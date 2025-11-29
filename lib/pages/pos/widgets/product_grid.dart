@@ -302,92 +302,92 @@ class ProductGridState extends State<ProductGrid> {
       ),
       child: Column(
         children: [
-          if (widget.branchId != null && sellingPriceGroupId != null)
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton(
-                  isExpanded: true,
-                  dropdownColor: themeData.cardColor,
-                  icon: Icon(
-                    Icons.arrow_drop_down,
-                    color: themeData.colorScheme.onSurface,
-                  ),
-                  value: usePriceGroup,
-                  items: _priceGroupMenuItems,
-                  onChanged: (bool? newValue) async {
-                    if (newValue == usePriceGroup) return;
-                    await _showCartResetDialogForPriceGroup();
-                    if (mounted) {
-                      setState(() {
-                        usePriceGroup = newValue!;
-                        if (changePriceGroup) {
-                          widget.cartItems.clear();
-                          products.clear();
-                          _searchController.clear();
-                          offset = 0;
-                          fetchProducts();
-                        }
-                      });
-                    }
-                  },
-                ),
-              ),
-            ),
-          Padding(
-            padding: EdgeInsets.all((MySize.size8 ?? 8.0).toDouble()),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    enabled: widget.isBranchSelected,
-                    decoration: InputDecoration(
-                      hintText: AppLocalizations.of(context)?.translate('search_products') ?? 'Search products',
-                      hintStyle: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                        color: themeData.colorScheme.onSurface.withAlpha(150),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: themeData.colorScheme.primary,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular((MySize.size8 ?? 8.0).toDouble()),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: customAppTheme.bgLayer2,
-                    ),
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                      color: themeData.colorScheme.onSurface,
-                    ),
-                    onSubmitted: (value) => searchProducts(value),
-                    onChanged: (value) {
-                      _debouncer(() {
-                        if (mounted) {
-                          searchProducts(value);
-                        }
-                      });
-                    },
-                  ),
-                ),
-                SizedBox(width: (MySize.size8 ?? 8.0).toDouble()),
-                IconButton(
-                  icon: Icon(
-                    Icons.refresh,
-                    color: themeData.colorScheme.primary,
-                    size: (MySize.size24 ?? 24.0).toDouble(),
-                  ),
-                  onPressed: widget.isBranchSelected ? refreshProducts : null,
-                  tooltip: AppLocalizations.of(context)?.translate('refresh_products') ?? 'Refresh products',
-                ),
-              ],
-            ),
-          ),
+          // if (widget.branchId != null && sellingPriceGroupId != null)
+          //   Padding(
+          //     padding: EdgeInsets.only(left: 16, bottom: 16, right: 16),
+          //     child: DropdownButtonHideUnderline(
+          //       child: DropdownButton(
+          //         isExpanded: true,
+          //         dropdownColor: themeData.cardColor,
+          //         icon: Icon(
+          //           Icons.arrow_drop_down,
+          //           color: themeData.colorScheme.onSurface,
+          //         ),
+          //         value: usePriceGroup,
+          //         items: _priceGroupMenuItems,
+          //         onChanged: (bool? newValue) async {
+          //           if (newValue == usePriceGroup) return;
+          //           await _showCartResetDialogForPriceGroup();
+          //           if (mounted) {
+          //             setState(() {
+          //               usePriceGroup = newValue!;
+          //               if (changePriceGroup) {
+          //                 widget.cartItems.clear();
+          //                 products.clear();
+          //                 _searchController.clear();
+          //                 offset = 0;
+          //                 fetchProducts();
+          //               }
+          //             });
+          //           }
+          //         },
+          //       ),
+          //     ),
+          //   ),
+          // Padding(
+          //   padding: EdgeInsets.all((MySize.size8 ?? 8.0).toDouble()),
+          //   child: Row(
+          //     children: [
+          //       Expanded(
+          //         child: TextField(
+          //           controller: _searchController,
+          //           enabled: widget.isBranchSelected,
+          //           decoration: InputDecoration(
+          //             hintText: AppLocalizations.of(context)?.translate('search_products') ?? 'Tìm kiếm',
+          //             hintStyle: TextStyle(
+          //               fontFamily: 'Cairo',
+          //               fontSize: (MySize.size14 ?? 14.0).toDouble(),
+          //               color: themeData.colorScheme.onSurface.withAlpha(150),
+          //             ),
+          //             prefixIcon: Icon(
+          //               Icons.search,
+          //               color: themeData.colorScheme.primary,
+          //             ),
+          //             border: OutlineInputBorder(
+          //               borderRadius: BorderRadius.circular((MySize.size8 ?? 8.0).toDouble()),
+          //               borderSide: BorderSide.none,
+          //             ),
+          //             filled: true,
+          //             fillColor: customAppTheme.bgLayer2,
+          //           ),
+          //           style: TextStyle(
+          //             fontFamily: 'Cairo',
+          //             fontSize: (MySize.size14 ?? 14.0).toDouble(),
+          //             color: themeData.colorScheme.onSurface,
+          //           ),
+          //           onSubmitted: (value) => searchProducts(value),
+          //           onChanged: (value) {
+          //             _debouncer(() {
+          //               if (mounted) {
+          //                 searchProducts(value);
+          //               }
+          //             });
+          //           },
+          //         ),
+          //       ),
+          //       SizedBox(width: (MySize.size8 ?? 8.0).toDouble()),
+          //       IconButton(
+          //         icon: Icon(
+          //           Icons.refresh,
+          //           color: themeData.colorScheme.primary,
+          //           size: (MySize.size24 ?? 24.0).toDouble(),
+          //         ),
+          //         onPressed: widget.isBranchSelected ? refreshProducts : null,
+          //         tooltip: AppLocalizations.of(context)?.translate('refresh_products') ?? 'Refresh products',
+          //       ),
+          //     ],
+          //   ),
+          // ),
           Expanded(
             child: widget.isBranchSelected
                 ? Stack(
@@ -420,10 +420,10 @@ class ProductGridState extends State<ProductGrid> {
                     controller: _scrollController,
                     padding: EdgeInsets.all((MySize.size8 ?? 8.0).toDouble()),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
+                      crossAxisCount: 4,
                       mainAxisSpacing: (MySize.size8 ?? 8.0).toDouble(),
                       crossAxisSpacing: (MySize.size8 ?? 8.0).toDouble(),
-                      childAspectRatio: 1.3,
+                      childAspectRatio: 1,
                     ),
                     itemCount: products.length,
                     itemBuilder: (context, index) {
@@ -536,83 +536,88 @@ class ProductCard extends StatelessWidget {
               ),
               child: CachedNetworkImage(
                 imageUrl: product['product_image_url']?.toString() ?? '',
-                height: (MySize.size120 ?? 120.0).toDouble(),
+                height: (MySize.size60 ?? 60).toDouble(),
                 width: double.infinity,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Image.asset(
                   'assets/images/default_product.png',
-                  height: (MySize.size120 ?? 120.0).toDouble(),
+                  height: (MySize.size60 ?? 60).toDouble(),
                   fit: BoxFit.cover,
                 ),
                 errorWidget: (context, url, error) => Image.asset(
                   'assets/images/default_product.png',
-                  height: (MySize.size120 ?? 120.0).toDouble(),
+                  height: (MySize.size60 ?? 60).toDouble(),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all((MySize.size8 ?? 8.0).toDouble()),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product['display_name']?.toString() ?? '',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                      fontWeight: FontWeight.w600,
-                      color: themeData.colorScheme.onSurface,
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all((MySize.size8 ?? 8.0).toDouble()),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product['display_name']?.toString() ?? '',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: (MySize.size14 ?? 14.0).toDouble(),
+                        fontWeight: FontWeight.w600,
+                        color: themeData.colorScheme.onSurface,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: (MySize.size4 ?? 4.0).toDouble()),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '$symbol${Helper().formatCurrency(product['unit_price'] ?? 0.0)}',
-                        style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: (MySize.size12 ?? 12.0).toDouble(),
-                          fontWeight: FontWeight.w700,
-                          color: themeData.colorScheme.primary,
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: (MySize.size6 ?? 6.0).toDouble(),
-                          vertical: (MySize.size2 ?? 2.0).toDouble(),
-                        ),
-                        decoration: BoxDecoration(
-                          color: themeData.colorScheme.primary,
-                          borderRadius: BorderRadius.circular((MySize.size4 ?? 4.0).toDouble()),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              MdiIcons.stocking,
-                              size: (MySize.size12 ?? 12.0).toDouble(),
-                              color: themeData.colorScheme.onPrimary,
+                    SizedBox(height: (MySize.size4 ?? 4.0).toDouble()),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '$symbol${Helper().formatCurrency(product['unit_price'] ?? 0.0)}',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: (MySize.size12 ?? 12.0).toDouble(),
+                              fontWeight: FontWeight.w700,
+                              color: themeData.colorScheme.primary,
                             ),
-                            SizedBox(width: (MySize.size4 ?? 4.0).toDouble()),
-                            Text(
-                              product['enable_stock'] != 0
-                                  ? Helper().formatQuantity(product['stock_available']?.toString() ?? '0')
-                                  : '-',
-                              style: TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: (MySize.size10 ?? 10.0).toDouble(),
-                                color: themeData.colorScheme.onPrimary,
-                              ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: (MySize.size6 ?? 6.0).toDouble(),
+                              vertical: (MySize.size2 ?? 2.0).toDouble(),
                             ),
-                          ],
-                        ),
+                            decoration: BoxDecoration(
+                              color: themeData.colorScheme.primary,
+                              borderRadius: BorderRadius.circular((MySize.size4 ?? 4.0).toDouble()),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  MdiIcons.stocking,
+                                  size: (MySize.size12 ?? 12.0).toDouble(),
+                                  color: themeData.colorScheme.onPrimary,
+                                ),
+                                SizedBox(width: (MySize.size4 ?? 4.0).toDouble()),
+                                Text(
+                                  product['enable_stock'] != 0
+                                      ? Helper().formatQuantity(product['stock_available']?.toString() ?? '0')
+                                      : '-',
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontSize: (MySize.size10 ?? 10.0).toDouble(),
+                                    color: themeData.colorScheme.onPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

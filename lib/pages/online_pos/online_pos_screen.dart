@@ -40,9 +40,11 @@ class _OnlinePosScreenState extends State<OnlinePosScreen> implements NetworkSta
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: InAppWebView(
-        initialUrlRequest: URLRequest(
-          url: WebUri('https://stg.oman.digityze.asia')
+      body: SafeArea(
+        child: InAppWebView(
+          initialUrlRequest: URLRequest(
+            url: WebUri('https://stg.oman.digityze.asia')
+          ),
         ),
       ),
     );

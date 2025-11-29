@@ -26,6 +26,7 @@ import 'package:pos_final/pages/pos/widgets/product_grid.dart';
 import 'package:pos_final/pages/pos/widgets/cart_summary.dart';
 import 'package:pos_final/pages/pos/widgets/shipping_details.dart';
 import 'package:pos_final/pages/pos/widgets/suspended_sales_list.dart';
+import 'package:pos_final/src/presentation/widgets/button.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../models/system.dart';
@@ -144,8 +145,8 @@ class PosScreenState extends State<PosScreen> {
     }
   }
 
-  void onCartUpdated(
-      List<dynamic> updatedCart, double total, double amount, String type, int? tax) {
+  void onCartUpdated(List<dynamic> updatedCart, double total, double amount,
+      String type, int? tax) {
     Future.microtask(() {
       if (mounted) {
         setState(() {
@@ -203,7 +204,8 @@ class PosScreenState extends State<PosScreen> {
     if (await Helper().checkConnectivity()) {
       Navigator.pushNamed(context, '/expense');
     } else {
-      _showErrorSnackBar(AppLocalizations.of(context).translate('check_connectivity'));
+      _showErrorSnackBar(
+          AppLocalizations.of(context).translate('check_connectivity'));
     }
   }
 
@@ -212,15 +214,21 @@ class PosScreenState extends State<PosScreen> {
     try {
       final db = DbProvider.db;
       await db.clearProductsCache();
-      _showSuccessSnackBar(AppLocalizations.of(context).translate('products_refreshed'));
+      _showSuccessSnackBar(
+          AppLocalizations.of(context).translate('products_refreshed'));
     } catch (e) {
-      _showErrorSnackBar(AppLocalizations.of(context).translate('refresh_failed'));
+      _showErrorSnackBar(
+          AppLocalizations.of(context).translate('refresh_failed'));
     }
   }
 
-  Future<void> submitSale({bool isCredit = false, bool printInvoice = true}) async {
-    if (selectedCustomer == null || selectedCustomer?['id'] == null || selectedCustomer?['id'] == 1) {
-      _showErrorSnackBar(AppLocalizations.of(context).translate('select_customer_required'));
+  Future<void> submitSale(
+      {bool isCredit = false, bool printInvoice = true}) async {
+    if (selectedCustomer == null ||
+        selectedCustomer?['id'] == null ||
+        selectedCustomer?['id'] == 1) {
+      _showErrorSnackBar(
+          AppLocalizations.of(context).translate('select_customer_required'));
       return;
     }
 
@@ -237,9 +245,12 @@ class PosScreenState extends State<PosScreen> {
     deliveredTo = null;
 
     try {
-      final invoiceNo = "${Config.userId}_${DateFormat('yMdHm').format(DateTime.now())}";
+      final invoiceNo =
+          "${Config.userId}_${DateFormat('yMdHm').format(DateTime.now())}";
       final adjustedInvoiceAmount = invoiceAmount -
-          (discountType == 'percentage' ? invoiceAmount * discountAmount / 100 : discountAmount);
+          (discountType == 'percentage'
+              ? invoiceAmount * discountAmount / 100
+              : discountAmount);
 
       final Map<String, dynamic> sellData = await Sell().createSell(
         invoiceNo: invoiceNo,
@@ -295,8 +306,11 @@ class PosScreenState extends State<PosScreen> {
       }
 
       if (mounted) {
-        _showSuccessSnackBar(AppLocalizations.of(context).translate(
-            isQuotation ? 'quotation_added' : isSuspend ? 'suspended_sale_added' : 'invoice_success'));
+        _showSuccessSnackBar(AppLocalizations.of(context).translate(isQuotation
+            ? 'quotation_added'
+            : isSuspend
+                ? 'suspended_sale_added'
+                : 'invoice_success'));
       }
 
       await _player.play(AssetSource('audios/success.mp3'));
@@ -307,13 +321,16 @@ class PosScreenState extends State<PosScreen> {
           builder: (context) {
             return printInvoiceDialog(
               context,
-                  () async {
-                final sellDetail = await SellDatabase().getSellBySellId(responseId);
+              () async {
+                final sellDetail =
+                    await SellDatabase().getSellBySellId(responseId);
                 final String? invoiceUrl = sellDetail[0]['invoice_url'];
                 if (invoiceUrl != null) {
-                  final response = await http.Client().get(Uri.parse(invoiceUrl));
+                  final response =
+                      await http.Client().get(Uri.parse(invoiceUrl));
                   if (response.statusCode == 200) {
-                    await Helper().printDocument(responseId, taxId, context, invoice: response.body);
+                    await Helper().printDocument(responseId, taxId, context,
+                        invoice: response.body);
                   } else {
                     await Helper().printDocument(responseId, taxId, context);
                   }
@@ -336,8 +353,11 @@ class PosScreenState extends State<PosScreen> {
   }
 
   Future<void> showMultiPaymentDialog() async {
-    if (selectedCustomer == null || selectedCustomer?['id'] == null || selectedCustomer?['id'] == 1) {
-      _showErrorSnackBar(AppLocalizations.of(context).translate('select_customer_required'));
+    if (selectedCustomer == null ||
+        selectedCustomer?['id'] == null ||
+        selectedCustomer?['id'] == 1) {
+      _showErrorSnackBar(
+          AppLocalizations.of(context).translate('select_customer_required'));
       return;
     }
 
@@ -354,7 +374,8 @@ class PosScreenState extends State<PosScreen> {
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular((MySize.size12 ?? 12.0).toDouble()),
+            borderRadius:
+                BorderRadius.circular((MySize.size12 ?? 12.0).toDouble()),
           ),
           child: Container(
             padding: EdgeInsets.all((MySize.size16 ?? 16.0).toDouble()),
@@ -379,7 +400,9 @@ class PosScreenState extends State<PosScreen> {
                 Expanded(
                   child: PaymentSection(
                     invoiceAmount: invoiceAmount -
-                        (discountType == 'percentage' ? invoiceAmount * discountAmount / 100 : discountAmount) +
+                        (discountType == 'percentage'
+                            ? invoiceAmount * discountAmount / 100
+                            : discountAmount) +
                         shippingCharges,
                     branchId: selectedBranchId,
                     customerId: selectedCustomer?['id'],
@@ -399,7 +422,8 @@ class PosScreenState extends State<PosScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: customAppTheme.colorError,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular((MySize.size8 ?? 8.0).toDouble()),
+                          borderRadius: BorderRadius.circular(
+                              (MySize.size8 ?? 8.0).toDouble()),
                         ),
                         padding: EdgeInsets.symmetric(
                           horizontal: (MySize.size16 ?? 16.0).toDouble(),
@@ -424,7 +448,8 @@ class PosScreenState extends State<PosScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: customAppTheme.colorInfo,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular((MySize.size8 ?? 8.0).toDouble()),
+                          borderRadius: BorderRadius.circular(
+                              (MySize.size8 ?? 8.0).toDouble()),
                         ),
                         padding: EdgeInsets.symmetric(
                           horizontal: (MySize.size16 ?? 16.0).toDouble(),
@@ -432,7 +457,8 @@ class PosScreenState extends State<PosScreen> {
                         ),
                       ),
                       child: Text(
-                        AppLocalizations.of(context).translate('finalize_payment'),
+                        AppLocalizations.of(context)
+                            .translate('finalize_payment'),
                         style: TextStyle(
                           fontFamily: 'Cairo',
                           fontSize: (MySize.size14 ?? 14.0).toDouble(),
@@ -458,16 +484,18 @@ class PosScreenState extends State<PosScreen> {
           if (mounted) {
             setState(() {
               final sale = saleData['sale'];
-              cartItems = saleData['sell_lines'].map((line) => {
-                'product_id': line['product_id'],
-                'variation_id': line['variation_id'],
-                'quantity': line['quantity'],
-                'unit_price': line['unit_price'],
-                'tax_rate_id': line['tax_rate_id'],
-                'discount_amount': line['discount_amount'],
-                'discount_type': line['discount_type'],
-                'display_name': line['name'],
-              }).toList();
+              cartItems = saleData['sell_lines']
+                  .map((line) => {
+                        'product_id': line['product_id'],
+                        'variation_id': line['variation_id'],
+                        'quantity': line['quantity'],
+                        'unit_price': line['unit_price'],
+                        'tax_rate_id': line['tax_rate_id'],
+                        'discount_amount': line['discount_amount'],
+                        'discount_type': line['discount_type'],
+                        'display_name': line['name'],
+                      })
+                  .toList();
               selectedCustomer = {'id': sale['contact_id']};
               invoiceAmount = sale['invoice_amount'] ?? 0.0;
               discountAmount = sale['discount_amount'] ?? 0.0;
@@ -501,7 +529,8 @@ class PosScreenState extends State<PosScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context).translate('confirm')),
-        content: Text(AppLocalizations.of(context).translate('are_you_sure_cancel')),
+        content:
+            Text(AppLocalizations.of(context).translate('are_you_sure_cancel')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -512,10 +541,15 @@ class PosScreenState extends State<PosScreen> {
               try {
                 if (await Helper().checkConnectivity()) {
                   final db = await DbProvider.db.database;
-                  final sales = await db.query('sell', where: 'is_synced = ?', whereArgs: [0]);
+                  final sales = await db
+                      .query('sell', where: 'is_synced = ?', whereArgs: [0]);
                   for (var sale in sales) {
-                    final transactionId = sale['transaction_id'] != null ? int.tryParse(sale['transaction_id'].toString()) : null;
-                    final saleId = sale['id'] != null ? int.tryParse(sale['id'].toString()) : null;
+                    final transactionId = sale['transaction_id'] != null
+                        ? int.tryParse(sale['transaction_id'].toString())
+                        : null;
+                    final saleId = sale['id'] != null
+                        ? int.tryParse(sale['id'].toString())
+                        : null;
                     if (transactionId != null) {
                       await Sell().delete(transactionId);
                     }
@@ -562,7 +596,7 @@ class PosScreenState extends State<PosScreen> {
   Widget build(BuildContext context) {
     themeData = Theme.of(context);
     return Scaffold(
-      backgroundColor: customAppTheme.bgLayer1,
+      backgroundColor: customAppTheme.bgLayer4,
       appBar: AppBar(
         actionsPadding: EdgeInsets.symmetric(horizontal: 20),
         shape: RoundedRectangleBorder(
@@ -636,7 +670,8 @@ class PosScreenState extends State<PosScreen> {
           Visibility(
             visible: true,
             child: ElevatedButton.icon(
-              label: Text(AppLocalizations.of(context).translate('add_expenses')),
+              label:
+                  Text(AppLocalizations.of(context).translate('add_expenses')),
               icon: Icon(FontAwesomeIcons.moneyBill),
               onPressed: () async {
                 await goToExpenses();
@@ -653,6 +688,7 @@ class PosScreenState extends State<PosScreen> {
               spacing: 10,
               children: [
                 Expanded(
+                  flex: 3,
                   child: Card(
                     elevation: 8,
                     child: Column(
@@ -697,31 +733,64 @@ class PosScreenState extends State<PosScreen> {
                   ),
                 ),
                 Expanded(
-                  child: Card(
-                    elevation: 8,
-                    child: ProductGrid(
-                      branchId: selectedBranchId,
-                      onProductAdded: (product) {
-                        if (mounted) {
-                          setState(() {
-                            final existingItem = cartItems.firstWhere(
-                                  (item) => item['product_id'] == product['product_id'],
-                              orElse: () => null,
-                            );
-                            if (existingItem != null) {
-                              existingItem['quantity'] = (existingItem['quantity'] ?? 0) + 1;
-                            } else {
-                              product['quantity'] = 1;
-                              product['discount_amount'] = 0.0;
-                              product['discount_type'] = 'fixed';
-                              cartItems.add(product);
+                  flex: 2,
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GradientAppButton(
+                              text: 'Danh mục',
+                              padding: EdgeInsets.symmetric(
+                                vertical: 8,
+                              ),
+                              onPress: () {},
+                            ),
+                          ),
+                          const SizedBox(width: 24),
+                          Expanded(
+                            child: GradientAppButton(
+                              text: 'Thương hiệu',
+                              padding: EdgeInsets.symmetric(
+                                vertical: 8,
+                              ),
+                              onPress: () {},
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 12,
+                      ),
+                      Expanded(
+                        child: ProductGrid(
+                          branchId: selectedBranchId,
+                          onProductAdded: (product) {
+                            if (mounted) {
+                              setState(() {
+                                final existingItem = cartItems.firstWhere(
+                                  (item) =>
+                                      item['product_id'] ==
+                                      product['product_id'],
+                                  orElse: () => null,
+                                );
+                                if (existingItem != null) {
+                                  existingItem['quantity'] =
+                                      (existingItem['quantity'] ?? 0) + 1;
+                                } else {
+                                  product['quantity'] = 1;
+                                  product['discount_amount'] = 0.0;
+                                  product['discount_type'] = 'fixed';
+                                  cartItems.add(product);
+                                }
+                              });
                             }
-                          });
-                        }
-                      },
-                      isBranchSelected: selectedBranchId != null,
-                      cartItems: cartItems,
-                    ),
+                          },
+                          isBranchSelected: selectedBranchId != null,
+                          cartItems: cartItems,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -731,110 +800,134 @@ class PosScreenState extends State<PosScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: customAppTheme.bgLayer4,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          color: customAppTheme.bgLayer1,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
-        width: double.infinity,
-        height: 100,
-        padding: EdgeInsets.symmetric(horizontal: 10),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            spacing: 10,
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Text(
-                '${AppLocalizations.of(context).translate('total_payable')}: ${Helper().formatCurrency(invoiceAmount)} $symbol',
-                style: TextStyle(fontWeight: FontWeight.bold),
+        width: MySize.screenWidth,
+        height: MySize.size90,
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          spacing: 10,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ColumnAppButton(
+              text: 'Bản nháp',
+              leading: Icon(
+                Icons.drafts_outlined,
+                color: Colors.lightBlue,
+                size: 20,
               ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await submitSale();
-                },
-                label: Text(
-                  AppLocalizations.of(context).translate('cash'),
-                  style: TextStyle(color: Colors.white),
+            ),
+            ColumnAppButton(
+              text: 'Báo giá',
+              leading: Icon(
+                Icons.drafts_outlined,
+                color: Colors.orange,
+                size: 20,
+              ),
+            ),
+            ColumnAppButton(
+              text: 'Tạm ngưng',
+              leading: Icon(
+                Icons.pause,
+                color: Colors.red,
+                size: 20,
+              ),
+            ),
+            ColumnAppButton(
+              text: 'Trả góp',
+              leading: Icon(
+                Icons.check,
+                color: Colors.deepPurpleAccent,
+                size: 20,
+              ),
+            ),
+            ColumnAppButton(
+              text: 'Dùng thẻ',
+              leading: Icon(
+                Icons.payment,
+                color: Colors.pink,
+                size: 20,
+              ),
+            ),
+            Expanded(
+              child: IntrinsicHeight(
+                child: Row(
+                  spacing: 14,
+                  children: [
+                    Expanded(
+                      child: PrimaryAppButton(
+                        text: AppLocalizations.of(context)
+                            .translate('Phương thức'),
+                        onPress: () async {
+                          await submitSale();
+                        },
+                        backGroundColor: Colors.deepOrange,
+                        leading: Icon(Icons.payment_rounded, size: 20),
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                    Expanded(
+                      child: PrimaryAppButton(
+                        text: AppLocalizations.of(context).translate('cash'),
+                        onPress: () async {
+                          await submitSale();
+                        },
+                        backGroundColor: Colors.green,
+                        leading: Icon(Icons.payment_rounded, size: 20),
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                    Expanded(
+                      child: PrimaryAppButton(
+                        text: AppLocalizations.of(context).translate('cancel'),
+                        onPress: () async {
+                          await submitSale();
+                        },
+                        backGroundColor: Colors.red,
+                        leading: Icon(Icons.payment_rounded, size: 20),
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ],
                 ),
-                icon: Icon(FontAwesomeIcons.moneyBill),
-                style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.green)),
               ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await submitSale(isCredit: true);
-                },
-                label: Text(
-                  AppLocalizations.of(context).translate('sell_credit'),
-                  style: TextStyle(color: Colors.white),
-                ),
-                icon: Icon(FontAwesomeIcons.creditCard),
-                style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.orange)),
+            ),
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        '${AppLocalizations.of(context).translate('total_payable')}: ${Helper().formatCurrency(invoiceAmount)} $symbol',
+                        style:
+                            TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                      ),
+                    ),
+                  ),
+                  IntrinsicHeight(
+                    child: GradientAppButton(
+                      leading: Icon(Icons.timer),
+                      text: AppLocalizations.of(context)
+                          .translate('Lịch sử giao dịch'),
+                      textStyle: TextStyle(fontSize: 14, color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await submitSale(printInvoice: false);
-                },
-                label: Text(
-                  AppLocalizations.of(context).translate('save'),
-                  style: TextStyle(color: Colors.white),
-                ),
-                icon: Icon(Icons.save),
-                style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.blueGrey)),
-              ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await cancelSale();
-                },
-                label: Text(
-                  AppLocalizations.of(context).translate('cancel'),
-                  style: TextStyle(color: Colors.white),
-                ),
-                icon: Icon(Icons.cancel_presentation_outlined, color: Colors.white),
-                style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.red)),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/sale', arguments: 1);
-                },
-                label: Text(
-                  AppLocalizations.of(context).translate('previous_payments'),
-                  style: TextStyle(color: Colors.white),
-                ),
-                icon: Icon(Icons.history_outlined),
-                style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.purple)),
-              ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await showMultiPaymentDialog();
-                },
-                label: Text(
-                  AppLocalizations.of(context).translate('multi_payment'),
-                  style: TextStyle(color: Colors.white),
-                ),
-                icon: Icon(Icons.payment),
-                style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.blue)),
-              ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await showSuspendedSalesDialog();
-                },
-                label: Text(
-                  AppLocalizations.of(context).translate('suspended_sales'),
-                  style: TextStyle(color: Colors.white),
-                ),
-                icon: Icon(Icons.pause_circle_outline),
-                style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.teal)),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget printInvoiceDialog(BuildContext context, void Function() printDocument) {
+  Widget printInvoiceDialog(
+      BuildContext context, void Function() printDocument) {
     return AlertDialog(
       title: Text(AppLocalizations.of(context).translate('print_invoice')),
-      content: Text(AppLocalizations.of(context).translate('print_invoice_confirmation')),
+      content: Text(
+          AppLocalizations.of(context).translate('print_invoice_confirmation')),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -851,3 +944,77 @@ class PosScreenState extends State<PosScreen> {
     );
   }
 }
+
+// ElevatedButton.icon(
+//   onPressed: () async {
+//     await submitSale(isCredit: true);
+//   },
+//   label: Text(
+//     AppLocalizations.of(context).translate('sell_credit'),
+//     style: TextStyle(color: Colors.white),
+//   ),
+//   icon: Icon(FontAwesomeIcons.creditCard),
+//   style: ButtonStyle(
+//       backgroundColor: WidgetStatePropertyAll(Colors.orange)),
+// ),
+// ElevatedButton.icon(
+//   onPressed: () async {
+//     await submitSale(printInvoice: false);
+//   },
+//   label: Text(
+//     AppLocalizations.of(context).translate('save'),
+//     style: TextStyle(color: Colors.white),
+//   ),
+//   icon: Icon(Icons.save),
+//   style: ButtonStyle(
+//       backgroundColor: WidgetStatePropertyAll(Colors.blueGrey)),
+// ),
+// ElevatedButton.icon(
+//   onPressed: () async {
+//     await cancelSale();
+//   },
+//   label: Text(
+//     AppLocalizations.of(context).translate('cancel'),
+//     style: TextStyle(color: Colors.white),
+//   ),
+//   icon: Icon(Icons.cancel_presentation_outlined,
+//       color: Colors.white),
+//   style: ButtonStyle(
+//       backgroundColor: WidgetStatePropertyAll(Colors.red)),
+// ),
+// ElevatedButton.icon(
+//   onPressed: () {
+//     Navigator.pushNamed(context, '/sale', arguments: 1);
+//   },
+//   label: Text(
+//     AppLocalizations.of(context).translate('previous_payments'),
+//     style: TextStyle(color: Colors.white),
+//   ),
+//   icon: Icon(Icons.history_outlined),
+//   style: ButtonStyle(
+//       backgroundColor: WidgetStatePropertyAll(Colors.purple)),
+// ),
+// ElevatedButton.icon(
+//   onPressed: () async {
+//     await showMultiPaymentDialog();
+//   },
+//   label: Text(
+//     AppLocalizations.of(context).translate('multi_payment'),
+//     style: TextStyle(color: Colors.white),
+//   ),
+//   icon: Icon(Icons.payment),
+//   style: ButtonStyle(
+//       backgroundColor: WidgetStatePropertyAll(Colors.blue)),
+// ),
+// ElevatedButton.icon(
+//   onPressed: () async {
+//     await showSuspendedSalesDialog();
+//   },
+//   label: Text(
+//     AppLocalizations.of(context).translate('suspended_sales'),
+//     style: TextStyle(color: Colors.white),
+//   ),
+//   icon: Icon(Icons.pause_circle_outline),
+//   style: ButtonStyle(
+//       backgroundColor: WidgetStatePropertyAll(Colors.teal)),
+// ),
