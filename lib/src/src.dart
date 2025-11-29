@@ -11,7 +11,6 @@ export 'application/application.dart';
 
 // Application entry
 export 'application.dart';
-export 'app_navigator.dart';
 
 // Core
 export 'core/observers/base_observer.dart';

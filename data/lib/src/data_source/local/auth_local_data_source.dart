@@ -22,6 +22,9 @@ abstract class AuthLocalDataSource {
 
   /// Clears cached user
   Future<void> clearCachedUser();
+
+  /// Clears all auth data
+  Future<void> clearAll();
 }
 
 /// Implementation of [AuthLocalDataSource] using SharedPreferences
@@ -92,6 +95,12 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   Future<void> clearCachedUser() async {
     final prefs = await _prefs;
     await prefs.remove(_userIdKey);
+  }
+
+  @override
+  Future<void> clearAll() async {
+    await clearToken();
+    await clearCachedUser();
   }
 }
 

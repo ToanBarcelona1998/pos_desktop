@@ -66,6 +66,14 @@ class ValidationFailure extends Failure {
 }
 
 /// Unknown/unexpected failures
+class NotFoundFailure extends Failure {
+  const NotFoundFailure({
+    super.message = 'An unexpected error occurred',
+    super.code = 'NOT_FOUND_ERROR',
+  });
+}
+
+/// Unknown/unexpected failures
 class UnknownFailure extends Failure {
   const UnknownFailure({
     super.message = 'An unexpected error occurred',

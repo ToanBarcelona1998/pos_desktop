@@ -27,8 +27,6 @@ class NetworkInfoImpl implements NetworkInfo {
 
   @override
   Stream<bool> get onConnectivityChanged {
-    // This should be implemented with connectivity_plus
-    // For now, return an empty stream
     return const Stream.empty();
   }
 }
