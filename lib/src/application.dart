@@ -1,15 +1,107 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
-class Application extends StatefulWidget {
-  const Application({super.key});
+import '../helpers/app_theme.dart';
+import '../locale/my_localizations.dart';
+import 'application/application.dart';
 
-  @override
-  State<Application> createState() => _ApplicationState();
-}
+/// Main application widget with global state providers
+class Application extends StatelessWidget {
+  final Widget child;
 
-class _ApplicationState extends State<Application> {
+  const Application({
+    super.key,
+    required this.child,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AppThemeCubit>(
+          create: (_) => AppThemeCubit()..init(),
+        ),
+        BlocProvider<LanguageCubit>(
+          create: (_) => LanguageCubit()..init(),
+        ),
+        BlocProvider<AuthCubit>(
+          create: (_) => AuthCubit()..checkAuthentication(),
+        ),
+      ],
+      child: child,
+    );
   }
+}
+
+/// Material app with theme and language support
+class ApplicationMaterialApp extends StatelessWidget {
+  final Map<String, Widget Function(BuildContext)> routes;
+  final String initialRoute;
+  final bool debugShowCheckedModeBanner;
+
+  const ApplicationMaterialApp({
+    super.key,
+    required this.routes,
+    this.initialRoute = '/splash',
+    this.debugShowCheckedModeBanner = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AppThemeCubit, AppThemeState>(
+      builder: (context, themeState) {
+        return BlocBuilder<LanguageCubit, LanguageState>(
+          builder: (context, languageState) {
+            return MaterialApp(
+              debugShowCheckedModeBanner: debugShowCheckedModeBanner,
+              theme: themeState.themeData,
+              locale: languageState.locale,
+              supportedLocales: AppLanguages.supportedLocales,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+              ],
+              routes: routes,
+              initialRoute: initialRoute,
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Convenience widget for building with theme
+class ThemeBuilder extends StatelessWidget {
+  final Widget Function(BuildContext context, ThemeData theme, CustomAppTheme customTheme) builder;
+
+  const ThemeBuilder({
+    super.key,
+    required this.builder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AppThemeCubit, AppThemeState>(
+      builder: (context, state) {
+        final customTheme = context.read<AppThemeCubit>().customTheme;
+        return builder(context, state.themeData, customTheme);
+      },
+    );
+  }
+}
+
+/// Extension for easy access to global cubits
+extension ApplicationContext on BuildContext {
+  AppThemeCubit get themeCubit => read<AppThemeCubit>();
+  LanguageCubit get languageCubit => read<LanguageCubit>();
+  AuthCubit get authCubit => read<AuthCubit>();
+
+  ThemeData get theme => themeCubit.state.themeData;
+  CustomAppTheme get customTheme => themeCubit.customTheme;
+  Locale get locale => languageCubit.state.locale;
+  bool get isAuthenticated => authCubit.isAuthenticated;
 }

@@ -13,6 +13,12 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  
+  # Local packages (Clean Architecture)
+  domain:
+    path: ./domain
+  data:
+    path: ./data
 
   app_settings: ^6.1.1
   badges: ^3.0.3
@@ -93,6 +99,7 @@ flutter:
     - assets/lottie/
     - assets/svg/
     - assets/fonts/
+    - assets/config/
     - i18n/
   fonts:
     - family: Cairo
