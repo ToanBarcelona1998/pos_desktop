@@ -27,6 +27,7 @@ import 'package:pos_final/pages/pos/widgets/cart_summary.dart';
 import 'package:pos_final/pages/pos/widgets/shipping_details.dart';
 import 'package:pos_final/pages/pos/widgets/suspended_sales_list.dart';
 import 'package:pos_final/src/presentation/widgets/button.dart';
+import 'package:pos_final/src/presentation/widgets/icon_wrapper_widget.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../models/system.dart';
@@ -598,58 +599,88 @@ class PosScreenState extends State<PosScreen> {
     return Scaffold(
       backgroundColor: customAppTheme.bgLayer4,
       appBar: AppBar(
+        backgroundColor: customAppTheme.bgLayer1,
         actionsPadding: EdgeInsets.symmetric(horizontal: 20),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+          borderRadius: BorderRadius.all(Radius.circular(8)),
         ),
-        elevation: 5,
         title: Row(
           spacing: 10,
           children: [
             SizedBox(
               height: 34,
-              width: MediaQuery.sizeOf(context).width * 0.3,
+              // width: MediaQuery.sizeOf(context).width * 0.3,
               child: BranchSelector(
                 onBranchSelected: onBranchSelected,
                 selectedBranchId: selectedBranchId,
               ),
             ),
             SizedBox(
-              height: 34,
-              width: MediaQuery.sizeOf(context).width * 0.2,
-              child: DateTimeSelector(
-                onDateSelected: (date) {
-                  if (mounted) {
-                    setState(() {
-                      selectedDate = date;
-                    });
-                  }
-                },
-                selectedDate: selectedDate,
+              width: MySize.size16,
+            ),
+            GradientAppButton(
+              text: DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
+              textStyle:
+                  TextStyle(fontSize: MySize.size14, color: Colors.white),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              suffix: Icon(
+                Icons.date_range_rounded,
+                size: 20,
+                color: Colors.white,
               ),
             ),
-            SizedBox(
-              height: 34,
-              width: MediaQuery.sizeOf(context).width * 0.2,
-              child: InvoiceTypeSelector(
-                onInvoiceTypeSelected: onInvoiceTypeSelected,
-                selectedInvoiceType: invoiceType,
-                isQuotation: isQuotation,
-                isSuspend: isSuspend,
-              ),
-            ),
+            // SizedBox(
+            //   height: 34,
+            //   width: MediaQuery.sizeOf(context).width * 0.2,
+            //   child: DateTimeSelector(
+            //     onDateSelected: (date) {
+            //       if (mounted) {
+            //         setState(() {
+            //           selectedDate = date;
+            //         });
+            //       }
+            //     },
+            //     selectedDate: selectedDate,
+            //   ),
+            // ),
+            // SizedBox(
+            //   height: 34,
+            //   width: MediaQuery.sizeOf(context).width * 0.2,
+            //   child: InvoiceTypeSelector(
+            //     onInvoiceTypeSelected: onInvoiceTypeSelected,
+            //     selectedInvoiceType: invoiceType,
+            //     isQuotation: isQuotation,
+            //     isSuspend: isSuspend,
+            //   ),
+            // ),
           ],
         ),
         actions: [
-          IconButton(
-            onPressed: () async {
-              await refreshProducts();
-            },
-            icon: Icon(Icons.refresh),
-            tooltip: AppLocalizations.of(context).translate('refresh_products'),
+          IconWrapper(
+            icon: Icons.close_rounded,
+            iconColor: Colors.red,
           ),
-          IconButton(
-            onPressed: () async {
+          const SizedBox(
+            width: 8,
+          ),
+          IconWrapper(
+            icon: Icons.shopping_bag,
+            iconColor: Colors.green,
+          ),
+          const SizedBox(
+            width: 8,
+          ),
+          IconWrapper(
+            icon: Icons.arrow_back,
+            iconColor: Colors.redAccent,
+          ),
+          const SizedBox(
+            width: 8,
+          ),
+          IconWrapper(
+            icon: Icons.fullscreen_outlined,
+            iconColor: Colors.grey,
+            onTap: () async{
               bool isFullScreen = await windowManager.isFullScreen();
               if (isFullScreen) {
                 await windowManager.setFullScreen(false);
@@ -665,25 +696,31 @@ class PosScreenState extends State<PosScreen> {
                 await windowManager.setFullScreen(true);
               }
             },
-            icon: Icon(Icons.fullscreen_outlined),
           ),
-          Visibility(
-            visible: true,
-            child: ElevatedButton.icon(
-              label:
-                  Text(AppLocalizations.of(context).translate('add_expenses')),
-              icon: Icon(FontAwesomeIcons.moneyBill),
-              onPressed: () async {
-                await goToExpenses();
-              },
-            ),
-          ),
+          // IconButton(
+          //   onPressed: () async {
+          //     await refreshProducts();
+          //   },
+          //   icon: Icon(Icons.refresh),
+          //   tooltip: AppLocalizations.of(context).translate('refresh_products'),
+          // ),
+          // Visibility(
+          //   visible: true,
+          //   child: ElevatedButton.icon(
+          //     label:
+          //         Text(AppLocalizations.of(context).translate('add_expenses')),
+          //     icon: Icon(FontAwesomeIcons.moneyBill),
+          //     onPressed: () async {
+          //       await goToExpenses();
+          //     },
+          //   ),
+          // ),
         ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.only(top: 16, bottom: 8, left: 8, right: 8),
             child: Row(
               spacing: 10,
               children: [
@@ -698,18 +735,6 @@ class PosScreenState extends State<PosScreen> {
                           selectedCustomer: selectedCustomer,
                           isBranchSelected: selectedBranchId != null,
                         ),
-                        /* Commented out shipping details button to hide it from UI
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              showShipping = !showShipping;
-                            });
-                          },
-                          icon: Icon(showShipping ? Icons.arrow_drop_up : Icons.arrow_drop_down),
-                          label: Text(AppLocalizations.of(context).translate('shipping_details')),
-                          style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(themeData.colorScheme.primary)),
-                        ),
-                        */
                         Visibility(
                           visible: showShipping,
                           child: ShippingDetails(
@@ -740,6 +765,7 @@ class PosScreenState extends State<PosScreen> {
                         children: [
                           Expanded(
                             child: GradientAppButton(
+                              leading: Icon(Icons.menu, size: 20,),
                               text: 'Danh mục',
                               padding: EdgeInsets.symmetric(
                                 vertical: 8,
@@ -750,6 +776,7 @@ class PosScreenState extends State<PosScreen> {
                           const SizedBox(width: 24),
                           Expanded(
                             child: GradientAppButton(
+                              leading: Icon(Icons.branding_watermark, size: 20,),
                               text: 'Thương hiệu',
                               padding: EdgeInsets.symmetric(
                                 vertical: 8,
@@ -900,8 +927,8 @@ class PosScreenState extends State<PosScreen> {
                     child: Center(
                       child: Text(
                         '${AppLocalizations.of(context).translate('total_payable')}: ${Helper().formatCurrency(invoiceAmount)} $symbol',
-                        style:
-                            TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 24),
                       ),
                     ),
                   ),

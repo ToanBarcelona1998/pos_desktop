@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_observer.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_subject.dart';
+import 'package:pos_final/src/presentation/widgets/dialog/dialog_provider.dart';
 
 class OnlinePosScreen extends StatefulWidget {
   const OnlinePosScreen({super.key});
@@ -10,7 +11,8 @@ class OnlinePosScreen extends StatefulWidget {
   State<OnlinePosScreen> createState() => _OnlinePosScreenState();
 }
 
-class _OnlinePosScreenState extends State<OnlinePosScreen> implements NetworkStatusObserver{
+class _OnlinePosScreenState extends State<OnlinePosScreen>
+    implements NetworkStatusObserver {
   InAppWebViewController? webViewController;
   InAppWebViewSettings settings = InAppWebViewSettings(
     isInspectable: false,
@@ -42,9 +44,8 @@ class _OnlinePosScreenState extends State<OnlinePosScreen> implements NetworkSta
     return Scaffold(
       body: SafeArea(
         child: InAppWebView(
-          initialUrlRequest: URLRequest(
-            url: WebUri('https://stg.oman.digityze.asia')
-          ),
+          initialUrlRequest:
+              URLRequest(url: WebUri('https://stg.oman.digityze.asia')),
         ),
       ),
     );
@@ -52,8 +53,14 @@ class _OnlinePosScreenState extends State<OnlinePosScreen> implements NetworkSta
 
   @override
   void update(bool newState) {
-    if(!newState && mounted){
-      Navigator.pushReplacementNamed(context, '/pos');
+    if (!newState && mounted) {
+      DialogProvider.showConfirmDialog(
+        context,
+        message: 'Có vấn đề về đường truyền, bạn có muốn chuyển qua chế độ offline không?',
+        onConfirm: (){
+          Navigator.pushReplacementNamed(context, '/pos');
+        }
+      );
     }
   }
 }

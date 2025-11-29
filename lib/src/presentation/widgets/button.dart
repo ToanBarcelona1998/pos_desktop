@@ -240,6 +240,7 @@ final class TextAppButton extends StatelessWidget {
   final Widget? leading;
   final Widget? suffix;
   final TextStyle? style;
+  final EdgeInsets ?padding;
 
   const TextAppButton({
     super.key,
@@ -250,6 +251,7 @@ final class TextAppButton extends StatelessWidget {
     this.minWidth,
     this.leading,
     this.suffix,
+    this.padding,
   });
 
   @override
@@ -264,6 +266,7 @@ final class TextAppButton extends StatelessWidget {
       suffix: suffix,
       leading: leading,
       disableColor: Colors.transparent,
+      padding: padding,
     );
   }
 }
@@ -301,7 +304,7 @@ final class GradientAppButton extends StatelessWidget {
     const defaultGradient = LinearGradient(
       colors: [
         Color(0xFF2053ba),
-        Color(0xFF3c6fd6),
+        Color(0xff6982b8),
       ],
       begin: Alignment.centerLeft,
       end: Alignment.centerRight,
@@ -310,7 +313,7 @@ final class GradientAppButton extends StatelessWidget {
     final defaultTextStyle = TextStyle(
       fontWeight: FontWeight.w500,
       color: isDisable == true ? Colors.white30 : Colors.white,
-      fontSize: 24,
+      fontSize: 20,
     );
     return _AppButton(
       text: text,

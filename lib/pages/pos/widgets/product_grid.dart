@@ -571,48 +571,48 @@ class ProductCard extends StatelessWidget {
                     SizedBox(height: (MySize.size4 ?? 4.0).toDouble()),
                     Expanded(
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '$symbol${Helper().formatCurrency(product['unit_price'] ?? 0.0)}',
+                            '${Helper().formatCurrency(product['unit_price'] ?? 0.0)}$symbol',
                             style: TextStyle(
                               fontFamily: 'Cairo',
-                              fontSize: (MySize.size12 ?? 12.0).toDouble(),
-                              fontWeight: FontWeight.w700,
-                              color: themeData.colorScheme.primary,
+                              fontSize: (MySize.size16 ?? 16.0).toDouble(),
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff244ca3),
                             ),
                           ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: (MySize.size6 ?? 6.0).toDouble(),
-                              vertical: (MySize.size2 ?? 2.0).toDouble(),
-                            ),
-                            decoration: BoxDecoration(
-                              color: themeData.colorScheme.primary,
-                              borderRadius: BorderRadius.circular((MySize.size4 ?? 4.0).toDouble()),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  MdiIcons.stocking,
-                                  size: (MySize.size12 ?? 12.0).toDouble(),
-                                  color: themeData.colorScheme.onPrimary,
-                                ),
-                                SizedBox(width: (MySize.size4 ?? 4.0).toDouble()),
-                                Text(
-                                  product['enable_stock'] != 0
-                                      ? Helper().formatQuantity(product['stock_available']?.toString() ?? '0')
-                                      : '-',
-                                  style: TextStyle(
-                                    fontFamily: 'Cairo',
-                                    fontSize: (MySize.size10 ?? 10.0).toDouble(),
-                                    color: themeData.colorScheme.onPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          // Container(
+                          //   padding: EdgeInsets.symmetric(
+                          //     horizontal: (MySize.size6 ?? 6.0).toDouble(),
+                          //     vertical: (MySize.size2 ?? 2.0).toDouble(),
+                          //   ),
+                          //   decoration: BoxDecoration(
+                          //     color: themeData.colorScheme.primary,
+                          //     borderRadius: BorderRadius.circular((MySize.size4 ?? 4.0).toDouble()),
+                          //   ),
+                          //   child: Row(
+                          //     children: [
+                          //       Icon(
+                          //         MdiIcons.stocking,
+                          //         size: (MySize.size12 ?? 12.0).toDouble(),
+                          //         color: themeData.colorScheme.onPrimary,
+                          //       ),
+                          //       SizedBox(width: (MySize.size4 ?? 4.0).toDouble()),
+                          //       Text(
+                          //         product['enable_stock'] != 0
+                          //             ? Helper().formatQuantity(product['stock_available']?.toString() ?? '0')
+                          //             : '-',
+                          //         style: TextStyle(
+                          //           fontFamily: 'Cairo',
+                          //           fontSize: (MySize.size10 ?? 10.0).toDouble(),
+                          //           color: themeData.colorScheme.onPrimary,
+                          //         ),
+                          //       ),
+                          //     ],
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),
