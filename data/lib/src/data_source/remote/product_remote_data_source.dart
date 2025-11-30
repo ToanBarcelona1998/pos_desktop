@@ -16,6 +16,7 @@ abstract class ProductRemoteDataSource {
 }
 
 /// Implementation of [ProductRemoteDataSource]
+/// Uses /variation endpoint to match old API structure
 class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   final ApiClient _apiClient;
   final String _endpoint;
@@ -41,29 +42,43 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
           }
         : null;
 
+    // Use variation endpoint like old code: /variation?per_page=3000&not_for_selling=0
     final response = await _apiClient.get(
       _endpoint,
       queryParams: {
         'location_id': locationId,
-        'page': page,
         'per_page': perPage,
+        'page': page,
+        'not_for_selling': 0,
       },
       headers: headers,
     );
 
+    // Handle response structure: { data: [...], links: {...}, meta: {...} }
     final data = response['data'] as List<dynamic>? ?? [];
     final products = data
-        .map((json) => ProductModel.fromJson(json as Map<String, dynamic>))
+        .map((json) {
+          // Construct display_name if not present (like old code)
+          final jsonMap = json as Map<String, dynamic>;
+          if (jsonMap['display_name'] == null || jsonMap['display_name'].toString().isEmpty) {
+            final productName = jsonMap['product_name']?.toString() ?? '';
+            final productVariationName = jsonMap['product_variation_name']?.toString() ?? '';
+            final variationName = jsonMap['variation_name']?.toString() ?? '';
+            jsonMap['display_name'] = '$productName $productVariationName $variationName'.trim();
+          }
+          return ProductModel.fromJson(jsonMap);
+        })
         .toList();
 
     final meta = response['meta'] as Map<String, dynamic>?;
     final total = meta?['total'] as int? ?? products.length;
     final lastPage = meta?['last_page'] as int? ?? 1;
+    final currentPage = meta?['current_page'] as int? ?? page;
 
     return ProductListResponse(
       products: products,
       total: total,
-      currentPage: page,
+      currentPage: currentPage,
       lastPage: lastPage,
     );
   }
@@ -71,7 +86,18 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   @override
   Future<ProductModel> getProductById(int id) async {
     final response = await _apiClient.get('$_endpoint/$id');
-    return ProductModel.fromJson(response['data'] ?? response);
+    final json = response['data'] ?? response;
+    final jsonMap = json as Map<String, dynamic>;
+    
+    // Construct display_name if not present
+    if (jsonMap['display_name'] == null || jsonMap['display_name'].toString().isEmpty) {
+      final productName = jsonMap['product_name']?.toString() ?? '';
+      final productVariationName = jsonMap['product_variation_name']?.toString() ?? '';
+      final variationName = jsonMap['variation_name']?.toString() ?? '';
+      jsonMap['display_name'] = '$productName $productVariationName $variationName'.trim();
+    }
+    
+    return ProductModel.fromJson(jsonMap);
   }
 }
 
@@ -91,4 +117,3 @@ class ProductListResponse {
 
   bool get hasMore => currentPage < lastPage;
 }
-

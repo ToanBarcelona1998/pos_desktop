@@ -12,3 +12,6 @@ mixin JsonParseable<T> {
   T fromJson(Map<String, dynamic> json);
 }
 
+
+
+

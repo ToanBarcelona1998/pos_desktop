@@ -37,3 +37,6 @@ abstract class SellRepository {
   Future<Result<List<SellEntity>>> getSuspendedSells();
 }
 
+
+
+

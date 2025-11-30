@@ -59,3 +59,6 @@ class NotificationModel extends BaseModel {
   bool get isRead => readAt != null;
 }
 
+
+
+

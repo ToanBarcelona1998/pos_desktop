@@ -100,3 +100,6 @@ class ProductStockReportEntity extends Entity {
       ];
 }
 
+
+
+

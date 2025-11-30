@@ -1,17 +1,19 @@
 import 'dart:convert';
 
+import 'package:sqflite/sqflite.dart';
+
 import 'database/database_helper.dart';
 
 /// Local data source for system data storage
 abstract class SystemLocalDataSource {
   /// Insert data with a key
-  Future<void> insert(String key, String value, [int? referenceId]);
+  Future<void> insert(String key, String value, [int? keyId]);
 
   /// Get data by key
   Future<dynamic> get(String key);
 
-  /// Get data by key and reference ID
-  Future<dynamic> getByReference(String key, int referenceId);
+  /// Get data by key and keyId
+  Future<dynamic> getByKeyId(String key, int keyId);
 
   /// Delete data by key
   Future<void> delete(String key);
@@ -29,25 +31,24 @@ class SystemLocalDataSourceImpl implements SystemLocalDataSource {
   }) : _databaseHelper = databaseHelper;
 
   @override
-  Future<void> insert(String key, String value, [int? referenceId]) async {
+  Future<void> insert(String key, String value, [int? keyId]) async {
     final db = await _databaseHelper.database;
-    if (db == null) return;
 
+    // Use ConflictAlgorithm.replace to match old behavior
     await db.insert(
       'system',
       {
         'key': key,
+        'keyId': keyId,
         'value': value,
-        'reference_id': referenceId,
-        'updated_at': DateTime.now().toIso8601String(),
       },
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
   @override
   Future<dynamic> get(String key) async {
     final db = await _databaseHelper.database;
-    if (db == null) return null;
 
     final result = await db.query(
       'system',
@@ -61,21 +62,29 @@ class SystemLocalDataSourceImpl implements SystemLocalDataSource {
     if (value == null) return null;
 
     try {
-      return jsonDecode(value);
+      final decoded = jsonDecode(value);
+      // Handle double-encoded values (like in old code)
+      if (decoded is String) {
+        try {
+          return jsonDecode(decoded);
+        } catch (_) {
+          return decoded;
+        }
+      }
+      return decoded;
     } catch (_) {
       return value;
     }
   }
 
   @override
-  Future<dynamic> getByReference(String key, int referenceId) async {
+  Future<dynamic> getByKeyId(String key, int keyId) async {
     final db = await _databaseHelper.database;
-    if (db == null) return null;
 
     final result = await db.query(
       'system',
-      where: 'key = ? AND reference_id = ?',
-      whereArgs: [key, referenceId],
+      where: 'key = ? AND keyId = ?',
+      whereArgs: [key, keyId],
     );
 
     if (result.isEmpty) return null;
@@ -84,7 +93,16 @@ class SystemLocalDataSourceImpl implements SystemLocalDataSource {
     if (value == null) return null;
 
     try {
-      return jsonDecode(value);
+      final decoded = jsonDecode(value);
+      // Handle double-encoded values
+      if (decoded is String) {
+        try {
+          return jsonDecode(decoded);
+        } catch (_) {
+          return decoded;
+        }
+      }
+      return decoded;
     } catch (_) {
       return value;
     }
@@ -93,7 +111,6 @@ class SystemLocalDataSourceImpl implements SystemLocalDataSource {
   @override
   Future<void> delete(String key) async {
     final db = await _databaseHelper.database;
-    if (db == null) return;
 
     await db.delete(
       'system',
@@ -105,9 +122,7 @@ class SystemLocalDataSourceImpl implements SystemLocalDataSource {
   @override
   Future<void> clearAll() async {
     final db = await _databaseHelper.database;
-    if (db == null) return;
 
     await db.delete('system');
   }
 }
-

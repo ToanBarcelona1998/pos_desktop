@@ -6,6 +6,7 @@ export 'local/database/database_helper.dart';
 
 // Local
 export 'local/auth_local_data_source.dart';
+export 'local/contact_local_data_source.dart';
 export 'local/product_local_data_source.dart';
 export 'local/system_local_data_source.dart';
 

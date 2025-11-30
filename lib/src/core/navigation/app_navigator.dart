@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../helpers/bottom_nav.dart';
-import '../../../pages/brands/brands.dart';
 import '../../../pages/cart.dart';
 import '../../../pages/category_screen.dart';
 import '../../../pages/checkout/checkout.dart';
@@ -11,15 +9,12 @@ import '../../../pages/customer.dart';
 import '../../../pages/expenses.dart';
 import '../../../pages/field_force.dart';
 import '../../../pages/follow_up.dart';
-import '../../../pages/home.dart';
-import '../../../pages/home/home_logic.dart';
-import '../../../pages/login/login_screen.dart';
 import '../../../pages/notifications/notify.dart';
 import '../../../pages/on_boarding/on_boarding.dart';
-import '../../../pages/online_pos/online_pos_screen.dart';
-import '../../../pages/pos/pos_screen.dart';
+import '../../presentation/pages/pos_online/pos_online_page.dart';
+import '../../presentation/pages/pos/pos_page.dart';
 import '../../../pages/product_stock_report.dart';
-import '../../../pages/products.dart';
+import '../../presentation/pages/products/products_page.dart';
 import '../../../pages/profit_loss_report.dart';
 import '../../../pages/purchases/view/add_purchase_screen.dart';
 import '../../../pages/purchases/view/products_selection_screen.dart';
@@ -28,10 +23,14 @@ import '../../../pages/purchases/view/purchases_screen.dart';
 import '../../../pages/report.dart';
 import '../../../pages/sales.dart';
 import '../../../pages/shipment.dart';
-import '../../../pages/splash.dart';
 import '../../../pages/units/units.dart';
 import '../../../pages/users.dart';
 import '../../../pages/warranties/warranties.dart';
+import '../../../pages/home/home_logic.dart';
+import '../../presentation/pages/brands/brands_page.dart';
+import '../../presentation/pages/home/home_page.dart';
+import '../../presentation/pages/login/login_page.dart';
+import '../../presentation/pages/splash/splash_page.dart';
 import 'route_path.dart';
 
 /// Global navigator key for accessing navigator from anywhere
@@ -57,6 +56,14 @@ class AppNavigator {
     return _navigator?.pushNamed<T>(routeName, arguments: arguments);
   }
 
+  /// Push a route path
+  static Future<T?> push<T>(
+    RoutePath route, {
+    Object? arguments,
+  }) async {
+    return _navigator?.pushNamed<T>(route.path, arguments: arguments);
+  }
+
   /// Push a route and remove all previous routes
   static Future<T?> pushNamedAndRemoveAll<T>(
     String routeName, {
@@ -67,6 +74,14 @@ class AppNavigator {
       (route) => false,
       arguments: arguments,
     );
+  }
+
+  /// Push a route path and remove all previous routes
+  static Future<T?> pushAndRemoveAll<T>(
+    RoutePath route, {
+    Object? arguments,
+  }) async {
+    return pushNamedAndRemoveAll<T>(route.path, arguments: arguments);
   }
 
   /// Push a route and remove until a specific route
@@ -95,15 +110,24 @@ class AppNavigator {
     );
   }
 
+  /// Push a replacement route path
+  static Future<T?> pushReplacement<T, TO>(
+    RoutePath route, {
+    Object? arguments,
+    TO? result,
+  }) async {
+    return pushReplacementNamed<T, TO>(route.path, arguments: arguments, result: result);
+  }
+
   /// Push a widget directly
-  static Future<T?> push<T>(Widget page) async {
+  static Future<T?> pushWidget<T>(Widget page) async {
     return _navigator?.push<T>(
       MaterialPageRoute(builder: (_) => page),
     );
   }
 
   /// Push a widget and remove all previous routes
-  static Future<T?> pushAndRemoveAll<T>(Widget page) async {
+  static Future<T?> pushWidgetAndRemoveAll<T>(Widget page) async {
     return _navigator?.pushAndRemoveUntil<T>(
       MaterialPageRoute(builder: (_) => page),
       (route) => false,
@@ -122,6 +146,11 @@ class AppNavigator {
   /// Pop until a specific route
   static void popUntil(String routeName) {
     _navigator?.popUntil(ModalRoute.withName(routeName));
+  }
+
+  /// Pop until a specific route path
+  static void popUntilRoute(RoutePath route) {
+    popUntil(route.path);
   }
 
   /// Pop until the first route
@@ -156,6 +185,12 @@ class AppNavigator {
     return routeName;
   }
 
+  /// Get current route
+  static RoutePath? get currentRoute {
+    final name = currentRouteName;
+    return name != null ? RoutePath.fromPath(name) : null;
+  }
+
   /// Check if route is active
   static bool isRouteActive(String routeName) {
     return currentRouteName == routeName;
@@ -163,12 +198,12 @@ class AppNavigator {
 
   /// Navigate to login and clear stack
   static Future<void> navigateToLogin() {
-    return pushNamedAndRemoveAll(RoutePath.login);
+    return pushNamedAndRemoveAll(RoutePath.login.path);
   }
 
   /// Navigate to home and clear stack
   static Future<void> navigateToHome() {
-    return pushNamedAndRemoveAll(RoutePath.layout);
+    return pushNamedAndRemoveAll(RoutePath.layout.path);
   }
 
   // ============== Route Generator ==============
@@ -178,108 +213,107 @@ class AppNavigator {
     final args = settings.arguments;
 
     switch (settings.name) {
-      // Auth routes
-      case RoutePath.splash:
-        return _buildRoute(settings, const Splash());
+      // Auth routes - Using new pages
+      case '/splash':
+        return _buildRoute(settings, const SplashPage());
 
-      case RoutePath.onBoarding:
+      case '/onBoarding':
         return _buildRoute(settings, const OnBoardingScreen());
 
-      case RoutePath.login:
-        return _buildRoute(settings, const LoginScreen());
+      case '/login':
+        return _buildRoute(settings, const LoginPage());
 
-      // Main routes
-      case RoutePath.layout:
-        return _buildRoute(settings, const Home());
+      // Main routes - Using new pages
+      case '/layout':
+        return _buildRoute(settings, const HomePage());
 
-      case RoutePath.products:
-        return _buildRoute(settings, const Products());
+      case '/products':
+        return _buildRoute(settings, const ProductsPage());
 
-      case RoutePath.categories:
+      case '/Categories':
         return _buildRoute(settings, const CategoryScreen());
 
-      case RoutePath.brands:
-        final homeLogic = args as HomeLogic? ?? HomeLogic(HomeState());
-        return _buildRoute(settings, BrandsPage(homeLogic: homeLogic));
+      case '/brands':
+        return _buildRoute(settings, const BrandsPage());
 
-      case RoutePath.units:
-        final homeLogic = args as HomeLogic? ?? HomeLogic(HomeState());
-        return _buildRoute(settings, UnitsPage(homeLogic: homeLogic));
+      // case '/units':
+      //   final homeLogic = args as HomeLogic? ?? HomeLogic(HomeState());
+      //   return _buildRoute(settings, UnitsPage(homeLogic: homeLogic));
 
-      case RoutePath.warranties:
-        final homeLogic = args as HomeLogic? ?? HomeLogic(HomeState());
-        return _buildRoute(settings, WarrantiesPage(homeLogic: homeLogic));
+      // case '/products/warranties':
+      //   final homeLogic = args as HomeLogic? ?? HomeLogic(HomeState());
+      //   return _buildRoute(settings, WarrantiesPage(homeLogic: homeLogic));
 
       // POS routes
-      case RoutePath.pos:
-        return _buildRoute(settings, const PosScreen());
+      case '/pos':
+        return _buildRoute(settings, const PosPage());
 
-      case RoutePath.onlinePos:
-        return _buildRoute(settings, const OnlinePosScreen());
+      case '/online_pos':
+        return _buildRoute(settings, const PosOnlinePage());
 
-      case RoutePath.cart:
+      case '/cart':
         return _buildRoute(settings, const Cart());
 
-      case RoutePath.checkout:
+      case '/checkout':
         return _buildRoute(settings, const CheckoutScreen());
 
       // Sales routes
-      case RoutePath.sale:
+      case '/sale':
         return _buildRoute(settings, const Sales());
 
-      case RoutePath.shipment:
+      case '/shipment':
         return _buildRoute(settings, const Shipment());
 
       // Customer routes
-      case RoutePath.customer:
+      case '/customer':
         return _buildRoute(settings, const Customer());
 
-      case RoutePath.leads:
+      case '/leads':
         return _buildRoute(settings, const Contacts());
 
-      case RoutePath.contactPayment:
+      case '/contactPayment':
         return _buildRoute(settings, const ContactPayment());
 
-      case RoutePath.followUp:
+      case '/followUp':
         return _buildRoute(settings, const FollowUp());
 
-      case RoutePath.fieldForce:
+      case '/fieldForce':
         return _buildRoute(settings, const FieldForce());
 
       // Purchase routes
-      case RoutePath.purchases:
+      case '/purchases':
         return _buildRoute(settings, const PurchasesScreen());
 
-      case RoutePath.addPurchases:
+      case '/add_purchases':
         return _buildRoute(settings, const AddPurchasesScreen());
 
-      case RoutePath.productsSelection:
+      case '/products_selection':
         return _buildRoute(settings, const ProductsSelectionScreen());
 
-      case RoutePath.purchaseCheckout:
+      case '/purchase_checkout':
         return _buildRoute(settings, const PurchaseCheckoutScreen());
 
       // Finance routes
-      case RoutePath.expense:
+      case '/expense':
         return _buildRoute(settings, const Expense());
 
       // User routes
-      case RoutePath.users:
-        final logic = args as HomeLogic? ?? HomeLogic(HomeState());
-        return _buildRoute(settings, UsersScreen(logic: logic));
+      // case '/users':
+      //   final logic = args as HomeLogic? ?? HomeLogic(HomeState());
+      //   return _buildRoute(settings, UsersScreen(logic: logic));
 
       // Notification routes
-      case RoutePath.notify:
+      case '/notify':
         return _buildRoute(settings, const NotificationScreen());
 
       // Report routes
-      case RoutePath.report:
+      case '/report':
         return _buildRoute(settings, ReportScreen());
 
-      case RoutePath.profitLossReport:
+      case '/profit_loss_report':
         return _buildRoute(settings, const ProfitLossReportScreen());
 
-      case RoutePath.productStockReport:
+      case '/product_stock_report':
         return _buildRoute(settings, const ProductStockReportScreen());
 
       default:
@@ -343,4 +377,3 @@ class AppNavigator {
     );
   }
 }
-

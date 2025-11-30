@@ -64,3 +64,6 @@ class AppThemeCubit extends Cubit<AppThemeState> {
   bool get isLight => state.themeMode == AppThemeMode.light;
 }
 
+
+
+

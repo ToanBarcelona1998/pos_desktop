@@ -13,3 +13,6 @@ abstract class BusinessRepository {
   Future<Result<BusinessEntity?>> getLocalBusinessDetails();
 }
 
+
+
+

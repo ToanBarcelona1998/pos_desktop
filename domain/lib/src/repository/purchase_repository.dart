@@ -22,3 +22,6 @@ abstract class PurchaseRepository {
   Future<Result<void>> deletePurchase(int id);
 }
 
+
+
+

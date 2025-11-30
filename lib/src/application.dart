@@ -3,17 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../helpers/app_theme.dart';
-import '../locale/my_localizations.dart';
 import 'application/application.dart';
+import 'core/localization/app_localization.dart';
 import 'core/navigation/navigation.dart';
 
 /// Main application widget with global state providers
 class Application extends StatelessWidget {
-  final Widget child;
-
   const Application({
     super.key,
-    required this.child,
   });
 
   @override
@@ -30,7 +27,7 @@ class Application extends StatelessWidget {
           create: (_) => AuthCubit()..checkAuthentication(),
         ),
       ],
-      child: child,
+      child: const ApplicationMaterialApp(),
     );
   }
 }
@@ -38,12 +35,12 @@ class Application extends StatelessWidget {
 /// Material app with theme, language, and navigation support
 /// Uses onGenerateRoute for type-safe navigation
 class ApplicationMaterialApp extends StatelessWidget {
-  final String initialRoute;
+  final String? initialRoute;
   final bool debugShowCheckedModeBanner;
 
   const ApplicationMaterialApp({
     super.key,
-    this.initialRoute = RoutePath.splash,
+    this.initialRoute,
     this.debugShowCheckedModeBanner = false,
   });
 
@@ -68,48 +65,7 @@ class ApplicationMaterialApp extends StatelessWidget {
               navigatorKey: navigatorKey,
               // Use onGenerateRoute for type-safe navigation
               onGenerateRoute: AppNavigator.onGenerateRoute,
-              initialRoute: initialRoute,
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-/// Legacy support: Material app with routes map (deprecated, use ApplicationMaterialApp instead)
-@Deprecated('Use ApplicationMaterialApp with onGenerateRoute instead')
-class ApplicationMaterialAppLegacy extends StatelessWidget {
-  final Map<String, Widget Function(BuildContext)> routes;
-  final String initialRoute;
-  final bool debugShowCheckedModeBanner;
-
-  const ApplicationMaterialAppLegacy({
-    super.key,
-    required this.routes,
-    this.initialRoute = '/splash',
-    this.debugShowCheckedModeBanner = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AppThemeCubit, AppThemeState>(
-      builder: (context, themeState) {
-        return BlocBuilder<LanguageCubit, LanguageState>(
-          builder: (context, languageState) {
-            return MaterialApp(
-              debugShowCheckedModeBanner: debugShowCheckedModeBanner,
-              theme: themeState.themeData,
-              locale: languageState.locale,
-              supportedLocales: AppLanguages.supportedLocales,
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-              ],
-              routes: routes,
-              initialRoute: initialRoute,
+              initialRoute: initialRoute ?? RoutePath.splash.path,
             );
           },
         );
@@ -152,19 +108,24 @@ extension ApplicationContext on BuildContext {
 
 /// Extension for navigation using AppNavigator
 extension NavigationContext on BuildContext {
-  /// Navigate to a named route
-  Future<T?> navigateTo<T>(String routeName, {Object? arguments}) {
+  /// Navigate to a route path
+  Future<T?> navigateTo<T>(RoutePath route, {Object? arguments}) {
+    return AppNavigator.push<T>(route, arguments: arguments);
+  }
+
+  /// Navigate to a named route string
+  Future<T?> navigateToNamed<T>(String routeName, {Object? arguments}) {
     return AppNavigator.pushNamed<T>(routeName, arguments: arguments);
   }
 
-  /// Navigate to a named route and remove all previous routes
-  Future<T?> navigateToAndRemoveAll<T>(String routeName, {Object? arguments}) {
-    return AppNavigator.pushNamedAndRemoveAll<T>(routeName, arguments: arguments);
+  /// Navigate to a route path and remove all previous routes
+  Future<T?> navigateToAndRemoveAll<T>(RoutePath route, {Object? arguments}) {
+    return AppNavigator.pushAndRemoveAll<T>(route, arguments: arguments);
   }
 
-  /// Navigate to a named route and replace the current route
-  Future<T?> navigateToReplacement<T>(String routeName, {Object? arguments}) {
-    return AppNavigator.pushReplacementNamed<T, dynamic>(routeName, arguments: arguments);
+  /// Navigate to a route path and replace the current route
+  Future<T?> navigateToReplacement<T>(RoutePath route, {Object? arguments}) {
+    return AppNavigator.pushReplacement<T, dynamic>(route, arguments: arguments);
   }
 
   /// Go back
@@ -173,7 +134,12 @@ extension NavigationContext on BuildContext {
   }
 
   /// Go back to a specific route
-  void goBackTo(String routeName) {
+  void goBackTo(RoutePath route) {
+    AppNavigator.popUntilRoute(route);
+  }
+
+  /// Go back to a specific route by name
+  void goBackToNamed(String routeName) {
     AppNavigator.popUntil(routeName);
   }
 

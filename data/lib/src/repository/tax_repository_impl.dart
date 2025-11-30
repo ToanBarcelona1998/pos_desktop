@@ -9,6 +9,7 @@ import '../data_source/remote/tax_remote_data_source.dart';
 import '../model/tax_model.dart';
 
 /// Implementation of [TaxRepository]
+/// Prioritizes local data for offline-first approach
 class TaxRepositoryImpl implements TaxRepository {
   final TaxRemoteDataSource _remoteDataSource;
   final SystemLocalDataSource _localDataSource;
@@ -24,17 +25,57 @@ class TaxRepositoryImpl implements TaxRepository {
 
   @override
   Future<Result<List<TaxEntity>>> getTaxes() async {
-    if (!await _networkInfo.isConnected) {
-      return getLocalTaxes();
-    }
-
-    try {
-      final taxes = await _remoteDataSource.getTaxes();
-      final entities = taxes.map(_mapToEntity).toList();
-      return Success(entities);
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
-    }
+    // Always try local first (offline-first)
+    final localResult = await getLocalTaxes();
+    
+    return localResult.fold(
+      onSuccess: (localTaxes) async {
+        // If we have local data, return it immediately
+        if (localTaxes.isNotEmpty) {
+          // If online, sync in background for next time
+          if (await _networkInfo.isConnected) {
+            _syncTaxesInBackground();
+          }
+          return Success(localTaxes);
+        }
+        
+        // No local data - try remote if online
+        if (await _networkInfo.isConnected) {
+          try {
+            final taxes = await _remoteDataSource.getTaxes();
+            final entities = taxes.map(_mapToEntity).toList();
+            
+            // Save to local
+            await syncTaxes();
+            
+            return Success(entities);
+          } catch (e) {
+            return Error(ExceptionHandler.handleException(e));
+          }
+        }
+        
+        // Offline and no local data
+        return const Success([]);
+      },
+      onError: (failure) async {
+        // Local fetch failed - try remote if online
+        if (await _networkInfo.isConnected) {
+          try {
+            final taxes = await _remoteDataSource.getTaxes();
+            final entities = taxes.map(_mapToEntity).toList();
+            
+            // Save to local
+            await syncTaxes();
+            
+            return Success(entities);
+          } catch (e) {
+            return Error(ExceptionHandler.handleException(e));
+          }
+        }
+        
+        return Error(failure);
+      },
+    );
   }
 
   @override
@@ -50,6 +91,13 @@ class TaxRepositoryImpl implements TaxRepository {
       },
       onError: (failure) => Error(failure),
     );
+  }
+
+  /// Sync taxes in background without blocking
+  void _syncTaxesInBackground() {
+    syncTaxes().catchError((e) {
+      print('Background tax sync error: $e');
+    });
   }
 
   @override
@@ -101,4 +149,3 @@ class TaxRepositoryImpl implements TaxRepository {
     );
   }
 }
-

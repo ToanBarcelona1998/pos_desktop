@@ -5,20 +5,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Application localization class
-class AppLocalization {
+class AppLocalizations {
   final Locale locale;
   Map<String, String>? _localizedStrings;
 
-  AppLocalization({required this.locale});
+  AppLocalizations({required this.locale});
 
-  /// Gets the localization from context
-  static AppLocalization of(BuildContext context) {
-    return Localizations.of<AppLocalization>(context, AppLocalization)!;
+  /// Gets the localization from context (nullable)
+  static AppLocalizations? of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
   /// Localization delegate
-  static const LocalizationsDelegate<AppLocalization> delegate =
+  static const LocalizationsDelegate<AppLocalizations> delegate =
       _AppLocalizationDelegate();
+
+  /// Supported locales
+  static const List<Locale> supportedLocales = [
+    Locale('en'),
+    Locale('vi'),
+  ];
 
   /// Loads the localization strings from JSON
   Future<bool> load() async {
@@ -57,7 +63,7 @@ class AppLocalization {
   String tr(String key) => translate(key);
 }
 
-class _AppLocalizationDelegate extends LocalizationsDelegate<AppLocalization> {
+class _AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationDelegate();
 
   static const List<String> _supportedLanguages = ['en', 'vi'];
@@ -68,8 +74,8 @@ class _AppLocalizationDelegate extends LocalizationsDelegate<AppLocalization> {
   }
 
   @override
-  Future<AppLocalization> load(Locale locale) async {
-    final localization = AppLocalization(locale: locale);
+  Future<AppLocalizations> load(Locale locale) async {
+    final localization = AppLocalizations(locale: locale);
     await localization.load();
     return localization;
   }
@@ -80,11 +86,10 @@ class _AppLocalizationDelegate extends LocalizationsDelegate<AppLocalization> {
 
 /// Extension for easy translation access
 extension LocalizationExtension on BuildContext {
-  /// Translates a key
-  String tr(String key) => AppLocalization.of(this).translate(key);
+  /// Translates a key (returns key if localization not available)
+  String tr(String key) => AppLocalizations.of(this)?.translate(key) ?? key;
 
   /// Translates a key with arguments
   String trArgs(String key, Map<String, dynamic> args) =>
-      AppLocalization.of(this).translateWithArgs(key, args);
+      AppLocalizations.of(this)?.translateWithArgs(key, args) ?? key;
 }
-

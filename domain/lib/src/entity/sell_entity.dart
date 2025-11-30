@@ -161,3 +161,6 @@ final class SellPaymentEntity extends Entity {
   List<Object?> get props => [id, sellId, method, amount];
 }
 
+
+
+

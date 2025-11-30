@@ -42,3 +42,6 @@ class AuthError extends AuthState {
   String get message => failure.message;
 }
 
+
+
+

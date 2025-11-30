@@ -110,3 +110,6 @@ extension ResultExtension<T> on T? {
       : Error(failure ?? const UnknownFailure());
 }
 
+
+
+

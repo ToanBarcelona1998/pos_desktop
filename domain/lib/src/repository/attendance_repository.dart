@@ -28,3 +28,6 @@ abstract class AttendanceRepository {
   Future<Result<AttendanceEntity?>> getTodayAttendance(int userId);
 }
 
+
+
+

@@ -9,6 +9,7 @@ import '../data_source/remote/location_remote_data_source.dart';
 import '../model/location_model.dart';
 
 /// Implementation of [LocationRepository]
+/// Prioritizes local data for offline-first approach
 class LocationRepositoryImpl implements LocationRepository {
   final LocationRemoteDataSource _remoteDataSource;
   final SystemLocalDataSource _localDataSource;
@@ -24,17 +25,57 @@ class LocationRepositoryImpl implements LocationRepository {
 
   @override
   Future<Result<List<LocationEntity>>> getLocations() async {
-    if (!await _networkInfo.isConnected) {
-      return getLocalLocations();
-    }
-
-    try {
-      final locations = await _remoteDataSource.getLocations();
-      final entities = locations.map(_mapToEntity).toList();
-      return Success(entities);
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
-    }
+    // Always try local first (offline-first)
+    final localResult = await getLocalLocations();
+    
+    return localResult.fold(
+      onSuccess: (localLocations) async {
+        // If we have local data, return it immediately
+        if (localLocations.isNotEmpty) {
+          // If online, sync in background for next time
+          if (await _networkInfo.isConnected) {
+            _syncLocationsInBackground();
+          }
+          return Success(localLocations);
+        }
+        
+        // No local data - try remote if online
+        if (await _networkInfo.isConnected) {
+          try {
+            final locations = await _remoteDataSource.getLocations();
+            final entities = locations.map(_mapToEntity).toList();
+            
+            // Save to local
+            await syncLocations();
+            
+            return Success(entities);
+          } catch (e) {
+            return Error(ExceptionHandler.handleException(e));
+          }
+        }
+        
+        // Offline and no local data
+        return const Success([]);
+      },
+      onError: (failure) async {
+        // Local fetch failed - try remote if online
+        if (await _networkInfo.isConnected) {
+          try {
+            final locations = await _remoteDataSource.getLocations();
+            final entities = locations.map(_mapToEntity).toList();
+            
+            // Save to local
+            await syncLocations();
+            
+            return Success(entities);
+          } catch (e) {
+            return Error(ExceptionHandler.handleException(e));
+          }
+        }
+        
+        return Error(failure);
+      },
+    );
   }
 
   @override
@@ -52,6 +93,13 @@ class LocationRepositoryImpl implements LocationRepository {
     );
   }
 
+  /// Sync locations in background without blocking
+  void _syncLocationsInBackground() {
+    syncLocations().catchError((e) {
+      print('Background location sync error: $e');
+    });
+  }
+
   @override
   Future<Result<void>> syncLocations() async {
     if (!await _networkInfo.isConnected) {
@@ -65,7 +113,7 @@ class LocationRepositoryImpl implements LocationRepository {
 
       // Store payment methods per location
       for (final location in locations) {
-        if (location.paymentMethods != null) {
+        if (location.paymentMethods != null && location.paymentMethods!.isNotEmpty) {
           await _localDataSource.insert(
             'payment_method',
             jsonEncode(location.paymentMethods),
@@ -120,4 +168,3 @@ class LocationRepositoryImpl implements LocationRepository {
     );
   }
 }
-

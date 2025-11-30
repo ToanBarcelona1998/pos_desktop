@@ -74,3 +74,6 @@ class LanguageCubit extends Cubit<LanguageState> {
       AppLanguages.supportedLanguages.any((l) => l.code == languageCode);
 }
 
+
+
+

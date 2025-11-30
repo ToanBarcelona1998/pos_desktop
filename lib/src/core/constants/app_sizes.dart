@@ -19,12 +19,14 @@ abstract final class AppSizes {
   static const double avatarXxl = 96.0;
 
   // Button heights
+  static const double buttonHeight = 48.0;
   static const double buttonHeightSm = 32.0;
   static const double buttonHeightMd = 40.0;
   static const double buttonHeightLg = 48.0;
   static const double buttonHeightXl = 56.0;
 
   // Input heights
+  static const double inputHeight = 48.0;
   static const double inputHeightSm = 36.0;
   static const double inputHeightMd = 44.0;
   static const double inputHeightLg = 52.0;
@@ -56,6 +58,27 @@ abstract final class AppSizes {
 
   // Touch target minimum
   static const double minTouchTarget = 48.0;
+
+  // Illustration sizes
+  static const double illustrationXs = 80.0;
+  static const double illustrationSm = 120.0;
+  static const double illustrationMd = 160.0;
+  static const double illustrationLg = 200.0;
+  static const double illustrationXl = 280.0;
+
+  // Logo sizes
+  static const double logoSm = 48.0;
+  static const double logoMd = 80.0;
+  static const double logoLg = 120.0;
+
+  // Product grid
+  static const double productGridItemWidth = 150.0;
+  static const double productGridItemHeight = 180.0;
+
+  // List item
+  static const double listItemHeight = 72.0;
+  static const double listItemHeightSm = 56.0;
+  static const double listItemHeightLg = 88.0;
 }
 
 /// Responsive breakpoints
@@ -79,4 +102,3 @@ abstract final class AppBreakpoints {
   static bool isDesktopLarge(BuildContext context) =>
       MediaQuery.of(context).size.width >= desktopLarge;
 }
-

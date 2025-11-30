@@ -29,3 +29,6 @@ class VariationListResult {
   bool get hasMore => nextLink != null && nextLink!.isNotEmpty;
 }
 
+
+
+

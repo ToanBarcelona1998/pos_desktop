@@ -49,14 +49,29 @@ class ProductModel extends BaseModel {
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
+    // Construct display_name if not present (like old code)
+    String? displayName = json['display_name'] as String?;
+    if (displayName == null || displayName.isEmpty) {
+      final productName = json['product_name']?.toString() ?? '';
+      final productVariationName = json['product_variation_name']?.toString() ?? '';
+      final variationName = json['variation_name']?.toString() ?? '';
+      displayName = '$productName $productVariationName $variationName'.trim();
+    }
+
+    // Use variation_id as id if id is not present (database uses variation_id as primary key)
+    int? id = json['id'] as int?;
+    if (id == null) {
+      id = json['variation_id'] as int?;
+    }
+
     return ProductModel(
-      id: json['id'] as int?,
+      id: id,
       productId: json['product_id'] as int?,
       variationId: json['variation_id'] as int?,
       productName: json['product_name'] as String?,
       productVariationName: json['product_variation_name'] as String?,
       variationName: json['variation_name'] as String?,
-      displayName: json['display_name'] as String?,
+      displayName: displayName,
       sku: json['sku'] as String?,
       subSku: json['sub_sku'] as String?,
       type: json['type'] as String?,
@@ -110,4 +125,3 @@ class ProductModel extends BaseModel {
     };
   }
 }
-

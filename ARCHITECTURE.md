@@ -290,3 +290,6 @@ class BrandListCubit {
 4. **Reusability** - Domain logic is framework-independent
 5. **Flexibility** - Easy to swap implementations
 
+
+
+

@@ -9,6 +9,7 @@ import '../data_source/remote/category_remote_data_source.dart';
 import '../model/category_model.dart';
 
 /// Implementation of [CategoryRepository]
+/// Prioritizes local data for offline-first approach
 class CategoryRepositoryImpl implements CategoryRepository {
   final CategoryRemoteDataSource _remoteDataSource;
   final SystemLocalDataSource _localDataSource;
@@ -24,17 +25,57 @@ class CategoryRepositoryImpl implements CategoryRepository {
 
   @override
   Future<Result<List<CategoryEntity>>> getCategories() async {
-    if (!await _networkInfo.isConnected) {
-      return getLocalCategories();
-    }
-
-    try {
-      final categories = await _remoteDataSource.getCategories();
-      final entities = categories.map(_mapToEntity).toList();
-      return Success(entities);
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
-    }
+    // Always try local first (offline-first)
+    final localResult = await getLocalCategories();
+    
+    return localResult.fold(
+      onSuccess: (localCategories) async {
+        // If we have local data, return it immediately
+        if (localCategories.isNotEmpty) {
+          // If online, sync in background for next time
+          if (await _networkInfo.isConnected) {
+            _syncCategoriesInBackground();
+          }
+          return Success(localCategories);
+        }
+        
+        // No local data - try remote if online
+        if (await _networkInfo.isConnected) {
+          try {
+            final categories = await _remoteDataSource.getCategories();
+            final entities = categories.map(_mapToEntity).toList();
+            
+            // Save to local
+            await syncCategories();
+            
+            return Success(entities);
+          } catch (e) {
+            return Error(ExceptionHandler.handleException(e));
+          }
+        }
+        
+        // Offline and no local data
+        return const Success([]);
+      },
+      onError: (failure) async {
+        // Local fetch failed - try remote if online
+        if (await _networkInfo.isConnected) {
+          try {
+            final categories = await _remoteDataSource.getCategories();
+            final entities = categories.map(_mapToEntity).toList();
+            
+            // Save to local
+            await syncCategories();
+            
+            return Success(entities);
+          } catch (e) {
+            return Error(ExceptionHandler.handleException(e));
+          }
+        }
+        
+        return Error(failure);
+      },
+    );
   }
 
   @override
@@ -50,6 +91,13 @@ class CategoryRepositoryImpl implements CategoryRepository {
       },
       onError: (failure) => Error(failure),
     );
+  }
+
+  /// Sync categories in background without blocking
+  void _syncCategoriesInBackground() {
+    syncCategories().catchError((e) {
+      print('Background category sync error: $e');
+    });
   }
 
   @override
@@ -140,4 +188,3 @@ class CategoryRepositoryImpl implements CategoryRepository {
     );
   }
 }
-

@@ -7,6 +7,7 @@ import '../data_source/remote/product_remote_data_source.dart';
 import '../model/product_model.dart';
 
 /// Implementation of [ProductRepository]
+/// Prioritizes local data for offline-first approach
 class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDataSource _remoteDataSource;
   final ProductLocalDataSource _localDataSource;
@@ -27,34 +28,77 @@ class ProductRepositoryImpl implements ProductRepository {
     int perPage = 10,
     String? searchQuery,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return getCachedProducts(locationId: locationId);
+    // Always try local first (offline-first)
+    try {
+      final cachedProducts = await _localDataSource.getProducts(
+        locationId: locationId,
+        offset: (page - 1) * perPage,
+        limit: perPage,
+        searchTerm: searchQuery,
+      );
+
+      if (cachedProducts.isNotEmpty) {
+        // Return local data immediately
+        final entities = cachedProducts.map(_mapToEntity).toList();
+        
+        // If online, sync in background for next time
+        if (await _networkInfo.isConnected) {
+          _syncProductsInBackground(locationId);
+        }
+        
+        return Success(entities);
+      }
+    } catch (e) {
+      print('Error getting cached products: $e');
     }
 
-    try {
-      final response = await _remoteDataSource.getProducts(
-        locationId: locationId,
-        page: page,
-        perPage: perPage,
-      );
-      final entities = response.products.map(_mapToEntity).toList();
-      return Success(entities);
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
+    // If no local data and online, fetch from remote
+    if (await _networkInfo.isConnected) {
+      try {
+        final response = await _remoteDataSource.getProducts(
+          locationId: locationId,
+          page: page,
+          perPage: perPage,
+        );
+        final entities = response.products.map(_mapToEntity).toList();
+        
+        // Save to local for offline use
+        await _localDataSource.saveProducts(response.products, locationId);
+        
+        return Success(entities);
+      } catch (e) {
+        return Error(ExceptionHandler.handleException(e));
+      }
     }
+
+    // Offline and no local data
+    return const Success([]);
   }
 
   @override
   Future<Result<ProductEntity>> getProductById(int id) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
+    // Try local first
     try {
-      final product = await _remoteDataSource.getProductById(id);
+      final products = await _localDataSource.getProducts(
+        locationId: 0, // Get all
+        limit: 1000,
+      );
+      final product = products.firstWhere(
+        (p) => p.id == id || p.variationId == id,
+        orElse: () => throw Exception('Not found'),
+      );
       return Success(_mapToEntity(product));
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
+    } catch (_) {
+      // If online, try remote
+      if (await _networkInfo.isConnected) {
+        try {
+          final product = await _remoteDataSource.getProductById(id);
+          return Success(_mapToEntity(product));
+        } catch (e) {
+          return Error(ExceptionHandler.handleException(e));
+        }
+      }
+      return const Error(NotFoundFailure(message: 'Product not found'));
     }
   }
 
@@ -65,7 +109,7 @@ class ProductRepositoryImpl implements ProductRepository {
     int? categoryId,
     int? brandId,
   }) async {
-    // Try cached products first with search term
+    // Always try local first
     try {
       final products = await _localDataSource.getProducts(
         locationId: locationId,
@@ -82,14 +126,27 @@ class ProductRepositoryImpl implements ProductRepository {
         filtered = filtered.where((p) => p.brandId == brandId);
       }
 
-      return Success(filtered.toList());
-    } catch (e) {
-      // Fallback to remote search
-      if (await _networkInfo.isConnected) {
-        return getProducts(locationId: locationId, perPage: 100, searchQuery: query);
+      final result = filtered.toList();
+      if (result.isNotEmpty) {
+        return Success(result);
       }
-      return Error(ExceptionHandler.handleException(e));
+    } catch (e) {
+      print('Error searching local products: $e');
     }
+
+    // If online and no local results, try remote
+    if (await _networkInfo.isConnected) {
+      return getProducts(locationId: locationId, perPage: 100, searchQuery: query);
+    }
+
+    return const Success([]);
+  }
+
+  /// Sync products in background without blocking
+  void _syncProductsInBackground(int locationId) {
+    syncProducts(locationId).catchError((e) {
+      print('Background product sync error: $e');
+    });
   }
 
   @override
@@ -166,14 +223,17 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   ProductEntity _mapToEntity(ProductModel model) {
+    // Use variation_id as id if id is null (like old code)
+    final id = model.id ?? model.variationId ?? 0;
+    
     return ProductEntity(
-      id: model.id ?? 0,
+      id: id,
       productId: model.productId,
       variationId: model.variationId,
       productName: model.productName,
       productVariationName: model.productVariationName,
       variationName: model.variationName,
-      displayName: model.displayName,
+      displayName: model.displayName ?? '', // Ensure displayName is never null
       sku: model.sku,
       subSku: model.subSku,
       type: model.type,

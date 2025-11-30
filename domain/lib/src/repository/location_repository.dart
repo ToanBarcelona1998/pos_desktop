@@ -16,3 +16,6 @@ abstract class LocationRepository {
   Future<Result<List<LocationEntity>>> getLocalLocations();
 }
 
+
+
+

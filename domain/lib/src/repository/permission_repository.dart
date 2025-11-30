@@ -16,3 +16,6 @@ abstract class PermissionRepository {
   Future<Result<bool>> hasPermission(String permission);
 }
 
+
+
+

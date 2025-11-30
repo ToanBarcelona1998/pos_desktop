@@ -1,70 +1,41 @@
 import 'package:domain/domain.dart';
 
-/// Base state class for all presentation states
+/// Base state for all Blocs
 abstract class BaseState {
   const BaseState();
 }
 
-/// Initial state - when the screen is first loaded
-abstract class InitialState extends BaseState {
+/// Initial state
+class InitialState extends BaseState {
   const InitialState();
 }
 
-/// Loading state - when data is being fetched
-abstract class LoadingState extends BaseState {
-  const LoadingState();
+/// Loading state
+class LoadingState extends BaseState {
+  final String? message;
+  const LoadingState({this.message});
 }
 
 /// Success state with data
-abstract class SuccessState<T> extends BaseState {
+class SuccessState<T> extends BaseState {
   final T data;
-  const SuccessState(this.data);
+  final String? message;
+  
+  const SuccessState({required this.data, this.message});
 }
 
-/// Error state with failure
-abstract class ErrorState extends BaseState {
+/// Error state
+class ErrorState extends BaseState {
   final Failure failure;
-  const ErrorState(this.failure);
-
-  String get errorMessage => failure.message;
+  final String? message;
+  
+  const ErrorState({required this.failure, this.message});
+  
+  String get errorMessage => message ?? failure.message;
 }
 
-/// Empty state - when there's no data
-abstract class EmptyState extends BaseState {
-  const EmptyState();
+/// Empty state
+class EmptyState extends BaseState {
+  final String? message;
+  const EmptyState({this.message});
 }
-
-/// Generic data state for simple CRUD operations
-sealed class DataState<T> extends BaseState {
-  const DataState();
-}
-
-/// Initial data state
-class DataInitial<T> extends DataState<T> {
-  const DataInitial();
-}
-
-/// Loading data state
-class DataLoading<T> extends DataState<T> {
-  const DataLoading();
-}
-
-/// Success data state
-class DataSuccess<T> extends DataState<T> {
-  final T data;
-  const DataSuccess(this.data);
-}
-
-/// Error data state
-class DataError<T> extends DataState<T> {
-  final Failure failure;
-  const DataError(this.failure);
-
-  String get errorMessage => failure.message;
-}
-
-/// Empty data state
-class DataEmpty<T> extends DataState<T> {
-  const DataEmpty();
-}
-

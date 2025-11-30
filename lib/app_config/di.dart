@@ -63,6 +63,7 @@ Future<void> initDependencies({Environment env = Environment.development}) async
   // ============== Local Data Sources ==============
   sl.registerLazy<AuthLocalDataSource>(() => AuthLocalDataSourceImpl());
   sl.registerLazy<ProductLocalDataSource>(() => ProductLocalDataSourceImpl());
+  sl.registerLazy<ContactLocalDataSource>(() => ContactLocalDataSourceImpl());
   sl.registerLazy<SystemLocalDataSource>(() => SystemLocalDataSourceImpl(
         databaseHelper: sl.get<DatabaseHelper>(),
       ));
@@ -186,7 +187,7 @@ void _registerRemoteDataSources(AppConfig config) {
 
   sl.registerLazy<ProductRemoteDataSource>(() => ProductRemoteDataSourceImpl(
         apiClient: sl.get<ApiClient>(),
-        endpoint: '${config.apiUrl}/product',
+        endpoint: '${config.apiUrl}/variation', // Use variation endpoint like old code
       ));
 
   sl.registerLazy<PurchaseRemoteDataSource>(() => PurchaseRemoteDataSourceImpl(
@@ -214,11 +215,13 @@ void _registerRepositories() {
 
   sl.registerLazy<BrandRepository>(() => BrandRepositoryImpl(
         remoteDataSource: sl.get<BrandRemoteDataSource>(),
+        localDataSource: sl.get<SystemLocalDataSource>(),
         networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<ContactRepository>(() => ContactRepositoryImpl(
         remoteDataSource: sl.get<ContactRemoteDataSource>(),
+        localDataSource: sl.get<ContactLocalDataSource>(),
         networkInfo: sl.get<NetworkInfo>(),
       ));
 
@@ -339,6 +342,9 @@ void _registerServices() {
         paymentDataSource: sl.get<PaymentRemoteDataSource>(),
         taxDataSource: sl.get<TaxRemoteDataSource>(),
         contactDataSource: sl.get<ContactRemoteDataSource>(),
+        productDataSource: sl.get<ProductRemoteDataSource>(),
+        productLocalDataSource: sl.get<ProductLocalDataSource>(),
+        contactLocalDataSource: sl.get<ContactLocalDataSource>(),
       ));
 }
 

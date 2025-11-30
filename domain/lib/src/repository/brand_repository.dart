@@ -32,3 +32,6 @@ abstract class BrandRepository {
   Future<Result<List<BrandEntity>>> searchBrands(String query);
 }
 
+
+
+
