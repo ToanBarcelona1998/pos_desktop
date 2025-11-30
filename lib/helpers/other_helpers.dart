@@ -47,7 +47,7 @@ class Helper {
   String formatCurrency(amount) {
     double convertAmount = double.tryParse(amount.toString()) ?? 0.0;
     var amt = NumberFormat.currency(
-        symbol: '', decimalDigits: Config.currencyPrecision)
+        symbol: '', decimalDigits: 0)
         .format(convertAmount);
     return amt;
   }

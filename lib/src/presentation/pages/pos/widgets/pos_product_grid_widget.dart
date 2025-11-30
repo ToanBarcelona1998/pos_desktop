@@ -1,5 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
+import 'package:pos_final/helpers/other_helpers.dart';
+import 'package:pos_final/src/core/constants/app_sizes.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -111,15 +114,15 @@ class _PosProductGridWidgetState extends State<PosProductGridWidget>
               onFilterTap: _toggleFilterDrawer,
               l10n: l10n,
             ),
-            SizedBox(height: AppSpacing.sm),
-            // Search
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: AppSearchField(
-                hintText: l10n?.translate(LocaleKeys.searchProducts) ?? 'Search products...',
-                onChanged: widget.onSearch,
-              ),
-            ),
+            // SizedBox(height: AppSpacing.sm),
+            // // Search
+            // Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            //   child: AppSearchField(
+            //     hintText: l10n?.translate(LocaleKeys.searchProducts) ?? 'Search products...',
+            //     onChanged: widget.onSearch,
+            //   ),
+            // ),
             SizedBox(height: AppSpacing.sm),
             // Product grid
             Expanded(
@@ -327,10 +330,10 @@ class _ProductGrid extends StatelessWidget {
     return GridView.builder(
       padding: AppSpacing.paddingSm,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+        crossAxisCount: 4,
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
-        childAspectRatio: 0.85,
+        childAspectRatio: 1,
       ),
       itemCount: products.length,
       itemBuilder: (context, index) {
@@ -393,51 +396,62 @@ class _ProductItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Product image
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(4),
-                      ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(4),
                     ),
-                    child: product.productImageUrl != null &&
-                            product.productImageUrl!.isNotEmpty
-                        ? ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(4),
-                            ),
-                            child: Image.network(
-                              product.productImageUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _buildPlaceholder(theme),
-                            ),
-                          )
-                        : _buildPlaceholder(theme),
                   ),
+                  child: product.productImageUrl != null &&
+                          product.productImageUrl!.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(4),
+                          ),
+                          child: CachedNetworkImage(
+                            imageUrl: product.productImageUrl ?? '',
+                            height: AppSizes.avatarLg,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => _buildPlaceholder(theme),
+                            errorWidget: (context, url, error) => Image.asset(
+                              'assets/images/default_product.png',
+                              height: AppSizes.avatarLg,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        )
+                      : _buildPlaceholder(theme),
                 ),
                 // Product info
-                Padding(
-                  padding: EdgeInsets.all(AppSpacing.xs),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: AppTypography.labelSmall,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        '\$${price.toStringAsFixed(2)}',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.xs),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          name,
+                          style: AppTypography.labelSmall,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                        SizedBox(height: AppSpacing.xxs),
+                        Expanded(
+                          child: Align(
+                            alignment: AlignmentGeometry.bottomCenter,
+                            child: Text(
+                              '${Helper().formatCurrency(price)}đ',
+                              style: AppTypography.labelLarge.copyWith(
+                                color: Color(0xff244ca3),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

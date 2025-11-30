@@ -44,3 +44,4 @@ class BrandsDelete extends BrandsEvent {
 
 
 
+

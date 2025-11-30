@@ -136,8 +136,19 @@ class PosState {
   /// Calculate tax amount
   double get taxAmount => (subtotal - invoiceDiscount) * taxRate / 100;
 
-  /// Calculate total
+  /// Calculate total (includes tax)
   double get total => subtotal - invoiceDiscount + taxAmount;
+
+  /// Calculate adjusted invoice amount
+  /// Old POS logic: adjustedInvoiceAmount = invoiceAmount - discount
+  /// Where invoiceAmount is the total (subtotal + tax)
+  /// So: adjustedInvoiceAmount = total - discount
+  double get adjustedInvoiceAmount {
+    if (discountType == 'percentage') {
+      return total - (total * discountAmount / 100);
+    }
+    return total - discountAmount;
+  }
 
   /// Get cart item count
   int get itemCount => cartItems.fold(0, (sum, item) => sum + item.quantity);

@@ -8,6 +8,7 @@ export 'local/database/database_helper.dart';
 export 'local/auth_local_data_source.dart';
 export 'local/contact_local_data_source.dart';
 export 'local/product_local_data_source.dart';
+export 'local/sell_local_data_source.dart';
 export 'local/system_local_data_source.dart';
 
 // Remote

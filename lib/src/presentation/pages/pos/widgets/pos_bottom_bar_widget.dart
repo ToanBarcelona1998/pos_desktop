@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos_final/src/presentation/widgets/button.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -131,13 +132,19 @@ class PosBottomBarWidget extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  _ActionButton(
-                    icon: Icons.history,
-                    label: l10n?.translate('History') ?? 'History',
-                    color: theme.colorScheme.primary,
-                    onTap: () {
-                      // Show history
-                    },
+                  IntrinsicHeight(
+                    child: GradientAppButton(
+                      leading: Icon(Icons.history),
+                      text: l10n?.translate('Lịch sử giao dịch') ?? 'History',
+                      // color: theme.colorScheme.primary,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: AppSpacing.xs,
+                      ),
+                      onPress: () {
+                        // Show history
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -235,5 +242,6 @@ class _MainActionButton extends StatelessWidget {
     );
   }
 }
+
 
 

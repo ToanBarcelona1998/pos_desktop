@@ -1,8 +1,5 @@
 import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-
-import '../../../../app_config/di.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
 
@@ -294,7 +291,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     emit(state.copyWith(isSubmitting: true, clearMessages: true));
 
     try {
-      // Create sell lines from cart items
+      // Create sell lines from cart items (like old code)
       final sellLines = state.cartItems.map((item) {
         return SellLineEntity(
           id: 0,
@@ -308,7 +305,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         );
       }).toList();
 
-      // Create sell entity
+      // Calculate adjusted invoice amount (like old code: invoiceAmount - discount)
+      // Note: old code uses invoiceAmount (subtotal) before tax, then subtracts discount
+      final adjustedInvoiceAmount = state.adjustedInvoiceAmount;
+
+      // Determine status (like old code: isCredit ? 'pending' : invoiceType)
+      final saleStatus = event.isCredit ? 'pending' : state.invoiceType;
+
+      // Create sell entity - use state values, no hardcoded values
       final invoiceNo = _generateInvoiceNo();
       final sell = SellEntity(
         id: 0,
@@ -316,26 +320,37 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer!.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: 'final',
+        status: saleStatus, // Dynamic: isCredit ? 'pending' : invoiceType
         taxRateId: state.taxId,
-        discountAmount: state.invoiceDiscount,
+        discountAmount: state.discountAmount, // Use raw discount amount
         discountType: state.discountType,
-        invoiceAmount: state.total,
-        isQuotation: false,
-        isSuspend: false,
+        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (after discount, before tax)
+        pendingAmount: event.isCredit ? adjustedInvoiceAmount : 0.0, // Like old code
+        isQuotation: state.isQuotation, // Use state value
+        isSuspend: state.isSuspended, // Use state value
         sellLines: sellLines,
       );
 
-      // Create payment for cash sale
-      final payment = SellPaymentEntity(
-        id: 0,
-        sellId: null,
-        method: 'cash',
-        amount: state.total,
-        transactionDate: DateTime.now().toIso8601String(),
-      );
+      // Create payment only if not quotation and not suspended (like old code)
+      final List<SellPaymentEntity> payments = [];
+      if (!state.isQuotation && !state.isSuspended) {
+        // Determine payment method (like old code: isCredit ? 'card' : 'cash')
+        final paymentMethod = event.paymentMethod ??
+            (event.isCredit ? 'card' : 'cash');
+        
+        // Payment amount (like old code: isCredit ? 0 : adjustedInvoiceAmount)
+        final paymentAmount = event.isCredit ? 0.0 : adjustedInvoiceAmount;
 
-      final sellWithPayment = sell.copyWith(payments: [payment]);
+        payments.add(SellPaymentEntity(
+          id: 0,
+          sellId: null,
+          method: paymentMethod, // Dynamic: based on isCredit or provided
+          amount: paymentAmount, // Dynamic: isCredit ? 0 : adjustedInvoiceAmount
+          transactionDate: DateTime.now().toIso8601String(),
+        ));
+      }
+
+      final sellWithPayment = sell.copyWith(payments: payments);
 
       final result = await _createSellUseCase.call(sellWithPayment);
 
@@ -343,7 +358,13 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         onSuccess: (createdSell) {
           emit(state.copyWith(
             isSubmitting: false,
-            successMessage: 'Sale completed successfully',
+            successMessage: event.isCredit
+                ? 'Credit sale created successfully'
+                : (state.isQuotation
+                    ? 'Quotation created successfully'
+                    : (state.isSuspended
+                        ? 'Sale suspended successfully'
+                        : 'Sale completed successfully')),
             cartItems: [],
             discountAmount: 0,
             discountType: 'fixed',
@@ -374,76 +395,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosSubmitCreditSale event,
     Emitter<PosState> emit,
   ) async {
-    if (!state.canSubmit) {
-      emit(state.copyWith(
-        failure: ValidationFailure(
-            message: 'Please select customer and add items'),
-      ));
-      return;
-    }
-
-    emit(state.copyWith(isSubmitting: true, clearMessages: true));
-
-    try {
-      final sellLines = state.cartItems.map((item) {
-        return SellLineEntity(
-          id: 0,
-          productId: item.productId,
-          variationId: item.variationId,
-          quantity: item.quantity.toDouble(),
-          unitPrice: item.unitPrice,
-          taxRateId: item.taxId ?? state.taxId,
-          discountAmount: item.discountAmount,
-          discountType: item.discountType,
-        );
-      }).toList();
-
-      final invoiceNo = _generateInvoiceNo();
-      final sell = SellEntity(
-        id: 0,
-        locationId: state.selectedLocationId,
-        contactId: state.selectedCustomer!.id,
-        transactionDate: DateTime.now().toIso8601String(),
-        invoiceNo: invoiceNo,
-        status: 'pending',
-        taxRateId: state.taxId,
-        discountAmount: state.invoiceDiscount,
-        discountType: state.discountType,
-        invoiceAmount: state.total,
-        pendingAmount: state.total,
-        isQuotation: false,
-        isSuspend: false,
-        sellLines: sellLines,
-      );
-
-      final result = await _createSellUseCase.call(sell);
-
-      result.fold(
-        onSuccess: (_) {
-          emit(state.copyWith(
-            isSubmitting: false,
-            successMessage: 'Credit sale created successfully',
-            cartItems: [],
-            discountAmount: 0,
-            discountType: 'fixed',
-            taxId: null,
-            taxRate: 0,
-            clearCustomer: true,
-          ));
-        },
-        onError: (failure) {
-          emit(state.copyWith(
-            isSubmitting: false,
-            failure: failure,
-          ));
-        },
-      );
-    } catch (e) {
-      emit(state.copyWith(
-        isSubmitting: false,
-        failure: UnknownFailure(message: e.toString()),
-      ));
-    }
+    // Credit sale is now handled by PosSubmitSale with isCredit=true
+    // This method redirects to the unified submit method
+    add(PosSubmitSale(isCredit: true));
   }
 
   Future<void> _onCreateQuotation(
@@ -461,7 +415,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     emit(state.copyWith(isSubmitting: true, clearMessages: true));
 
     try {
-      // Save quotation locally
+      // Create sell lines from cart items (like old code)
       final sellLines = state.cartItems.map((item) {
         return SellLineEntity(
           id: 0,
@@ -475,6 +429,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         );
       }).toList();
 
+      // Calculate adjusted invoice amount (like old code)
+      final adjustedInvoiceAmount = state.adjustedInvoiceAmount;
+
+      // Create sell entity - quotation uses 'quotation' status
       final invoiceNo = _generateInvoiceNo();
       final sell = SellEntity(
         id: 0,
@@ -482,15 +440,17 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer!.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: 'quotation',
+        status: 'quotation', // Quotation always uses 'quotation' status
         taxRateId: state.taxId,
-        discountAmount: state.invoiceDiscount,
+        discountAmount: state.discountAmount, // Use raw discount amount
         discountType: state.discountType,
-        invoiceAmount: state.total,
-        isQuotation: true,
-        isSuspend: false,
+        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (like old code)
+        isQuotation: true, // Quotation always has isQuotation = true
+        isSuspend: state.isSuspended, // Use state value
         sellLines: sellLines,
       );
+
+      // No payment for quotations (like old code: !isQuotation && !isSuspend)
 
       // Save locally first
       final localResult = await _sellRepository.saveSellLocally(sell);
@@ -533,6 +493,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     emit(state.copyWith(isSubmitting: true, clearMessages: true));
 
     try {
+      // Create sell lines from cart items (like old code)
       final sellLines = state.cartItems.map((item) {
         return SellLineEntity(
           id: 0,
@@ -546,6 +507,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         );
       }).toList();
 
+      // Calculate adjusted invoice amount (like old code)
+      final adjustedInvoiceAmount = state.adjustedInvoiceAmount;
+
+      // Create sell entity - suspended uses 'suspended' status
       final invoiceNo = _generateInvoiceNo();
       final sell = SellEntity(
         id: 0,
@@ -553,15 +518,17 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer?.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: 'suspended',
+        status: 'suspended', // Suspended sale always uses 'suspended' status
         taxRateId: state.taxId,
-        discountAmount: state.invoiceDiscount,
+        discountAmount: state.discountAmount, // Use raw discount amount
         discountType: state.discountType,
-        invoiceAmount: state.total,
-        isQuotation: false,
-        isSuspend: true,
+        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (like old code)
+        isQuotation: state.isQuotation, // Use state value
+        isSuspend: true, // Suspended sale always has isSuspend = true
         sellLines: sellLines,
       );
+
+      // No payment for suspended sales (like old code: !isQuotation && !isSuspend)
 
       // Save locally
       final localResult = await _sellRepository.saveSellLocally(sell);

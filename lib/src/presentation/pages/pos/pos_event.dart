@@ -72,10 +72,16 @@ class PosSetTax extends PosEvent {
   const PosSetTax({this.taxId, required this.taxRate});
 }
 
-/// Submit sale (cash payment)
+/// Submit sale
 class PosSubmitSale extends PosEvent {
+  final bool isCredit;
   final bool printInvoice;
-  const PosSubmitSale({this.printInvoice = true});
+  final String? paymentMethod; // Optional payment method, defaults based on isCredit
+  const PosSubmitSale({
+    this.isCredit = false,
+    this.printInvoice = true,
+    this.paymentMethod,
+  });
 }
 
 /// Submit credit sale
@@ -126,5 +132,6 @@ class PosFilterByBrand extends PosEvent {
   final int? brandId;
   const PosFilterByBrand(this.brandId);
 }
+
 
 

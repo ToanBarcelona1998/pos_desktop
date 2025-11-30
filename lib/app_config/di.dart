@@ -318,8 +318,13 @@ void _registerRepositories() {
         networkInfo: sl.get<NetworkInfo>(),
       ));
 
+  sl.registerLazy<SellLocalDataSource>(() => SellLocalDataSourceImpl(
+        dbHelper: sl.get<DatabaseHelper>(),
+      ));
+
   sl.registerLazy<SellRepository>(() => SellRepositoryImpl(
         remoteDataSource: sl.get<SellRemoteDataSource>(),
+        localDataSource: sl.get<SellLocalDataSource>(),
         networkInfo: sl.get<NetworkInfo>(),
       ));
 
