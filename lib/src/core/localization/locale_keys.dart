@@ -333,6 +333,16 @@ abstract final class LocaleKeys {
   static const String selectSupplier = 'select_supplier';
   static const String suppliersCustomers = 'suppliers_customers';
 
+  // Customers
+  static const String noCustomersFound = 'no_customers_found';
+  static const String addCustomer = 'add_customer';
+
+  // Suspended Sales
+  static const String suspendedSales = 'suspended_sales';
+  static const String continueSale = 'continue';
+  static const String suspendedSaleLoaded = 'suspended_sale_loaded';
+  static const String suspendedSaleDeleted = 'suspended_sale_deleted';
+
   // Shipping
   static const String shipment = 'shipment';
   static const String shippingCharges = 'shipping_charges';
@@ -358,6 +368,7 @@ abstract final class LocaleKeys {
   static const String todo = 'todo';
   static const String summary = 'summary';
   static const String totalItems = 'total_items';
+  static const String items = 'items';
 }
 
 

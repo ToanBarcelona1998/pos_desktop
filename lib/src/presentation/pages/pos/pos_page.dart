@@ -13,6 +13,8 @@ import 'widgets/pos_app_bar_widget.dart';
 import 'widgets/pos_bottom_bar_widget.dart';
 import 'widgets/pos_cart_widget.dart';
 import 'widgets/pos_product_grid_widget.dart';
+import 'widgets/pos_customer_selector_widget.dart';
+import 'widgets/pos_suspended_sales_bottom_sheet.dart';
 
 /// POS page
 class PosPage extends StatelessWidget {
@@ -26,6 +28,7 @@ class PosPage extends StatelessWidget {
         productRepository: sl.get<ProductRepository>(),
         categoryRepository: sl.get<CategoryRepository>(),
         brandRepository: sl.get<BrandRepository>(),
+        contactRepository: sl.get<ContactRepository>(),
         createSellUseCase: sl.get<CreateSellUseCase>(),
         sellRepository: sl.get<SellRepository>(),
         businessRepository: sl.get<BusinessRepository>(),
@@ -85,6 +88,7 @@ class _PosView extends StatelessWidget {
             onRefresh: () {
               context.read<PosBloc>().add(const PosRefreshProducts());
             },
+            onSuspendedSales: () => _showSuspendedSalesBottomSheet(context),
           ),
           body: Row(
             children: [
@@ -126,6 +130,8 @@ class _PosView extends StatelessWidget {
                   selectedBrandId: state.selectedBrandId,
                   searchQuery: state.searchQuery,
                   isLoading: state.isLoadingProducts,
+                  isLoadingMore: state.isLoadingMore,
+                  hasMore: state.hasMore,
                   cartItems: state.cartItems,
                   onProductTap: (product) {
                     context.read<PosBloc>().add(PosAddToCart(product: product));
@@ -138,6 +144,12 @@ class _PosView extends StatelessWidget {
                   },
                   onBrandFilter: (brandId) {
                     context.read<PosBloc>().add(PosFilterByBrand(brandId));
+                  },
+                  onLoadMore: () {
+                    context.read<PosBloc>().add(const PosLoadMoreProducts());
+                  },
+                  onRefresh: () {
+                    context.read<PosBloc>().add(const PosRefreshProducts());
                   },
                 ),
               ),
@@ -170,18 +182,78 @@ class _PosView extends StatelessWidget {
   }
 
   void _showCustomerSelector(BuildContext context) {
-    // TODO: Show customer selector dialog
+    final bloc = context.read<PosBloc>();
+    final state = bloc.state;
+
+    // Load customers if not loaded
+    if (state.customers.isEmpty && !state.isLoadingCustomers) {
+      bloc.add(const PosLoadCustomers());
+    }
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Select Customer'),
-        content: const Text('Customer selector will be implemented here'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
-          ),
-        ],
+      builder: (ctx) => BlocProvider.value(
+        value: bloc,
+        child: BlocBuilder<PosBloc, PosState>(
+          builder: (context, state) {
+            // Filter customers by search query
+            final filteredCustomers = state.customerSearchQuery.isEmpty
+                ? state.customers
+                : state.customers.where((customer) {
+                    final query = state.customerSearchQuery.toLowerCase();
+                    return customer.name.toLowerCase().contains(query) ||
+                        (customer.mobile?.toLowerCase().contains(query) ?? false);
+                  }).toList();
+
+            return PosCustomerSelectorWidget(
+              customers: filteredCustomers,
+              selectedCustomer: state.selectedCustomer,
+              isLoading: state.isLoadingCustomers,
+              searchQuery: state.customerSearchQuery,
+              onSearch: (query) {
+                context.read<PosBloc>().add(PosSearchCustomers(query));
+              },
+              onCustomerSelected: (customer) {
+                context.read<PosBloc>().add(PosSelectCustomer(customer));
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showSuspendedSalesBottomSheet(BuildContext context) {
+    final bloc = context.read<PosBloc>();
+    final state = bloc.state;
+
+    // Load suspended sells if not loaded
+    if (state.suspendedSells.isEmpty && !state.isLoadingSuspendedSells) {
+      bloc.add(const PosLoadSuspendedSells());
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => BlocProvider.value(
+        value: bloc,
+        child: BlocBuilder<PosBloc, PosState>(
+          builder: (context, state) {
+            return PosSuspendedSalesBottomSheet(
+              suspendedSells: state.suspendedSells,
+              isLoading: state.isLoadingSuspendedSells,
+              onContinue: (sell) {
+                context.read<PosBloc>().add(PosLoadSuspendedSell(sell));
+              },
+              onDelete: (sellId) {
+                context.read<PosBloc>().add(PosDeleteSuspendedSell(sellId));
+              },
+            );
+          },
+        ),
       ),
     );
   }

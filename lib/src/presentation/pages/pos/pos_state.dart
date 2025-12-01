@@ -64,6 +64,9 @@ class PosState {
 
   // Customer
   final ContactEntity? selectedCustomer;
+  final List<ContactEntity> customers;
+  final bool isLoadingCustomers;
+  final String customerSearchQuery;
 
   // Products
   final List<ProductEntity> products;
@@ -73,6 +76,9 @@ class PosState {
   final int? selectedBrandId;
   final List<CategoryEntity> categories;
   final List<BrandEntity> brands;
+  final int currentPage;
+  final bool hasMore;
+  final bool isLoadingMore;
 
   // Cart
   final List<CartItem> cartItems;
@@ -85,6 +91,10 @@ class PosState {
   final String invoiceType; // 'final', 'quotation', 'suspended'
   final bool isQuotation;
   final bool isSuspended;
+
+  // Suspended Sells
+  final List<SellEntity> suspendedSells;
+  final bool isLoadingSuspendedSells;
 
   // Currency
   final String currencySymbol;
@@ -100,6 +110,9 @@ class PosState {
     this.locations = const [],
     this.selectedLocationId,
     this.selectedCustomer,
+    this.customers = const [],
+    this.isLoadingCustomers = false,
+    this.customerSearchQuery = '',
     this.products = const [],
     this.filteredProducts = const [],
     this.searchQuery = '',
@@ -107,6 +120,9 @@ class PosState {
     this.selectedBrandId,
     this.categories = const [],
     this.brands = const [],
+    this.currentPage = 1,
+    this.hasMore = false,
+    this.isLoadingMore = false,
     this.cartItems = const [],
     this.discountAmount = 0,
     this.discountType = 'fixed',
@@ -115,6 +131,8 @@ class PosState {
     this.invoiceType = 'final',
     this.isQuotation = false,
     this.isSuspended = false,
+    this.suspendedSells = const [],
+    this.isLoadingSuspendedSells = false,
     this.currencySymbol = '\$',
     this.failure,
     this.successMessage,
@@ -169,6 +187,9 @@ class PosState {
     List<LocationEntity>? locations,
     int? selectedLocationId,
     ContactEntity? selectedCustomer,
+    List<ContactEntity>? customers,
+    bool? isLoadingCustomers,
+    String? customerSearchQuery,
     List<ProductEntity>? products,
     List<ProductEntity>? filteredProducts,
     String? searchQuery,
@@ -176,6 +197,9 @@ class PosState {
     int? selectedBrandId,
     List<CategoryEntity>? categories,
     List<BrandEntity>? brands,
+    int? currentPage,
+    bool? hasMore,
+    bool? isLoadingMore,
     List<CartItem>? cartItems,
     double? discountAmount,
     String? discountType,
@@ -184,6 +208,8 @@ class PosState {
     String? invoiceType,
     bool? isQuotation,
     bool? isSuspended,
+    List<SellEntity>? suspendedSells,
+    bool? isLoadingSuspendedSells,
     String? currencySymbol,
     Failure? failure,
     String? successMessage,
@@ -200,6 +226,9 @@ class PosState {
       selectedLocationId: selectedLocationId ?? this.selectedLocationId,
       selectedCustomer:
           clearCustomer ? null : (selectedCustomer ?? this.selectedCustomer),
+      customers: customers ?? this.customers,
+      isLoadingCustomers: isLoadingCustomers ?? this.isLoadingCustomers,
+      customerSearchQuery: customerSearchQuery ?? this.customerSearchQuery,
       products: products ?? this.products,
       filteredProducts: filteredProducts ?? this.filteredProducts,
       searchQuery: searchQuery ?? this.searchQuery,
@@ -210,6 +239,9 @@ class PosState {
           clearBrandId ? null : (selectedBrandId ?? this.selectedBrandId),
       categories: categories ?? this.categories,
       brands: brands ?? this.brands,
+      currentPage: currentPage ?? this.currentPage,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       cartItems: cartItems ?? this.cartItems,
       discountAmount: discountAmount ?? this.discountAmount,
       discountType: discountType ?? this.discountType,
@@ -218,6 +250,8 @@ class PosState {
       invoiceType: invoiceType ?? this.invoiceType,
       isQuotation: isQuotation ?? this.isQuotation,
       isSuspended: isSuspended ?? this.isSuspended,
+      suspendedSells: suspendedSells ?? this.suspendedSells,
+      isLoadingSuspendedSells: isLoadingSuspendedSells ?? this.isLoadingSuspendedSells,
       currencySymbol: currencySymbol ?? this.currencySymbol,
       failure: clearMessages ? null : (failure ?? this.failure),
       successMessage:

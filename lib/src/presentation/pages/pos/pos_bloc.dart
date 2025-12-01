@@ -9,6 +9,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   final ProductRepository _productRepository;
   final CategoryRepository _categoryRepository;
   final BrandRepository _brandRepository;
+  final ContactRepository _contactRepository;
   final CreateSellUseCase _createSellUseCase;
   final SellRepository _sellRepository;
   final BusinessRepository _businessRepository;
@@ -18,6 +19,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     required ProductRepository productRepository,
     required CategoryRepository categoryRepository,
     required BrandRepository brandRepository,
+    required ContactRepository contactRepository,
     required CreateSellUseCase createSellUseCase,
     required SellRepository sellRepository,
     required BusinessRepository businessRepository,
@@ -25,6 +27,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         _productRepository = productRepository,
         _categoryRepository = categoryRepository,
         _brandRepository = brandRepository,
+        _contactRepository = contactRepository,
         _createSellUseCase = createSellUseCase,
         _sellRepository = sellRepository,
         _businessRepository = businessRepository,
@@ -44,10 +47,18 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     on<PosSuspendSale>(_onSuspendSale);
     on<PosCancelSale>(_onCancelSale);
     on<PosRefreshProducts>(_onRefreshProducts);
+    on<PosLoadMoreProducts>(_onLoadMoreProducts);
     on<PosSearchProducts>(_onSearchProducts);
     on<PosFilterByCategory>(_onFilterByCategory);
     on<PosFilterByBrand>(_onFilterByBrand);
+    on<PosLoadCustomers>(_onLoadCustomers);
+    on<PosSearchCustomers>(_onSearchCustomers);
+    on<PosLoadSuspendedSells>(_onLoadSuspendedSells);
+    on<PosLoadSuspendedSell>(_onLoadSuspendedSell);
+    on<PosDeleteSuspendedSell>(_onDeleteSuspendedSell);
   }
+
+  static const int _perPage = 50;
 
   Future<void> _onInitialize(
     PosInitialize event,
@@ -113,6 +124,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       if (defaultLocationId != null) {
         add(PosSelectLocation(defaultLocationId!));
       }
+
+      // Load customers
+      add(const PosLoadCustomers());
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,
@@ -131,21 +145,30 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       cartItems: [], // Clear cart on location change
       clearCustomer: true,
       clearMessages: true,
+      currentPage: 1,
+      hasMore: true,
     ));
 
-    // Load products for location
+    // Load products for location (first page)
     final result = await _productRepository.getProducts(
       locationId: event.locationId,
       page: 1,
-      perPage: 100,
+      perPage: _perPage,
     );
 
     result.fold(
       onSuccess: (products) {
+        final filtered = _filterProducts(
+          products,
+          state.searchQuery,
+          state.selectedCategoryId,
+          state.selectedBrandId,
+        );
         emit(state.copyWith(
           isLoadingProducts: false,
           products: products,
-          filteredProducts: products,
+          filteredProducts: filtered,
+          hasMore: products.length >= _perPage,
         ));
       },
       onError: (failure) {
@@ -571,44 +594,96 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     if (state.selectedLocationId == null) return;
 
-    emit(state.copyWith(isLoadingProducts: true, clearMessages: true));
+    emit(state.copyWith(
+      isLoadingProducts: true,
+      clearMessages: true,
+      currentPage: 1,
+    ));
 
-    final result = await _productRepository.syncProducts(state.selectedLocationId!);
+    // Sync products first
+    await _productRepository.syncProducts(state.selectedLocationId!);
+
+    // Reload products from first page
+    final result = await _productRepository.getProducts(
+      locationId: state.selectedLocationId!,
+      page: 1,
+      perPage: _perPage,
+    );
 
     result.fold(
-      onSuccess: (_) async {
-        // Reload products
-        final productsResult = await _productRepository.getProducts(
-          locationId: state.selectedLocationId!,
-          page: 1,
-          perPage: 100,
+      onSuccess: (products) {
+        final filtered = _filterProducts(
+          products,
+          state.searchQuery,
+          state.selectedCategoryId,
+          state.selectedBrandId,
         );
-
-        productsResult.fold(
-          onSuccess: (products) {
-            emit(state.copyWith(
-              isLoadingProducts: false,
-              products: products,
-              filteredProducts: _filterProducts(
-                products,
-                state.searchQuery,
-                state.selectedCategoryId,
-                state.selectedBrandId,
-              ),
-              successMessage: 'Products refreshed',
-            ));
-          },
-          onError: (failure) {
-            emit(state.copyWith(
-              isLoadingProducts: false,
-              failure: failure,
-            ));
-          },
-        );
+        emit(state.copyWith(
+          isLoadingProducts: false,
+          products: products,
+          filteredProducts: filtered,
+          currentPage: 1,
+          hasMore: products.length >= _perPage,
+          successMessage: 'Products refreshed',
+        ));
       },
       onError: (failure) {
         emit(state.copyWith(
           isLoadingProducts: false,
+          failure: failure,
+        ));
+      },
+    );
+  }
+
+  Future<void> _onLoadMoreProducts(
+    PosLoadMoreProducts event,
+    Emitter<PosState> emit,
+  ) async {
+    if (state.selectedLocationId == null ||
+        !state.hasMore ||
+        state.isLoadingMore) {
+      return;
+    }
+
+    emit(state.copyWith(isLoadingMore: true));
+
+    final nextPage = state.currentPage + 1;
+    final result = await _productRepository.getProducts(
+      locationId: state.selectedLocationId!,
+      page: nextPage,
+      perPage: _perPage,
+    );
+
+    result.fold(
+      onSuccess: (newProducts) {
+        if (newProducts.isEmpty) {
+          emit(state.copyWith(
+            isLoadingMore: false,
+            hasMore: false,
+          ));
+          return;
+        }
+
+        final allProducts = [...state.products, ...newProducts];
+        final filtered = _filterProducts(
+          allProducts,
+          state.searchQuery,
+          state.selectedCategoryId,
+          state.selectedBrandId,
+        );
+
+        emit(state.copyWith(
+          isLoadingMore: false,
+          products: allProducts,
+          filteredProducts: filtered,
+          currentPage: nextPage,
+          hasMore: newProducts.length >= _perPage,
+        ));
+      },
+      onError: (failure) {
+        emit(state.copyWith(
+          isLoadingMore: false,
           failure: failure,
         ));
       },
@@ -679,7 +754,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       if (query.isNotEmpty) {
         final name = (product.displayName ?? product.productName ?? '')
             .toLowerCase();
-        final sku = (product.sku ?? '').toLowerCase();
+        final sku = (product.subSku ?? product.sku ?? '').toLowerCase();
         final searchLower = query.toLowerCase();
         if (!name.contains(searchLower) && !sku.contains(searchLower)) {
           return false;
@@ -698,6 +773,158 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
       return true;
     }).toList();
+  }
+
+  Future<void> _onLoadCustomers(
+    PosLoadCustomers event,
+    Emitter<PosState> emit,
+  ) async {
+    emit(state.copyWith(isLoadingCustomers: true));
+
+    final result = await _contactRepository.getContacts(type: 'customer');
+
+    result.fold(
+      onSuccess: (customers) {
+        emit(state.copyWith(
+          customers: customers,
+          isLoadingCustomers: false,
+        ));
+      },
+      onError: (failure) {
+        emit(state.copyWith(
+          isLoadingCustomers: false,
+          failure: failure,
+        ));
+      },
+    );
+  }
+
+  void _onSearchCustomers(
+    PosSearchCustomers event,
+    Emitter<PosState> emit,
+  ) {
+    emit(state.copyWith(customerSearchQuery: event.query));
+  }
+
+  Future<void> _onLoadSuspendedSells(
+    PosLoadSuspendedSells event,
+    Emitter<PosState> emit,
+  ) async {
+    emit(state.copyWith(isLoadingSuspendedSells: true));
+
+    final result = await _sellRepository.getSuspendedSells();
+
+    result.fold(
+      onSuccess: (sells) {
+        emit(state.copyWith(
+          suspendedSells: sells,
+          isLoadingSuspendedSells: false,
+        ));
+      },
+      onError: (failure) {
+        emit(state.copyWith(
+          isLoadingSuspendedSells: false,
+          failure: failure,
+        ));
+      },
+    );
+  }
+
+  Future<void> _onLoadSuspendedSell(
+    PosLoadSuspendedSell event,
+    Emitter<PosState> emit,
+  ) async {
+    final sell = event.sell;
+
+    // Load customer if available
+    ContactEntity? customer;
+    if (sell.contactId != null) {
+      final customerResult = await _contactRepository.getContactById(sell.contactId!);
+      customerResult.fold(
+        onSuccess: (c) => customer = c,
+        onError: (_) {},
+      );
+    }
+
+    // Load products and create cart items from sell lines
+    final cartItems = <CartItem>[];
+    if (sell.sellLines!.isNotEmpty) {
+      // Get all products for the location to find product details
+      final productsResult = await _productRepository.getProducts(
+        locationId: sell.locationId!,
+        page: 1,
+        perPage: 1000, // Get all products to find matches
+      );
+
+      productsResult.fold(
+        onSuccess: (products) {
+          for (final line in sell.sellLines!) {
+            // Find matching product
+            final product = products.firstWhere(
+              (p) => (p.productId ?? p.id) == line.productId &&
+                  (p.variationId ?? 0) == line.variationId,
+              orElse: () => products.first, // Fallback, should not happen
+            );
+
+            cartItems.add(CartItem(
+              product: product,
+              productId: line.productId!,
+              variationId: line.variationId!,
+              quantity: line.quantity!.toInt(),
+              unitPrice: line.unitPrice!,
+              discountAmount: line.discountAmount ?? 0,
+              discountType: line.discountType ?? 'fixed',
+              taxId: line.taxRateId,
+            ));
+          }
+        },
+        onError: (_) {},
+      );
+    }
+
+    // Set discount and tax
+    final discountAmount = sell.discountAmount ?? 0;
+    final discountType = sell.discountType ?? 'fixed';
+    final taxId = sell.taxRateId;
+
+    // Get tax rate if taxId is available
+    double taxRate = 0;
+    if (taxId != null && taxId != 0) {
+      // Try to get tax rate from repository (if available)
+      // For now, we'll need to calculate from the sell amount
+    }
+
+    emit(state.copyWith(
+      selectedCustomer: customer,
+      cartItems: cartItems,
+      discountAmount: discountAmount,
+      discountType: discountType,
+      taxId: taxId,
+      taxRate: taxRate,
+      isSuspended: true,
+      invoiceType: sell.status ?? 'suspended',
+      successMessage: 'Suspended sale loaded successfully',
+    ));
+  }
+
+  Future<void> _onDeleteSuspendedSell(
+    PosDeleteSuspendedSell event,
+    Emitter<PosState> emit,
+  ) async {
+    final result = await _sellRepository.deleteSell(event.sellId);
+
+    result.fold(
+      onSuccess: (_) {
+        // Reload suspended sells
+        add(const PosLoadSuspendedSells());
+        emit(state.copyWith(
+          successMessage: 'Suspended sale deleted successfully',
+        ));
+      },
+      onError: (failure) {
+        emit(state.copyWith(failure: failure));
+      },
+    );
   }
 
   String _generateInvoiceNo() {

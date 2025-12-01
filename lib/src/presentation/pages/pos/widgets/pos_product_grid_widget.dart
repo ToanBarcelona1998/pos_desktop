@@ -22,11 +22,15 @@ class PosProductGridWidget extends StatefulWidget {
   final int? selectedBrandId;
   final String searchQuery;
   final bool isLoading;
+  final bool isLoadingMore;
+  final bool hasMore;
   final List<CartItem> cartItems;
   final ValueChanged<ProductEntity>? onProductTap;
   final ValueChanged<String>? onSearch;
   final ValueChanged<int?>? onCategoryFilter;
   final ValueChanged<int?>? onBrandFilter;
+  final VoidCallback? onLoadMore;
+  final VoidCallback? onRefresh;
 
   const PosProductGridWidget({
     super.key,
@@ -37,11 +41,15 @@ class PosProductGridWidget extends StatefulWidget {
     this.selectedBrandId,
     this.searchQuery = '',
     this.isLoading = false,
+    this.isLoadingMore = false,
+    this.hasMore = false,
     required this.cartItems,
     this.onProductTap,
     this.onSearch,
     this.onCategoryFilter,
     this.onBrandFilter,
+    this.onLoadMore,
+    this.onRefresh,
   });
 
   @override
@@ -123,17 +131,25 @@ class _PosProductGridWidgetState extends State<PosProductGridWidget>
             //   ),
             // ),
             SizedBox(height: AppSpacing.sm),
-            // Product grid
+            // Product grid with refresh
             Expanded(
               child: widget.isLoading
                   ? const AppLoadingCenter()
-                  : widget.products.isEmpty
-                      ? _EmptyProducts(l10n: l10n)
-                      : _ProductGrid(
-                          products: widget.products,
-                          cartItems: widget.cartItems,
-                          onProductTap: widget.onProductTap,
-                        ),
+                  : RefreshIndicator(
+                      onRefresh: () async {
+                        widget.onRefresh?.call();
+                      },
+                      child: widget.products.isEmpty
+                          ? _EmptyProducts(l10n: l10n)
+                          : _ProductGrid(
+                              products: widget.products,
+                              cartItems: widget.cartItems,
+                              onProductTap: widget.onProductTap,
+                              isLoadingMore: widget.isLoadingMore ?? false,
+                              hasMore: widget.hasMore ?? false,
+                              onLoadMore: widget.onLoadMore,
+                            ),
+                    ),
             ),
           ],
         ),
@@ -317,47 +333,76 @@ class _ProductGrid extends StatelessWidget {
   final List<ProductEntity> products;
   final List<CartItem> cartItems;
   final ValueChanged<ProductEntity>? onProductTap;
+  final bool isLoadingMore;
+  final bool hasMore;
+  final VoidCallback? onLoadMore;
 
   const _ProductGrid({
     required this.products,
     required this.cartItems,
     this.onProductTap,
+    this.isLoadingMore = false,
+    this.hasMore = false,
+    this.onLoadMore,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: AppSpacing.paddingSm,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 1,
-      ),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final product = products[index];
-        final productId = product.productId ?? product.id;
-        final variationId = product.variationId ?? 0;
-        final cartItem = cartItems.firstWhere(
-          (item) => item.productId == productId && item.variationId == variationId,
-          orElse: () => CartItem(
-            product: product,
-            productId: productId,
-            variationId: variationId,
-            unitPrice: 0,
-          ),
-        );
-        final inCart = cartItems.any(
-          (item) => item.productId == productId && item.variationId == variationId,
-        );
-
-        return _ProductItem(
-          product: product,
-          quantity: inCart ? cartItem.quantity : 0,
-          onTap: () => onProductTap?.call(product),
-        );
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollEndNotification) {
+          // Load more when scrolled near bottom (200px threshold)
+          if (notification.metrics.extentAfter < 200 &&
+              hasMore &&
+              !isLoadingMore) {
+            onLoadMore?.call();
+          }
+        }
+        return false;
       },
+      child: GridView.builder(
+        padding: AppSpacing.paddingSm,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 1,
+        ),
+        itemCount: products.length + (isLoadingMore ? 2 : 0),
+        itemBuilder: (context, index) {
+          // Show loading indicator at the end
+          if (index >= products.length) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          final product = products[index];
+          final productId = product.productId ?? product.id;
+          final variationId = product.variationId ?? 0;
+          final cartItem = cartItems.firstWhere(
+            (item) => item.productId == productId && item.variationId == variationId,
+            orElse: () => CartItem(
+              product: product,
+              productId: productId,
+              variationId: variationId,
+              unitPrice: 0,
+            ),
+          );
+          final inCart = cartItems.any(
+            (item) => item.productId == productId && item.variationId == variationId,
+          );
+
+          return _ProductItem(
+            product: product,
+            quantity: inCart ? cartItem.quantity : 0,
+            onTap: () => onProductTap?.call(product),
+          );
+        },
+      ),
     );
   }
 }

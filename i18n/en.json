@@ -584,5 +584,11 @@
   "total_brands": "Total Brands",
   "use_for_repair": "Use for Repair",
   "quick_login": "Quick Login",
-  "failed_to_load_products": "Failed to load products"
+  "failed_to_load_products": "Failed to load products",
+  "no_customers_found": "No customers found",
+  "add_customer": "Add Customer",
+  "suspended_sales": "Suspended Sales",
+  "continue": "Continue",
+  "suspended_sale_loaded": "Suspended sale loaded successfully",
+  "suspended_sale_deleted": "Suspended sale deleted successfully"
 }

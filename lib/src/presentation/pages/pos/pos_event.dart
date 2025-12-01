@@ -115,6 +115,11 @@ class PosRefreshProducts extends PosEvent {
   const PosRefreshProducts();
 }
 
+/// Load more products (pagination)
+class PosLoadMoreProducts extends PosEvent {
+  const PosLoadMoreProducts();
+}
+
 /// Search products
 class PosSearchProducts extends PosEvent {
   final String query;
@@ -131,6 +136,34 @@ class PosFilterByCategory extends PosEvent {
 class PosFilterByBrand extends PosEvent {
   final int? brandId;
   const PosFilterByBrand(this.brandId);
+}
+
+/// Load customers
+class PosLoadCustomers extends PosEvent {
+  const PosLoadCustomers();
+}
+
+/// Search customers
+class PosSearchCustomers extends PosEvent {
+  final String query;
+  const PosSearchCustomers(this.query);
+}
+
+/// Load suspended sells
+class PosLoadSuspendedSells extends PosEvent {
+  const PosLoadSuspendedSells();
+}
+
+/// Load suspended sell into POS
+class PosLoadSuspendedSell extends PosEvent {
+  final SellEntity sell;
+  const PosLoadSuspendedSell(this.sell);
+}
+
+/// Delete suspended sell
+class PosDeleteSuspendedSell extends PosEvent {
+  final int sellId;
+  const PosDeleteSuspendedSell(this.sellId);
 }
 
 

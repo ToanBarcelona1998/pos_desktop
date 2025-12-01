@@ -584,5 +584,11 @@
   "total_brands": "Tổng thương hiệu",
   "use_for_repair": "Dùng cho sửa chữa",
   "quick_login": "Đăng nhập nhanh",
-  "failed_to_load_products": "Không thể tải sản phẩm"
+  "failed_to_load_products": "Không thể tải sản phẩm",
+  "no_customers_found": "Không tìm thấy khách hàng",
+  "add_customer": "Thêm khách hàng",
+  "suspended_sales": "Bán hàng tạm dừng",
+  "continue": "Tiếp tục",
+  "suspended_sale_loaded": "Đã tải bán hàng tạm dừng thành công",
+  "suspended_sale_deleted": "Đã xóa bán hàng tạm dừng thành công"
 }

@@ -13,6 +13,7 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final int? selectedLocationId;
   final ValueChanged<int>? onLocationChanged;
   final VoidCallback? onRefresh;
+  final VoidCallback? onSuspendedSales;
 
   const PosAppBarWidget({
     super.key,
@@ -20,6 +21,7 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     this.selectedLocationId,
     this.onLocationChanged,
     this.onRefresh,
+    this.onSuspendedSales,
   });
 
   @override
@@ -90,6 +92,12 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
         IconButton(
           icon: const Icon(Icons.refresh),
           onPressed: onRefresh,
+          tooltip: l10n?.translate(LocaleKeys.refresh) ?? 'Refresh',
+        ),
+        IconButton(
+          icon: const Icon(Icons.pause_circle_outline),
+          onPressed: onSuspendedSales,
+          tooltip: l10n?.translate(LocaleKeys.suspendedSales) ?? 'Suspended Sales',
         ),
         IconButton(
           icon: const Icon(Icons.fullscreen),
