@@ -10,7 +10,6 @@ import '../../../../core/constants/app_radius.dart';
 import '../../../../core/localization/app_localization.dart';
 import '../../../../core/localization/locale_keys.dart';
 import '../../../widgets/app_loading.dart';
-import '../../../widgets/app_text_field.dart';
 import '../pos_state.dart';
 import 'pos_filter_drawer.dart';
 

@@ -78,55 +78,55 @@ class HomeDrawerWidget extends StatelessWidget {
               AppNavigator.pushNamed(RoutePath.pos.path);
             },
           ),
-          _DrawerMenuItem(
-            icon: Icons.inventory,
-            title: l10n?.translate(LocaleKeys.products) ?? 'Products',
-            onTap: () {
-              Navigator.pop(context);
-              AppNavigator.pushNamed(RoutePath.products.path);
-            },
-          ),
-          _DrawerMenuItem(
-            icon: Icons.receipt_long,
-            title: l10n?.translate(LocaleKeys.sales) ?? 'Sales',
-            onTap: () {
-              Navigator.pop(context);
-              AppNavigator.pushNamed(RoutePath.sale.path);
-            },
-          ),
-          _DrawerMenuItem(
-            icon: Icons.shopping_bag,
-            title: l10n?.translate(LocaleKeys.purchases) ?? 'Purchases',
-            onTap: () {
-              Navigator.pop(context);
-              AppNavigator.pushNamed(RoutePath.purchases.path);
-            },
-          ),
-          _DrawerMenuItem(
-            icon: Icons.people,
-            title: l10n?.translate(LocaleKeys.contacts) ?? 'Contacts',
-            onTap: () {
-              Navigator.pop(context);
-              AppNavigator.pushNamed(RoutePath.customer.path);
-            },
-          ),
-          _DrawerMenuItem(
-            icon: Icons.payment,
-            title: l10n?.translate(LocaleKeys.expenses) ?? 'Expenses',
-            onTap: () {
-              Navigator.pop(context);
-              AppNavigator.pushNamed(RoutePath.expense.path);
-            },
-          ),
-          const Divider(),
-          _DrawerMenuItem(
-            icon: Icons.bar_chart,
-            title: l10n?.translate(LocaleKeys.reports) ?? 'Reports',
-            onTap: () {
-              Navigator.pop(context);
-              AppNavigator.pushNamed(RoutePath.report.path);
-            },
-          ),
+          // _DrawerMenuItem(
+          //   icon: Icons.inventory,
+          //   title: l10n?.translate(LocaleKeys.products) ?? 'Products',
+          //   onTap: () {
+          //     Navigator.pop(context);
+          //     AppNavigator.pushNamed(RoutePath.products.path);
+          //   },
+          // ),
+          // _DrawerMenuItem(
+          //   icon: Icons.receipt_long,
+          //   title: l10n?.translate(LocaleKeys.sales) ?? 'Sales',
+          //   onTap: () {
+          //     Navigator.pop(context);
+          //     AppNavigator.pushNamed(RoutePath.sale.path);
+          //   },
+          // ),
+          // _DrawerMenuItem(
+          //   icon: Icons.shopping_bag,
+          //   title: l10n?.translate(LocaleKeys.purchases) ?? 'Purchases',
+          //   onTap: () {
+          //     Navigator.pop(context);
+          //     AppNavigator.pushNamed(RoutePath.purchases.path);
+          //   },
+          // ),
+          // _DrawerMenuItem(
+          //   icon: Icons.people,
+          //   title: l10n?.translate(LocaleKeys.contacts) ?? 'Contacts',
+          //   onTap: () {
+          //     Navigator.pop(context);
+          //     AppNavigator.pushNamed(RoutePath.customer.path);
+          //   },
+          // ),
+          // _DrawerMenuItem(
+          //   icon: Icons.payment,
+          //   title: l10n?.translate(LocaleKeys.expenses) ?? 'Expenses',
+          //   onTap: () {
+          //     Navigator.pop(context);
+          //     AppNavigator.pushNamed(RoutePath.expense.path);
+          //   },
+          // ),
+          // const Divider(),
+          // _DrawerMenuItem(
+          //   icon: Icons.bar_chart,
+          //   title: l10n?.translate(LocaleKeys.reports) ?? 'Reports',
+          //   onTap: () {
+          //     Navigator.pop(context);
+          //     AppNavigator.pushNamed(RoutePath.report.path);
+          //   },
+          // ),
           _DrawerMenuItem(
             icon: Icons.settings,
             title: l10n?.translate(LocaleKeys.settings) ?? 'Settings',
@@ -204,6 +204,7 @@ class _DrawerMenuItem extends StatelessWidget {
     );
   }
 }
+
 
 
 
