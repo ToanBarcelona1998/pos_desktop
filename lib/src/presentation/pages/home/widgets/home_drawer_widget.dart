@@ -75,7 +75,7 @@ class HomeDrawerWidget extends StatelessWidget {
             title: l10n?.translate(LocaleKeys.pos) ?? 'POS',
             onTap: () {
               Navigator.pop(context);
-              AppNavigator.pushNamed(RoutePath.pos.path);
+              AppNavigator.pushNamed(RoutePath.onlinePos.path);
             },
           ),
           // _DrawerMenuItem(
@@ -142,39 +142,8 @@ class HomeDrawerWidget extends StatelessWidget {
             iconColor: theme.colorScheme.error,
             onTap: () {
               Navigator.pop(context);
-              _showLogoutDialog(context, l10n, onLogout);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLogoutDialog(
-    BuildContext context,
-    AppLocalizations? l10n,
-    VoidCallback? onLogout,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n?.translate(LocaleKeys.logout) ?? 'Logout'),
-        content: Text(l10n?.translate(LocaleKeys.areYouSure) ?? 'Are you sure?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n?.translate(LocaleKeys.cancel) ?? 'Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
               onLogout?.call();
-              AppNavigator.navigateToLogin();
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(l10n?.translate(LocaleKeys.logout) ?? 'Logout'),
           ),
         ],
       ),
@@ -204,6 +173,7 @@ class _DrawerMenuItem extends StatelessWidget {
     );
   }
 }
+
 
 
 

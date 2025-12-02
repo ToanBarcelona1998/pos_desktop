@@ -13,6 +13,9 @@ class HomeState {
   final double totalExpenses;
   final int numberOfSales;
   final Failure? failure;
+  final bool showLogoutDialog;
+  final int unsyncedSellsCount;
+  final bool syncSuccess;
 
   const HomeState({
     this.isLoading = false,
@@ -26,6 +29,9 @@ class HomeState {
     this.totalExpenses = 0,
     this.numberOfSales = 0,
     this.failure,
+    this.showLogoutDialog = false,
+    this.unsyncedSellsCount = 0,
+    this.syncSuccess = false,
   });
 
   factory HomeState.initial() => const HomeState(isLoading: true);
@@ -43,6 +49,9 @@ class HomeState {
     int? numberOfSales,
     Failure? failure,
     bool clearFailure = false,
+    bool? showLogoutDialog,
+    int? unsyncedSellsCount,
+    bool? syncSuccess,
   }) {
     return HomeState(
       isLoading: isLoading ?? this.isLoading,
@@ -56,9 +65,13 @@ class HomeState {
       totalExpenses: totalExpenses ?? this.totalExpenses,
       numberOfSales: numberOfSales ?? this.numberOfSales,
       failure: clearFailure ? null : (failure ?? this.failure),
+      showLogoutDialog: showLogoutDialog ?? this.showLogoutDialog,
+      unsyncedSellsCount: unsyncedSellsCount ?? this.unsyncedSellsCount,
+      syncSuccess: syncSuccess ?? this.syncSuccess,
     );
   }
 }
+
 
 
 

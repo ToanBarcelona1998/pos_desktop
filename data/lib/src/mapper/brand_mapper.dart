@@ -29,3 +29,4 @@ class BrandMapper extends ReadOnlyMapper<BrandModel, BrandEntity> {
 
 
 
+

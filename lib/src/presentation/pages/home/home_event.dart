@@ -31,6 +31,22 @@ class HomeSyncData extends HomeEvent {
   const HomeSyncData();
 }
 
+/// Logout with sync event
+class HomeLogoutWithSync extends HomeEvent {
+  const HomeLogoutWithSync();
+}
+
+/// Logout without sync event
+class HomeLogoutWithoutSync extends HomeEvent {
+  const HomeLogoutWithoutSync();
+}
+
+/// Cancel logout event
+class HomeCancelLogout extends HomeEvent {
+  const HomeCancelLogout();
+}
+
+
 
 
 

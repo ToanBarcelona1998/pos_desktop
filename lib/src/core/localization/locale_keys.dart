@@ -271,6 +271,8 @@ abstract final class LocaleKeys {
   static const String syncInProgress = 'sync_in_progress';
   static const String syncSuccess = 'sync_success';
   static const String pendingSync = 'pending_sync';
+  static const String syncAllSalesBeforeLogout = 'sync_all_sales_before_logout';
+  static const String logoutWithoutSync = 'logout_without_sync';
 
   // Date/Time
   static const String today = 'today';
