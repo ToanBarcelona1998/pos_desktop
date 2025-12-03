@@ -414,31 +414,8 @@ void _registerUseCases() {
   sl.registerLazy<CreateUnitUseCase>(() => CreateUnitUseCase(sl.get<UnitRepository>()));
 }
 
-// ============== Helper Functions ==============
-
 void setAccessToken(String? token) {
   if (sl.isRegistered<ApiClient>()) {
     sl.get<ApiClient>().setAccessToken(token);
-  }
-}
-
-Future<void> initDatabase(int userId) async {
-  await sl.get<DatabaseHelper>().initDatabase(userId);
-}
-
-Future<void> syncSystemData() async {
-  try {
-    await sl.get<SystemSyncService>().syncAll();
-  } catch (e) {
-    print('Failed to sync system data: $e');
-  }
-}
-
-Future<void> clearCache() async {
-  try {
-    await sl.get<SystemSyncService>().clearCache();
-    await sl.get<AuthLocalDataSource>().clearAll();
-  } catch (e) {
-    print('Failed to clear cache: $e');
   }
 }

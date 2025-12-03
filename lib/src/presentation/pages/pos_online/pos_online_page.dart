@@ -36,6 +36,8 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     iframeAllowFullscreen: true,
   );
 
+  late PosOnlineBloc _posOnlineBloc;
+
   late NetworkStatusSubject _networkStatusSubject;
 
   final AppConfig _appConfig = sl.get<AppConfig>();
@@ -58,6 +60,11 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   void initState() {
+    _posOnlineBloc = PosOnlineBloc(
+      authCubit: context.read<AuthCubit>(),
+      syncService: sl.get<SystemSyncService>(),
+      sellRepository: sl.get<SellRepository>(),
+    )..add(const PosOnlineInitialize());
     _networkStatusSubject = NetworkStatusSubject();
     _networkStatusSubject.attach(this);
     _networkStatusSubject.listenNetworkChanged();
@@ -69,6 +76,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     _networkStatusSubject.detach(this);
     _networkStatusSubject.close();
     webViewController?.dispose();
+    _posOnlineBloc.close();
     super.dispose();
   }
 
@@ -77,11 +85,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     final l10n = AppLocalizations.of(context);
 
     return BlocProvider(
-      create: (context) => PosOnlineBloc(
-        authCubit: context.read<AuthCubit>(),
-        syncService: sl.get<SystemSyncService>(),
-        sellRepository: sl.get<SellRepository>(),
-      )..add(const PosOnlineInitialize()),
+      create: (context) => _posOnlineBloc,
       child: BlocListener<AuthCubit, AuthState>(
         listener: (context, authState) {
           if (authState is Unauthenticated) {
@@ -268,21 +272,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                     // POS Offline Screen (stacked on top when network disconnects)
                     if (state.showOfflinePos)
                       Positioned.fill(
-                        child: Scaffold(
-                          appBar: AppBar(
-                            title: Text(l10n.translate(LocaleKeys.pos)),
-                            leading: IconButton(
-                              icon: const Icon(Icons.arrow_back),
-                              onPressed: () {
-                                context.read<PosOnlineBloc>().add(
-                                      const PosOnlineHideOffline(),
-                                    );
-                              },
-                              tooltip: l10n.translate(LocaleKeys.back),
-                            ),
-                          ),
-                          body: const PosPage(),
-                        ),
+                        child: const PosPage(),
                       ),
                   ],
                 ),
@@ -382,7 +372,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
         context,
         message: l10n.translate(LocaleKeys.networkConnectionIssue),
         onConfirm: () {
-          context.read<PosOnlineBloc>().add(const PosOnlineShowOffline());
+          _posOnlineBloc.add(const PosOnlineShowOffline());
         },
       );
     }
