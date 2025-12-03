@@ -1,5 +1,7 @@
 import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../core/localization/locale_keys.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
 
@@ -382,12 +384,12 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           emit(state.copyWith(
             isSubmitting: false,
             successMessage: event.isCredit
-                ? 'Credit sale created successfully'
+                ? LocaleKeys.creditSaleCreatedSuccessfully
                 : (state.isQuotation
-                    ? 'Quotation created successfully'
+                    ? LocaleKeys.quotationCreatedSuccessfully
                     : (state.isSuspended
-                        ? 'Sale suspended successfully'
-                        : 'Sale completed successfully')),
+                        ? LocaleKeys.saleSuspendedSuccessfully
+                        : LocaleKeys.saleCompletedSuccessfully)),
             cartItems: [],
             discountAmount: 0,
             discountType: 'fixed',
@@ -430,7 +432,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     if (!state.canSubmit) {
       emit(state.copyWith(
         failure: ValidationFailure(
-            message: 'Please select customer and add items'),
+            message: LocaleKeys.pleaseSelectCustomerAndAddItems),
       ));
       return;
     }
@@ -482,7 +484,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         onSuccess: (_) {
           emit(state.copyWith(
             isSubmitting: false,
-            successMessage: 'Quotation created successfully',
+            successMessage: LocaleKeys.quotationCreatedSuccessfully,
             cartItems: [],
             clearCustomer: true,
           ));
@@ -508,7 +510,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     if (state.cartItems.isEmpty) {
       emit(state.copyWith(
-        failure: ValidationFailure(message: 'Cart is empty'),
+        failure: ValidationFailure(message: LocaleKeys.cartIsEmpty),
       ));
       return;
     }
@@ -560,7 +562,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         onSuccess: (_) {
           emit(state.copyWith(
             isSubmitting: false,
-            successMessage: 'Sale suspended successfully',
+            successMessage: LocaleKeys.saleSuspendedSuccessfully,
             cartItems: [],
             clearCustomer: true,
             isSuspended: true,
@@ -624,7 +626,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           filteredProducts: filtered,
           currentPage: 1,
           hasMore: products.length >= _perPage,
-          successMessage: 'Products refreshed',
+          successMessage: LocaleKeys.syncCompletedSuccessfully,
         ));
       },
       onError: (failure) {

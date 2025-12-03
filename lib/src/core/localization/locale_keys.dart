@@ -371,6 +371,32 @@ abstract final class LocaleKeys {
   static const String summary = 'summary';
   static const String totalItems = 'total_items';
   static const String items = 'items';
+
+  // POS Online
+  static const String posOnline = 'pos_online';
+  static const String syncData = 'sync_data';
+  static const String authenticationFailed = 'authentication_failed';
+  static const String error = 'error';
+  static const String loggedOutSuccessfully = 'logged_out_successfully';
+  static const String syncCompletedSuccessfully = 'sync_completed_successfully';
+  static const String syncError = 'sync_error';
+  static const String pendingSynchronization = 'pending_synchronization';
+  static const String unsyncedSalesCount = 'unsynced_sales_count';
+  static const String syncAndLogout = 'sync_and_logout';
+  static const String logoutError = 'logout_error';
+  static const String syncingSystemData = 'syncing_system_data';
+  static const String syncingUnsyncedSales = 'syncing_unsynced_sales';
+  static const String syncing = 'syncing';
+  static const String networkConnectionIssue = 'network_connection_issue';
+  static const String switchToOfflineMode = 'switch_to_offline_mode';
+
+  // POS Messages
+  static const String pleaseSelectCustomerAndAddItems = 'please_select_customer_and_add_items';
+  static const String cartIsEmpty = 'cart_is_empty';
+  static const String creditSaleCreatedSuccessfully = 'credit_sale_created_successfully';
+  static const String quotationCreatedSuccessfully = 'quotation_created_successfully';
+  static const String saleSuspendedSuccessfully = 'sale_suspended_successfully';
+  static const String saleCompletedSuccessfully = 'sale_completed_successfully';
 }
 
 

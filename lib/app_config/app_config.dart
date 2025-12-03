@@ -4,12 +4,14 @@ final class AppConfig {
   final String clientSecret;
   final String clientId;
   final String webUrl;
+  final String webHeader;
   final String environment;
 
   const AppConfig({
     required this.baseUrl,
     required this.clientSecret,
     required this.webUrl,
+    required this.webHeader,
     this.clientId = '7',
     this.environment = 'production',
   });
@@ -19,30 +21,9 @@ final class AppConfig {
       baseUrl: json['base_url'] as String,
       clientSecret: json['client_secret'] as String,
       webUrl: json['web_url'] as String,
+      webHeader: json['web_header'] as String,
       clientId: json['client_id'] as String? ?? '7',
       environment: json['environment'] as String? ?? 'production',
-    );
-  }
-
-  /// Development configuration
-  factory AppConfig.development() {
-    return const AppConfig(
-      baseUrl: 'https://sandbox.oman.digityze.asia',
-      clientSecret: 'ikfxjBPEghUyohjQrWaMRugc8q973ntYzibFxTjC',
-      webUrl: 'https://sandbox.oman.digityze.asia',
-      clientId: '7',
-      environment: 'development',
-    );
-  }
-
-  /// Production configuration
-  factory AppConfig.production() {
-    return const AppConfig(
-      baseUrl: 'https://sandbox.oman.digityze.asia',
-      clientSecret: 'ikfxjBPEghUyohjQrWaMRugc8q973ntYzibFxTjC',
-      webUrl: 'https://sandbox.oman.digityze.asia',
-      clientId: '7',
-      environment: 'production',
     );
   }
 

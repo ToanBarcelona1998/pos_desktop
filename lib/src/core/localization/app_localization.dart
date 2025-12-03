@@ -12,8 +12,8 @@ class AppLocalizations {
   AppLocalizations({required this.locale});
 
   /// Gets the localization from context (nullable)
-  static AppLocalizations? of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
   /// Localization delegate

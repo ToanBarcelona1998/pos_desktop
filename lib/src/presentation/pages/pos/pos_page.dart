@@ -60,9 +60,12 @@ class _PosView extends StatelessWidget {
           );
         }
         if (state.successMessage != null) {
+          // Translate success message key
+          final translatedMessage = l10n?.translate(state.successMessage!) ??
+              state.successMessage!;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.successMessage!),
+              content: Text(translatedMessage),
               backgroundColor: Colors.green,
             ),
           );

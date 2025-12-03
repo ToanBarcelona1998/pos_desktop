@@ -33,6 +33,8 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     final theme = Theme.of(context);
 
     return AppBar(
+      leading: const SizedBox(),
+      leadingWidth: 0,
       title: Row(
         children: [
           // Location selector
@@ -44,7 +46,7 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               borderRadius: AppRadius.borderRadiusSm,
-              border: Border.all(color: theme.dividerColor),
+              // border: Border.all(color: theme.dividerColor),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(

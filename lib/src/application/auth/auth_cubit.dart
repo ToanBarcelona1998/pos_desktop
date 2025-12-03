@@ -37,7 +37,7 @@ class AuthCubit extends Cubit<AuthState> {
             setAccessToken(token.accessToken);
             
             // Initialize database for this user
-            await _initializeDatabase(user.id!);
+            await _initializeDatabase(user.id);
             
             // Sync system data in background (for offline mode)
             _syncSystemData();
@@ -94,6 +94,59 @@ class AuthCubit extends Cubit<AuthState> {
         emit(AuthError(failure));
       },
     );
+  }
+
+  /// Logs in from webview with access token and user info
+  Future<void> loginFromWebView({
+    required String accessToken,
+    required Map<String, dynamic> userInfo,
+  }) async {
+    emit(const AuthLoading());
+
+    try {
+      // Create token entity from access token
+      final token = AuthTokenEntity(
+        accessToken: accessToken,
+        refreshToken: null,
+        tokenType: 'Bearer',
+        expiresAt: null,
+      );
+
+      // Save token
+      final saveTokenResult = await _authRepository.saveToken(token);
+      await saveTokenResult.fold(
+        onSuccess: (_) {},
+        onError: (failure) async {
+          emit(AuthError(failure));
+          return;
+        },
+      );
+
+      // Set token for API calls
+      setAccessToken(accessToken);
+
+      // Map user info from webview to UserModel
+      // Webview sends all user fields including business_id, role_id, role_name, etc.
+      final userModel = UserModel.fromJson(userInfo);
+
+      // Cache user directly using local data source
+      final authLocalDataSource = sl.get<AuthLocalDataSource>();
+      await authLocalDataSource.cacheUser(userModel);
+
+      // Initialize database for this user
+      await _initializeDatabase(userModel.id);
+
+      // Sync system data in background (like old code: SystemApi().store(), Variations().refresh())
+      _syncSystemData();
+
+      // Convert to entity using mapper
+      final userMapper = const UserMapper();
+      final userEntity = userMapper.toEntity(userModel);
+
+      emit(Authenticated(user: userEntity, token: token));
+    } catch (e) {
+      emit(AuthError(UnknownFailure(message: e.toString())));
+    }
   }
 
   /// Initialize database for user

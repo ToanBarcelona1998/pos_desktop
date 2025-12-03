@@ -15,14 +15,26 @@ class UserMapper extends ReadOnlyMapper<UserModel, UserEntity> {
       email: model.email,
       firstName: model.firstName,
       lastName: model.lastName,
+      surname: model.surname,
       isAdmin: model.isAdmin ?? false,
       permissions: model.allPermissions
               ?.map((e) => e.toString())
               .toList() ??
           const [],
+      businessId: model.businessId,
+      roleId: model.roleId,
+      roleName: model.roleName,
+      userType: model.userType,
+      language: model.language,
+      status: model.status,
+      contactNumber: model.contactNumber,
+      maxSalesDiscountPercent: model.maxSalesDiscountPercent != null
+          ? double.tryParse(model.maxSalesDiscountPercent!)
+          : null,
     );
   }
 }
+
 
 
 

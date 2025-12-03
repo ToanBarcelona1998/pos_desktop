@@ -34,26 +34,12 @@ class EnvConfig {
         ? 'env_production.json'
         : 'env_development.json';
 
-    try {
-      final jsonString = await rootBundle.loadString('assets/config/$configFileName');
-      final jsonMap = json.decode(jsonString) as Map<String, dynamic>;
+    final jsonString = await rootBundle.loadString('assets/config/$configFileName');
+    final jsonMap = json.decode(jsonString) as Map<String, dynamic>;
 
-      _config = AppConfig(
-        baseUrl: jsonMap['base_url'] as String? ?? 'https://sandbox.oman.digityze.asia',
-        clientSecret: jsonMap['client_secret'] as String? ?? '',
-        webUrl: jsonMap['web_url'] as String? ?? '',
-        clientId: jsonMap['client_id'] as String? ?? '7',
-        environment: jsonMap['environment'] as String? ?? 'development',
-      );
+    _config = AppConfig.fromJson(jsonMap);
 
-      return _config!;
-    } catch (e) {
-      // Fallback to default config
-      _config = env == Environment.production
-          ? AppConfig.production()
-          : AppConfig.development();
-      return _config!;
-    }
+    return _config!;
   }
 
   /// Reloads configuration with a different environment

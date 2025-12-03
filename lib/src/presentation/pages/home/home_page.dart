@@ -71,8 +71,8 @@ class _HomeView extends StatelessWidget {
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
-          // Reset syncSuccess flag
-          context.read<HomeBloc>().add(const _HomeResetSyncSuccess());
+          // // Reset syncSuccess flag
+          // context.read<HomeBloc>().add(const _HomeResetSyncSuccess());
         }
       },
       builder: (context, state) {
