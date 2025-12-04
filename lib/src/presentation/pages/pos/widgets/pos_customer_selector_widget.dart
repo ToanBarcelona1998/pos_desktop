@@ -35,8 +35,7 @@ class PosCustomerSelectorWidget extends StatefulWidget {
       _PosCustomerSelectorWidgetState();
 }
 
-class _PosCustomerSelectorWidgetState
-    extends State<PosCustomerSelectorWidget> {
+class _PosCustomerSelectorWidgetState extends State<PosCustomerSelectorWidget> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -76,22 +75,22 @@ class _PosCustomerSelectorWidgetState
                 IconWrapper(
                   icon: Icons.person,
                   iconColor: theme.colorScheme.primary,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                  backgroundColor: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
                   onTap: null,
                 ),
                 SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    l10n?.translate(LocaleKeys.selectCustomer) ??
-                        'Select Customer',
+                    l10n.translate(LocaleKeys.selectCustomer),
                     style: AppTypography.titleLarge,
                   ),
                 ),
                 if (widget.onAddCustomer != null)
                   IconButton(
-                    icon: Icon(Icons.person_add, color: theme.colorScheme.primary),
+                    icon: Icon(Icons.person_add,
+                        color: theme.colorScheme.primary),
                     onPressed: widget.onAddCustomer,
-                    tooltip: l10n?.translate('add_customer') ?? 'Add Customer',
+                    tooltip: l10n.translate(LocaleKeys.addCustomer),
                   ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -104,8 +103,9 @@ class _PosCustomerSelectorWidgetState
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: l10n?.translate(LocaleKeys.search) ?? 'Search...',
-                prefixIcon: Icon(Icons.search, color: theme.colorScheme.primary),
+                hintText: l10n.translate(LocaleKeys.search),
+                prefixIcon:
+                    Icon(Icons.search, color: theme.colorScheme.primary),
                 border: OutlineInputBorder(
                   borderRadius: AppRadius.borderRadiusSm,
                 ),
@@ -139,9 +139,9 @@ class _PosCustomerSelectorWidgetState
 }
 
 class _EmptyCustomers extends StatelessWidget {
-  final AppLocalizations? l10n;
+  final AppLocalizations l10n;
 
-  const _EmptyCustomers({this.l10n});
+  const _EmptyCustomers({required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -156,8 +156,7 @@ class _EmptyCustomers extends StatelessWidget {
           ),
           SizedBox(height: AppSpacing.md),
           Text(
-            l10n?.translate(LocaleKeys.noCustomersFound) ??
-                'No customers found',
+            l10n.translate(LocaleKeys.noCustomersFound),
             style: AppTypography.bodyLarge.copyWith(color: Colors.grey),
           ),
         ],
@@ -189,7 +188,7 @@ class _CustomerList extends StatelessWidget {
 
         return ListTile(
           leading: CircleAvatar(
-            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+            backgroundColor: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
             child: Icon(
               Icons.person,
               color: theme.colorScheme.primary,
@@ -211,14 +210,10 @@ class _CustomerList extends StatelessWidget {
               ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
               : null,
           selected: isSelected,
-          selectedTileColor: theme.colorScheme.primary.withOpacity(0.1),
+          selectedTileColor: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
           onTap: () => onCustomerSelected(customer),
         );
       },
     );
   }
 }
-
-
-
-

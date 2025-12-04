@@ -613,5 +613,16 @@
   "quotation_created_successfully": "Quotation created successfully",
   "sale_suspended_successfully": "Sale suspended successfully",
   "sale_completed_successfully": "Sale completed successfully",
-  "products_refreshed": "Products refreshed"
+  "products_refreshed": "Products refreshed",
+  "category": "Category",
+  "brand": "Brand",
+  "all_categories": "All Categories",
+  "all_brands": "All Brands",
+  "suspend": "Suspend",
+  "credit": "Credit",
+  "methods": "Methods",
+  "history": "History",
+  "filters": "Filters",
+  "subtotal": "Subtotal",
+  "product": "Product"
 }

@@ -51,7 +51,7 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
                 value: selectedLocationId,
-                hint: Text(l10n?.translate(LocaleKeys.selectLocation) ?? 'Select Location'),
+                hint: Text(l10n.translate(LocaleKeys.selectLocation)),
                 items: locations.map((location) {
                   return DropdownMenuItem<int>(
                     value: location.id,
@@ -94,12 +94,12 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
         IconButton(
           icon: const Icon(Icons.refresh),
           onPressed: onRefresh,
-          tooltip: l10n?.translate(LocaleKeys.refresh) ?? 'Refresh',
+          tooltip: l10n.translate(LocaleKeys.refresh),
         ),
         IconButton(
           icon: const Icon(Icons.pause_circle_outline),
           onPressed: onSuspendedSales,
-          tooltip: l10n?.translate(LocaleKeys.suspendedSales) ?? 'Suspended Sales',
+          tooltip: l10n.translate(LocaleKeys.suspendedSales),
         ),
         IconButton(
           icon: const Icon(Icons.fullscreen),

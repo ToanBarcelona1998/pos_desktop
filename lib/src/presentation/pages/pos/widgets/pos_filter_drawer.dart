@@ -39,7 +39,7 @@ class PosFilterDrawer extends StatelessWidget {
         color: theme.scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withAlpha((0.2 * 255).round()),
             blurRadius: 10,
             offset: const Offset(-2, 0),
           ),
@@ -60,7 +60,7 @@ class PosFilterDrawer extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    l10n?.translate('Filters') ?? 'Filters',
+                    l10n.translate(LocaleKeys.filters),
                     style: AppTypography.titleLarge.copyWith(
                       color: theme.colorScheme.onPrimary,
                       fontWeight: FontWeight.bold,
@@ -84,10 +84,10 @@ class PosFilterDrawer extends StatelessWidget {
               children: [
                 // Category section
                 _FilterSection(
-                  title: l10n?.translate('Category') ?? 'Category',
+                  title: l10n.translate(LocaleKeys.category),
                   icon: Icons.category,
                   items: [
-                    {'id': null, 'name': l10n?.translate('All Categories') ?? 'All Categories'},
+                    {'id': null, 'name': l10n.translate(LocaleKeys.allCategories)},
                     ...categories.map((c) => {'id': c.id, 'name': c.name}),
                   ],
                   selectedId: selectedCategoryId,
@@ -98,10 +98,10 @@ class PosFilterDrawer extends StatelessWidget {
                 SizedBox(height: AppSpacing.lg),
                 // Brand section
                 _FilterSection(
-                  title: l10n?.translate('Brand') ?? 'Brand',
+                  title: l10n.translate(LocaleKeys.brand),
                   icon: Icons.branding_watermark,
                   items: [
-                    {'id': null, 'name': l10n?.translate('All Brands') ?? 'All Brands'},
+                    {'id': null, 'name': l10n.translate(LocaleKeys.allBrands)},
                     ...brands.map((b) => {'id': b.id, 'name': b.name}),
                   ],
                   selectedId: selectedBrandId,
@@ -177,7 +177,7 @@ class _FilterSection extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? theme.colorScheme.primary.withOpacity(0.1)
+                      ? theme.colorScheme.primary.withAlpha((0.1 * 255).round())
                       : theme.cardColor,
                   borderRadius: AppRadius.borderRadiusSm,
                   border: Border.all(

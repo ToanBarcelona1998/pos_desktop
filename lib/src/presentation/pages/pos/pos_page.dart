@@ -61,8 +61,7 @@ class _PosView extends StatelessWidget {
         }
         if (state.successMessage != null) {
           // Translate success message key
-          final translatedMessage = l10n?.translate(state.successMessage!) ??
-              state.successMessage!;
+          final translatedMessage = l10n.translate(state.successMessage!);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(translatedMessage),
@@ -75,7 +74,7 @@ class _PosView extends StatelessWidget {
         if (state.isLoading) {
           return Scaffold(
             appBar: AppBar(
-              title: Text(l10n?.translate(LocaleKeys.pos) ?? 'POS'),
+              title: Text(l10n.translate(LocaleKeys.pos)),
             ),
             body: const AppLoadingCenter(),
           );

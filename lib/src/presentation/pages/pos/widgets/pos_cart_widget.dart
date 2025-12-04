@@ -62,6 +62,7 @@ class PosCartWidget extends StatelessWidget {
                     currencySymbol: currencySymbol,
                     onQuantityChanged: onQuantityChanged,
                     onRemoveItem: onRemoveItem,
+                    l10n: l10n,
                   ),
           ),
           const Divider(height: 1),
@@ -84,7 +85,7 @@ class PosCartWidget extends StatelessWidget {
 class _CustomerSelectorSection extends StatelessWidget {
   final ContactEntity? customer;
   final VoidCallback? onSelect;
-  final AppLocalizations? l10n;
+  final AppLocalizations l10n;
   final ThemeData theme;
 
   const _CustomerSelectorSection({
@@ -109,9 +110,7 @@ class _CustomerSelectorSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    customer?.name ??
-                        (l10n?.translate(LocaleKeys.selectCustomer) ??
-                            'Select Customer'),
+                    customer?.name ?? l10n.translate(LocaleKeys.selectCustomer),
                     style: AppTypography.titleMedium,
                   ),
                   if (customer?.mobile != null)
@@ -133,7 +132,7 @@ class _CustomerSelectorSection extends StatelessWidget {
 }
 
 class _EmptyCart extends StatelessWidget {
-  final AppLocalizations? l10n;
+  final AppLocalizations l10n;
 
   const _EmptyCart({required this.l10n});
 
@@ -150,7 +149,7 @@ class _EmptyCart extends StatelessWidget {
           ),
           SizedBox(height: AppSpacing.md),
           Text(
-            l10n?.translate(LocaleKeys.cartEmpty) ?? 'Cart is empty',
+            l10n.translate(LocaleKeys.cartEmpty),
             style: AppTypography.bodyLarge.copyWith(color: Colors.grey),
           ),
         ],
@@ -165,10 +164,12 @@ class _CartItemsList extends StatelessWidget {
   final void Function(int productId, int variationId, int quantity)?
       onQuantityChanged;
   final void Function(int productId, int variationId)? onRemoveItem;
+  final AppLocalizations l10n;
 
   const _CartItemsList({
     required this.cartItems,
     required this.currencySymbol,
+    required this.l10n,
     this.onQuantityChanged,
     this.onRemoveItem,
   });
@@ -184,8 +185,9 @@ class _CartItemsList extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = cartItems[index];
         final productId = item.productId;
-        final productName =
-            item.product.displayName ?? item.product.productName ?? 'Product';
+        final productName = item.product.displayName ??
+            item.product.productName ??
+            l10n.translate(LocaleKeys.product);
 
         return Padding(
           padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
@@ -265,7 +267,8 @@ class _CartItemsList extends StatelessWidget {
               ),
               // Remove button
               IconButton(
-                icon: Icon(Icons.delete_outline, size: 20, color: theme.colorScheme.error),
+                icon: Icon(Icons.delete_outline,
+                    size: 20, color: theme.colorScheme.error),
                 onPressed: () {
                   onRemoveItem?.call(productId, item.variationId);
                 },
@@ -286,7 +289,7 @@ class _CartSummary extends StatelessWidget {
   final double tax;
   final double total;
   final String currencySymbol;
-  final AppLocalizations? l10n;
+  final AppLocalizations l10n;
   final ThemeData theme;
 
   const _CartSummary({
@@ -312,18 +315,18 @@ class _CartSummary extends StatelessWidget {
       child: Column(
         children: [
           _SummaryRow(
-            label: l10n?.translate('Subtotal') ?? 'Subtotal',
+            label: l10n.translate(LocaleKeys.subtotal),
             value: '$currencySymbol${subtotal.toStringAsFixed(2)}',
           ),
           if (discount > 0)
             _SummaryRow(
-              label: l10n?.translate(LocaleKeys.discount) ?? 'Discount',
+              label: l10n.translate(LocaleKeys.discount),
               value: '-$currencySymbol${discount.toStringAsFixed(2)}',
               valueColor: Colors.red,
             ),
           if (tax > 0)
             _SummaryRow(
-              label: l10n?.translate(LocaleKeys.tax) ?? 'Tax',
+              label: l10n.translate(LocaleKeys.tax),
               value: '$currencySymbol${tax.toStringAsFixed(2)}',
             ),
           SizedBox(height: AppSpacing.xs),
@@ -340,7 +343,7 @@ class _CartSummary extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  l10n?.translate(LocaleKeys.total) ?? 'Total',
+                  l10n.translate(LocaleKeys.total),
                   style: AppTypography.titleMedium.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -393,4 +396,3 @@ class _SummaryRow extends StatelessWidget {
     );
   }
 }
-

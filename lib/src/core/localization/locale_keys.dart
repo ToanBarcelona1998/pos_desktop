@@ -206,6 +206,8 @@ abstract final class LocaleKeys {
 
   // Brands
   static const String brands = 'brands';
+  static const String brand = 'brand';
+  static const String allBrands = 'all_brands';
   static const String addBrand = 'add_brand';
   static const String editBrand = 'edit_brand';
   static const String brandName = 'brand_name';
@@ -220,10 +222,12 @@ abstract final class LocaleKeys {
 
   // Categories
   static const String categories = 'categories';
+  static const String category = 'category';
   static const String selectCategory = 'select_category';
   static const String subCategories = 'sub_categories';
   static const String selectSubCategory = 'select_sub_category';
   static const String categoryName = 'category_name';
+  static const String allCategories = 'all_categories';
 
   // Units
   static const String units = 'units';
@@ -397,6 +401,14 @@ abstract final class LocaleKeys {
   static const String quotationCreatedSuccessfully = 'quotation_created_successfully';
   static const String saleSuspendedSuccessfully = 'sale_suspended_successfully';
   static const String saleCompletedSuccessfully = 'sale_completed_successfully';
+  
+  // POS Actions
+  static const String suspend = 'suspend';
+  static const String credit = 'credit';
+  static const String methods = 'methods';
+  static const String history = 'history';
+  static const String filters = 'filters';
+  static const String subtotal = 'subtotal';
 }
 
 

@@ -47,7 +47,7 @@ class PosBottomBarWidget extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha((0.1 * 255).round()),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -60,25 +60,25 @@ class PosBottomBarWidget extends StatelessWidget {
             // Quick action buttons
             _ActionButton(
               icon: Icons.drafts_outlined,
-              label: l10n?.translate(LocaleKeys.draft) ?? 'Draft',
+              label: l10n.translate(LocaleKeys.draft),
               color: Colors.lightBlue,
               onTap: onQuotation,
             ),
             _ActionButton(
               icon: Icons.description_outlined,
-              label: l10n?.translate(LocaleKeys.quotation) ?? 'Quotation',
+              label: l10n.translate(LocaleKeys.quotation),
               color: Colors.orange,
               onTap: onQuotation,
             ),
             _ActionButton(
               icon: Icons.pause_circle_outline,
-              label: l10n?.translate('Suspend') ?? 'Suspend',
+              label: l10n.translate(LocaleKeys.suspend),
               color: Colors.red,
               onTap: onSuspend,
             ),
             _ActionButton(
               icon: Icons.credit_card,
-              label: l10n?.translate('Credit') ?? 'Credit',
+              label: l10n.translate(LocaleKeys.credit),
               color: Colors.purple,
               onTap: onCreditPayment,
             ),
@@ -89,7 +89,7 @@ class PosBottomBarWidget extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _MainActionButton(
-                      label: l10n?.translate('Methods') ?? 'Methods',
+                      label: l10n.translate(LocaleKeys.methods),
                       color: Colors.deepOrange,
                       icon: Icons.payment,
                       isLoading: isSubmitting,
@@ -99,7 +99,7 @@ class PosBottomBarWidget extends StatelessWidget {
                   SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: _MainActionButton(
-                      label: l10n?.translate(LocaleKeys.cash) ?? 'Cash',
+                      label: l10n.translate(LocaleKeys.cash),
                       color: Colors.green,
                       icon: Icons.payments,
                       isLoading: isSubmitting,
@@ -109,7 +109,7 @@ class PosBottomBarWidget extends StatelessWidget {
                   SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: _MainActionButton(
-                      label: l10n?.translate(LocaleKeys.cancel) ?? 'Cancel',
+                      label: l10n.translate(LocaleKeys.cancel),
                       color: Colors.red,
                       icon: Icons.cancel,
                       onTap: onCancel,
@@ -125,7 +125,7 @@ class PosBottomBarWidget extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '${l10n?.translate(LocaleKeys.totalPayable) ?? 'Total'}: $currencySymbol${total.toStringAsFixed(2)}',
+                      '${l10n.translate(LocaleKeys.totalPayable)}: $currencySymbol${total.toStringAsFixed(2)}',
                       style: AppTypography.headlineSmall.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -135,7 +135,7 @@ class PosBottomBarWidget extends StatelessWidget {
                   IntrinsicHeight(
                     child: GradientAppButton(
                       leading: Icon(Icons.history),
-                      text: l10n?.translate('Lịch sử giao dịch') ?? 'History',
+                      text: l10n.translate(LocaleKeys.history),
                       // color: theme.colorScheme.primary,
                       padding: EdgeInsets.symmetric(
                         horizontal: AppSpacing.sm,
@@ -242,6 +242,7 @@ class _MainActionButton extends StatelessWidget {
     );
   }
 }
+
 
 
 

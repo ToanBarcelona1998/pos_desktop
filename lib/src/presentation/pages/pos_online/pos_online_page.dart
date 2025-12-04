@@ -119,7 +119,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
               final translatedMessage = l10n.translate(state.successMessage!);
               
               // If logout was successful, send script to webview
-              if (state.successMessage == 'logged_out_successfully' && webViewController != null) {
+              if (state.successMessage == LocaleKeys.loggedOutSuccessfully && webViewController != null) {
                 webViewController!.evaluateJavascript(source: _logoutScript);
               }
               

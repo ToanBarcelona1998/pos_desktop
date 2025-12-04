@@ -22,3 +22,4 @@ class SyncCategoriesUseCase implements UseCaseNoParams<void> {
 
 
 
+

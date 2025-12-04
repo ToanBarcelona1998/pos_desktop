@@ -3,6 +3,7 @@ import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../application/auth/auth_cubit.dart';
+import '../../../core/localization/locale_keys.dart';
 import 'pos_online_event.dart';
 import 'pos_online_state.dart';
 
@@ -70,7 +71,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
 
           emit(state.copyWith(
             isSyncing: false,
-            successMessage: 'sync_completed_successfully',
+            successMessage: LocaleKeys.syncCompletedSuccessfully,
           ));
         } catch (e) {
           emit(state.copyWith(
@@ -85,7 +86,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
           await _syncService.syncAll();
           emit(state.copyWith(
             isSyncing: false,
-            successMessage: 'sync_completed_successfully',
+            successMessage: LocaleKeys.syncCompletedSuccessfully,
           ));
         } catch (e) {
           emit(state.copyWith(
@@ -150,7 +151,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
 
       emit(state.copyWith(
         isSyncing: false,
-        successMessage: 'logged_out_successfully',
+        successMessage: LocaleKeys.loggedOutSuccessfully,
         showLogoutDialog: false,
       ));
     } catch (e) {
@@ -170,7 +171,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
       await _authCubit.logout();
 
       emit(state.copyWith(
-        successMessage: 'logged_out_successfully',
+        successMessage: LocaleKeys.loggedOutSuccessfully,
       ));
     } catch (e) {
       emit(state.copyWith(
@@ -226,7 +227,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
       await _authCubit.logout();
 
       emit(state.copyWith(
-        successMessage: 'logged_out_successfully',
+        successMessage: LocaleKeys.loggedOutSuccessfully,
       ));
     } catch (e) {
       emit(state.copyWith(

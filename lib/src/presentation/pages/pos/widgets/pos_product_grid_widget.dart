@@ -145,8 +145,8 @@ class _PosProductGridWidgetState extends State<PosProductGridWidget>
                               products: widget.products,
                               cartItems: widget.cartItems,
                               onProductTap: widget.onProductTap,
-                              isLoadingMore: widget.isLoadingMore ?? false,
-                              hasMore: widget.hasMore ?? false,
+                              isLoadingMore: widget.isLoadingMore,
+                              hasMore: widget.hasMore,
                               onLoadMore: widget.onLoadMore,
                             ),
                     ),
@@ -158,7 +158,7 @@ class _PosProductGridWidgetState extends State<PosProductGridWidget>
           GestureDetector(
             onTap: _toggleFilterDrawer,
             child: Container(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withAlpha((0.5 * 255).round()),
             ),
           ),
         // Filter drawer
@@ -186,7 +186,7 @@ class _FilterSection extends StatelessWidget {
   final int? selectedCategoryId;
   final int? selectedBrandId;
   final VoidCallback? onFilterTap;
-  final AppLocalizations? l10n;
+  final AppLocalizations l10n;
 
   const _FilterSection({
     this.selectedCategoryId,
@@ -197,8 +197,9 @@ class _FilterSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final hasActiveFilter = selectedCategoryId != null || selectedBrandId != null;
+    // final theme = Theme.of(context);
+    final hasActiveFilter =
+        selectedCategoryId != null || selectedBrandId != null;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
@@ -207,7 +208,7 @@ class _FilterSection extends StatelessWidget {
           Expanded(
             child: _FilterButton(
               icon: Icons.category,
-              label: l10n?.translate('Category') ?? 'Category',
+              label: l10n.translate(LocaleKeys.category),
               isSelected: selectedCategoryId != null,
               hasActiveFilter: hasActiveFilter,
               onTap: onFilterTap,
@@ -217,7 +218,7 @@ class _FilterSection extends StatelessWidget {
           Expanded(
             child: _FilterButton(
               icon: Icons.branding_watermark,
-              label: l10n?.translate('Brand') ?? 'Brand',
+              label: l10n.translate(LocaleKeys.brand),
               isSelected: selectedBrandId != null,
               hasActiveFilter: hasActiveFilter,
               onTap: onFilterTap,
@@ -258,13 +259,11 @@ class _FilterButton extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? theme.colorScheme.primary.withOpacity(0.1)
+              ? theme.colorScheme.primary.withAlpha((0.1 * 255).round())
               : theme.cardColor,
           borderRadius: AppRadius.borderRadiusSm,
           border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.dividerColor,
+            color: isSelected ? theme.colorScheme.primary : theme.dividerColor,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -303,7 +302,7 @@ class _FilterButton extends StatelessWidget {
 }
 
 class _EmptyProducts extends StatelessWidget {
-  final AppLocalizations? l10n;
+  final AppLocalizations l10n;
 
   const _EmptyProducts({required this.l10n});
 
@@ -320,7 +319,7 @@ class _EmptyProducts extends StatelessWidget {
           ),
           SizedBox(height: AppSpacing.md),
           Text(
-            l10n?.translate(LocaleKeys.noProductsAvailable) ?? 'No products found',
+            l10n.translate(LocaleKeys.noProductsAvailable),
             style: AppTypography.bodyLarge.copyWith(color: Colors.grey),
           ),
         ],
@@ -384,7 +383,8 @@ class _ProductGrid extends StatelessWidget {
           final productId = product.productId ?? product.id;
           final variationId = product.variationId ?? 0;
           final cartItem = cartItems.firstWhere(
-            (item) => item.productId == productId && item.variationId == variationId,
+            (item) =>
+                item.productId == productId && item.variationId == variationId,
             orElse: () => CartItem(
               product: product,
               productId: productId,
@@ -393,7 +393,8 @@ class _ProductGrid extends StatelessWidget {
             ),
           );
           final inCart = cartItems.any(
-            (item) => item.productId == productId && item.variationId == variationId,
+            (item) =>
+                item.productId == productId && item.variationId == variationId,
           );
 
           return _ProductItem(
@@ -421,7 +422,10 @@ class _ProductItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final name = product.displayName ?? product.productName ?? 'Product';
+    final l10n = AppLocalizations.of(context);
+    final name = product.displayName ??
+        product.productName ??
+        l10n.translate(LocaleKeys.product);
     final price = product.sellPriceIncTax ?? product.defaultSellPrice ?? 0;
 
     return Card(
@@ -442,7 +446,7 @@ class _ProductItem extends StatelessWidget {
                 // Product image
                 Container(
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withAlpha((255 * 0.1).round()),
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(4),
                     ),
@@ -458,7 +462,8 @@ class _ProductItem extends StatelessWidget {
                             height: AppSizes.avatarLg,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => _buildPlaceholder(theme),
+                            placeholder: (context, url) =>
+                                _buildPlaceholder(theme),
                             errorWidget: (context, url, error) => Image.asset(
                               'assets/images/default_product.png',
                               height: AppSizes.avatarLg,
@@ -531,7 +536,7 @@ class _ProductItem extends StatelessWidget {
       child: Icon(
         Icons.inventory_2_outlined,
         size: 32,
-        color: theme.colorScheme.primary.withOpacity(0.5),
+        color: theme.colorScheme.primary.withAlpha((0.5 * 255).round()),
       ),
     );
   }

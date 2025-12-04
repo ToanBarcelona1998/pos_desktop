@@ -9,7 +9,6 @@ import '../../../../core/localization/app_localization.dart';
 import '../../../../core/localization/locale_keys.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/icon_wrapper_widget.dart';
-import '../pos_state.dart';
 
 /// Bottom sheet for suspended sales
 class PosSuspendedSalesBottomSheet extends StatelessWidget {
@@ -49,13 +48,13 @@ class PosSuspendedSalesBottomSheet extends StatelessWidget {
               IconWrapper(
                 icon: Icons.pause_circle_outline,
                 iconColor: theme.colorScheme.primary,
-                backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                backgroundColor: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
                 onTap: null,
               ),
               SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  l10n?.translate(LocaleKeys.suspendedSales) ?? 'Suspended Sales',
+                  l10n.translate(LocaleKeys.suspendedSales),
                   style: AppTypography.titleLarge,
                 ),
               ),
@@ -83,7 +82,7 @@ class PosSuspendedSalesBottomSheet extends StatelessWidget {
                               Navigator.of(context).pop();
                             },
                             onDelete: () {
-                              onDelete?.call(sell.id ?? 0);
+                              onDelete?.call(sell.id);
                             },
                             theme: theme,
                             l10n: l10n,
@@ -98,9 +97,9 @@ class PosSuspendedSalesBottomSheet extends StatelessWidget {
 }
 
 class _EmptySuspendedSales extends StatelessWidget {
-  final AppLocalizations? l10n;
+  final AppLocalizations l10n;
 
-  const _EmptySuspendedSales({this.l10n});
+  const _EmptySuspendedSales({required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +114,7 @@ class _EmptySuspendedSales extends StatelessWidget {
           ),
           SizedBox(height: AppSpacing.md),
           Text(
-            l10n?.translate(LocaleKeys.noData) ?? 'No suspended sales',
+            l10n.translate(LocaleKeys.noData),
             style: AppTypography.bodyLarge.copyWith(color: Colors.grey),
           ),
         ],
@@ -129,14 +128,14 @@ class _SuspendedSaleItem extends StatelessWidget {
   final VoidCallback onContinue;
   final VoidCallback onDelete;
   final ThemeData theme;
-  final AppLocalizations? l10n;
+  final AppLocalizations l10n;
 
   const _SuspendedSaleItem({
     required this.sell,
     required this.onContinue,
     required this.onDelete,
     required this.theme,
-    this.l10n,
+    required this.l10n,
   });
 
   @override
@@ -181,7 +180,7 @@ class _SuspendedSaleItem extends StatelessWidget {
                     vertical: AppSpacing.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
                     borderRadius: AppRadius.borderRadiusSm,
                   ),
                   child: Text(
@@ -197,7 +196,7 @@ class _SuspendedSaleItem extends StatelessWidget {
             if (sell.sellLines.isNotEmpty) ...[
               SizedBox(height: AppSpacing.xs),
               Text(
-                '${sell.sellLines.length} ${l10n?.translate(LocaleKeys.items) ?? 'items'}',
+                '${sell.sellLines.length} ${l10n.translate(LocaleKeys.items)}',
                 style: AppTypography.bodySmall,
               ),
             ],
@@ -206,7 +205,7 @@ class _SuspendedSaleItem extends StatelessWidget {
               children: [
                 Expanded(
                   child: AppButton(
-                    text: l10n?.translate(LocaleKeys.continueSale) ?? 'Continue',
+                    text: l10n.translate(LocaleKeys.continueSale),
                     icon: Icons.play_arrow,
                     onPressed: onContinue,
                     backgroundColor: theme.colorScheme.primary,
@@ -214,7 +213,7 @@ class _SuspendedSaleItem extends StatelessWidget {
                 ),
                 SizedBox(width: AppSpacing.sm),
                 AppButton(
-                  text: l10n?.translate(LocaleKeys.delete) ?? 'Delete',
+                  text: l10n.translate(LocaleKeys.delete),
                   icon: Icons.delete_outline,
                   onPressed: onDelete,
                   isOutlined: true,
@@ -229,6 +228,7 @@ class _SuspendedSaleItem extends StatelessWidget {
     );
   }
 }
+
 
 
 

@@ -613,5 +613,16 @@
   "quotation_created_successfully": "Tạo báo giá thành công",
   "sale_suspended_successfully": "Tạm dừng bán hàng thành công",
   "sale_completed_successfully": "Hoàn tất bán hàng thành công",
-  "products_refreshed": "Đã làm mới sản phẩm"
+  "products_refreshed": "Đã làm mới sản phẩm",
+  "category": "Danh mục",
+  "brand": "Thương hiệu",
+  "all_categories": "Tất cả danh mục",
+  "all_brands": "Tất cả thương hiệu",
+  "suspend": "Tạm dừng",
+  "credit": "Trả chậm",
+  "methods": "Phương thức",
+  "history": "Lịch sử",
+  "filters": "Bộ lọc",
+  "subtotal": "Tổng phụ",
+  "product": "Sản phẩm"
 }
