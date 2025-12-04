@@ -46,7 +46,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
     PosOnlineSync event,
     Emitter<PosOnlineState> emit,
   ) async {
-    emit(state.copyWith(isSyncing: true, clearFailure: true));
+    emit(state.copyWith(isSyncing: true, showSyncDialog: true, clearFailure: true));
 
     // Check for unsynced sells first
     final unsyncedSellsResult = await _sellRepository.getLocalSells();
@@ -71,11 +71,13 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
 
           emit(state.copyWith(
             isSyncing: false,
+            showSyncDialog: false,
             successMessage: LocaleKeys.syncCompletedSuccessfully,
           ));
         } catch (e) {
           emit(state.copyWith(
             isSyncing: false,
+            showSyncDialog: false,
             failure: UnknownFailure(message: e.toString()),
           ));
         }
@@ -86,11 +88,13 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
           await _syncService.syncAll();
           emit(state.copyWith(
             isSyncing: false,
+            showSyncDialog: false,
             successMessage: LocaleKeys.syncCompletedSuccessfully,
           ));
         } catch (e) {
           emit(state.copyWith(
             isSyncing: false,
+            showSyncDialog: false,
             failure: UnknownFailure(message: e.toString()),
           ));
         }
@@ -131,6 +135,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
   ) async {
     emit(state.copyWith(
       isSyncing: true,
+      showSyncDialog: true,
       showLogoutDialog: false,
       clearFailure: true,
     ));
@@ -151,12 +156,14 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
 
       emit(state.copyWith(
         isSyncing: false,
+        showSyncDialog: false,
         successMessage: LocaleKeys.loggedOutSuccessfully,
         showLogoutDialog: false,
       ));
     } catch (e) {
       emit(state.copyWith(
         isSyncing: false,
+        showSyncDialog: false,
         failure: UnknownFailure(message: e.toString()),
       ));
     }

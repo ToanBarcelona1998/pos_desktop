@@ -6,6 +6,7 @@ class PosOnlineState {
   final bool isSyncing;
   final bool showOfflinePos;
   final bool showLogoutDialog;
+  final bool showSyncDialog;
   final int unsyncedSellsCount;
   final Failure? failure;
   final String? successMessage;
@@ -15,6 +16,7 @@ class PosOnlineState {
     this.isSyncing = false,
     this.showOfflinePos = false,
     this.showLogoutDialog = false,
+    this.showSyncDialog = false,
     this.unsyncedSellsCount = 0,
     this.failure,
     this.successMessage,
@@ -27,6 +29,7 @@ class PosOnlineState {
     bool? isSyncing,
     bool? showOfflinePos,
     bool? showLogoutDialog,
+    bool? showSyncDialog,
     int? unsyncedSellsCount,
     Failure? failure,
     String? successMessage,
@@ -38,6 +41,7 @@ class PosOnlineState {
       isSyncing: isSyncing ?? this.isSyncing,
       showOfflinePos: showOfflinePos ?? this.showOfflinePos,
       showLogoutDialog: showLogoutDialog ?? this.showLogoutDialog,
+      showSyncDialog: showSyncDialog ?? this.showSyncDialog,
       unsyncedSellsCount: unsyncedSellsCount ?? this.unsyncedSellsCount,
       failure: clearFailure ? null : (failure ?? this.failure),
       successMessage:
@@ -45,6 +49,7 @@ class PosOnlineState {
     );
   }
 }
+
 
 
 

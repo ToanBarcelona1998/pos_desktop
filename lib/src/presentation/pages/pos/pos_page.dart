@@ -7,6 +7,7 @@ import '../../../core/localization/app_localization.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/toast/toast_manager.dart';
+import '../../widgets/dialog/dialog_provider.dart';
 import 'pos_bloc.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
@@ -183,9 +184,9 @@ class _PosView extends StatelessWidget {
       bloc.add(const PosLoadCustomers());
     }
 
-    showDialog(
-      context: context,
-      builder: (ctx) => BlocProvider.value(
+    DialogProvider.showAppDialog(
+      context,
+      messageWidget: BlocProvider.value(
         value: bloc,
         child: BlocBuilder<PosBloc, PosState>(
           builder: (context, state) {
@@ -208,11 +209,14 @@ class _PosView extends StatelessWidget {
               },
               onCustomerSelected: (customer) {
                 context.read<PosBloc>().add(PosSelectCustomer(customer));
+                Navigator.of(context).pop();
               },
             );
           },
         ),
       ),
+      actions: [],
+      width: 500,
     );
   }
 

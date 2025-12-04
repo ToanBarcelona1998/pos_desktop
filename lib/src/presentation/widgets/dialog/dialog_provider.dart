@@ -87,4 +87,39 @@ sealed class DialogProvider {
       ],
     );
   }
+
+  /// Show a loading dialog with a message
+  static Future<void> showLoadingDialog(
+    BuildContext context, {
+    required String message,
+    bool barrierDismissible = false,
+  }) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: barrierDismissible,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(width: 16),
+                Flexible(
+                  child: Text(
+                    message,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

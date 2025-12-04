@@ -13,6 +13,7 @@ import 'package:pos_final/src/presentation/widgets/toast/toast_manager.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_subject.dart';
 import 'package:pos_final/src/presentation/pages/pos/pos_page.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/dialog_provider.dart';
+import 'package:pos_final/src/presentation/widgets/dialog/base_dialog_widget.dart';
 import 'package:data/data.dart';
 
 import 'pos_online_bloc.dart';
@@ -104,7 +105,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
               previous.failure != current.failure ||
               previous.successMessage != current.successMessage ||
               previous.showLogoutDialog != current.showLogoutDialog ||
-              previous.isSyncing != current.isSyncing,
+              previous.showSyncDialog != current.showSyncDialog,
           listener: (context, state) {
             final l10n = AppLocalizations.of(context);
 
@@ -128,10 +129,10 @@ class _PosOnlinePageState extends State<PosOnlinePage>
             }
 
             // Show sync dialog when syncing starts
-            if (state.isSyncing && !state.showLogoutDialog && mounted) {
+            if (state.showSyncDialog && mounted) {
               _showSyncDialog(context, state);
-            } else if (!state.isSyncing && !state.showLogoutDialog && mounted) {
-              // Close sync dialog when sync completes
+            } else if (!state.showSyncDialog && mounted) {
+              // Close sync dialog when sync completes - only if dialog is actually showing
               if (Navigator.of(context, rootNavigator: true).canPop()) {
                 Navigator.of(context, rootNavigator: true).pop();
               }
@@ -289,80 +290,63 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   /// Show sync dialog
   void _showSyncDialog(BuildContext context, PosOnlineState state) {
     final l10n = AppLocalizations.of(context);
-    showDialog(
-      context: context,
+    final message = state.unsyncedSellsCount > 0
+        ? l10n.translateWithArgs(LocaleKeys.syncingUnsyncedSales, {
+            'count': state.unsyncedSellsCount,
+          })
+        : l10n.translate(LocaleKeys.syncingSystemData);
+    
+    DialogProvider.showLoadingDialog(
+      context,
+      message: message,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return AlertDialog(
-          content: Row(
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(width: 16),
-              Text(
-                state.unsyncedSellsCount > 0
-                    ? l10n.translateWithArgs(LocaleKeys.syncingUnsyncedSales, {
-                        'count': state.unsyncedSellsCount,
-                      })
-                    : l10n.translate(LocaleKeys.syncingSystemData),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
   /// Show logout dialog with unsynced sells
   void _showLogoutDialog(BuildContext context, int unsyncedCount) {
     final l10n = AppLocalizations.of(context);
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(
-            l10n.translate(LocaleKeys.pendingSynchronization),
-          ),
-          content: Text(
-            l10n.translateWithArgs(LocaleKeys.unsyncedSalesCount, {
-              'count': unsyncedCount,
-            }),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-                context.read<PosOnlineBloc>().add(
-                      const PosOnlineLogoutWithSync(),
-                    );
-              },
-              child: Text(
-                l10n.translate(LocaleKeys.syncAndLogout),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-                context.read<PosOnlineBloc>().add(
-                      const PosOnlineLogoutWithoutSync(),
-                    );
-              },
-              child: Text(
-                l10n.translate(LocaleKeys.logoutWithoutSync),
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-                context.read<PosOnlineBloc>().add(
-                      const PosOnlineCancelLogout(),
-                    );
-              },
-              child: Text(l10n.translate(LocaleKeys.cancel)),
-            ),
-          ],
-        );
-      },
+    DialogProvider.showAppDialog(
+      context,
+      titleText: l10n.translate(LocaleKeys.pendingSynchronization),
+      messageText: l10n.translateWithArgs(LocaleKeys.unsyncedSalesCount, {
+        'count': unsyncedCount,
+      }),
+      actions: [
+        BaseDialogAction(
+          text: l10n.translate(LocaleKeys.syncAndLogout),
+          isPrimary: true,
+          color: Colors.blue,
+          onPressed: () {
+            Navigator.pop(context);
+            context.read<PosOnlineBloc>().add(
+                  const PosOnlineLogoutWithSync(),
+                );
+          },
+        ),
+        BaseDialogAction(
+          text: l10n.translate(LocaleKeys.logoutWithoutSync),
+          isPrimary: false,
+          color: Colors.red,
+          onPressed: () {
+            Navigator.pop(context);
+            context.read<PosOnlineBloc>().add(
+                  const PosOnlineLogoutWithoutSync(),
+                );
+          },
+        ),
+        BaseDialogAction(
+          text: l10n.translate(LocaleKeys.cancel),
+          isPrimary: false,
+          color: Colors.grey,
+          onPressed: () {
+            Navigator.pop(context);
+            context.read<PosOnlineBloc>().add(
+                  const PosOnlineCancelLogout(),
+                );
+          },
+        ),
+      ],
     );
   }
 

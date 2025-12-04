@@ -24,3 +24,4 @@ class GetLocationsUseCase implements UseCaseNoParams<List<LocationEntity>> {
 
 
 
+

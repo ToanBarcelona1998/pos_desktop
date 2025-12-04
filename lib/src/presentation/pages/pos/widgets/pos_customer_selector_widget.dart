@@ -58,81 +58,76 @@ class _PosCustomerSelectorWidgetState extends State<PosCustomerSelectorWidget> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.borderRadiusMd,
-      ),
-      child: Container(
-        width: 500,
-        height: 600,
-        padding: AppSpacing.paddingMd,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                IconWrapper(
-                  icon: Icons.person,
-                  iconColor: theme.colorScheme.primary,
-                  backgroundColor: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
-                  onTap: null,
-                ),
-                SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    l10n.translate(LocaleKeys.selectCustomer),
-                    style: AppTypography.titleLarge,
-                  ),
-                ),
-                if (widget.onAddCustomer != null)
-                  IconButton(
-                    icon: Icon(Icons.person_add,
-                        color: theme.colorScheme.primary),
-                    onPressed: widget.onAddCustomer,
-                    tooltip: l10n.translate(LocaleKeys.addCustomer),
-                  ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-            SizedBox(height: AppSpacing.md),
-            // Search field
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: l10n.translate(LocaleKeys.search),
-                prefixIcon:
-                    Icon(Icons.search, color: theme.colorScheme.primary),
-                border: OutlineInputBorder(
-                  borderRadius: AppRadius.borderRadiusSm,
-                ),
-                filled: true,
-                fillColor: theme.cardColor,
+    return Container(
+      width: 500,
+      height: 600,
+      padding: AppSpacing.paddingMd,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              IconWrapper(
+                icon: Icons.person,
+                iconColor: theme.colorScheme.primary,
+                backgroundColor: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
+                onTap: null,
               ),
-              style: AppTypography.bodyMedium,
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  l10n.translate(LocaleKeys.selectCustomer),
+                  style: AppTypography.titleLarge,
+                ),
+              ),
+              if (widget.onAddCustomer != null)
+                IconButton(
+                  icon: Icon(Icons.person_add,
+                      color: theme.colorScheme.primary),
+                  onPressed: widget.onAddCustomer,
+                  tooltip: l10n.translate(LocaleKeys.addCustomer),
+                ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.md),
+          // Search field
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: l10n.translate(LocaleKeys.search),
+              prefixIcon:
+                  Icon(Icons.search, color: theme.colorScheme.primary),
+              border: OutlineInputBorder(
+                borderRadius: AppRadius.borderRadiusSm,
+              ),
+              filled: true,
+              fillColor: theme.cardColor,
             ),
-            SizedBox(height: AppSpacing.md),
-            // Customer list
-            Expanded(
-              child: widget.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : widget.customers.isEmpty
-                      ? _EmptyCustomers(l10n: l10n)
-                      : _CustomerList(
-                          customers: widget.customers,
-                          selectedCustomer: widget.selectedCustomer,
-                          onCustomerSelected: (customer) {
-                            widget.onCustomerSelected?.call(customer);
-                            Navigator.of(context).pop();
-                          },
-                          theme: theme,
-                        ),
-            ),
-          ],
-        ),
+            style: AppTypography.bodyMedium,
+          ),
+          SizedBox(height: AppSpacing.md),
+          // Customer list
+          Expanded(
+            child: widget.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : widget.customers.isEmpty
+                    ? _EmptyCustomers(l10n: l10n)
+                    : _CustomerList(
+                        customers: widget.customers,
+                        selectedCustomer: widget.selectedCustomer,
+                        onCustomerSelected: (customer) {
+                          widget.onCustomerSelected?.call(customer);
+                          Navigator.of(context).pop();
+                        },
+                        theme: theme,
+                      ),
+          ),
+        ],
       ),
     );
   }
