@@ -8,9 +8,8 @@ import 'package:pos_final/app_config/app_config.dart';
 import 'package:pos_final/app_config/di.dart';
 import 'package:pos_final/src/application/application.dart';
 import 'package:pos_final/src/core/core.dart';
-import 'package:pos_final/src/core/localization/app_localization.dart';
-import 'package:pos_final/src/core/localization/locale_keys.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_observer.dart';
+import 'package:pos_final/src/presentation/widgets/toast/toast_manager.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_subject.dart';
 import 'package:pos_final/src/presentation/pages/pos/pos_page.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/dialog_provider.dart';
@@ -90,11 +89,14 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
     return BlocProvider(
       create: (context) => _posOnlineBloc,
-      child: BlocListener<AuthCubit, AuthState>(
+        child: BlocListener<AuthCubit, AuthState>(
         listener: (context, authState) {
           if (authState is Unauthenticated) {
             // Hide offline POS when logged out
-            context.read<PosOnlineBloc>().add(const PosOnlineHideOffline());
+            // Don't navigate away - let webview handle login page
+            if (mounted) {
+              context.read<PosOnlineBloc>().add(const PosOnlineHideOffline());
+            }
           }
         },
         child: BlocConsumer<PosOnlineBloc, PosOnlineState>(
@@ -106,16 +108,11 @@ class _PosOnlinePageState extends State<PosOnlinePage>
           listener: (context, state) {
             final l10n = AppLocalizations.of(context);
 
-            if (state.failure != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.failure!.message),
-                  backgroundColor: Colors.red,
-                ),
-              );
+            if (state.failure != null && mounted) {
+              ToastManager.showError(context, state.failure!.message);
             }
 
-            if (state.successMessage != null) {
+            if (state.successMessage != null && mounted) {
               final translatedMessage = l10n.translate(state.successMessage!);
               
               // If logout was successful, send script to webview
@@ -123,22 +120,17 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                 webViewController!.evaluateJavascript(source: _logoutScript);
               }
               
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(translatedMessage),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              ToastManager.showSuccess(context, translatedMessage);
             }
 
-            if (state.showLogoutDialog) {
+            if (state.showLogoutDialog && mounted) {
               _showLogoutDialog(context, state.unsyncedSellsCount);
             }
 
             // Show sync dialog when syncing starts
-            if (state.isSyncing && !state.showLogoutDialog) {
+            if (state.isSyncing && !state.showLogoutDialog && mounted) {
               _showSyncDialog(context, state);
-            } else if (!state.isSyncing && !state.showLogoutDialog) {
+            } else if (!state.isSyncing && !state.showLogoutDialog && mounted) {
               // Close sync dialog when sync completes
               if (Navigator.of(context, rootNavigator: true).canPop()) {
                 Navigator.of(context, rootNavigator: true).pop();
@@ -244,13 +236,9 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                               print('Error handling auth from webview: $e');
                               if (mounted) {
                                 final l10n = AppLocalizations.of(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      '${l10n.translate(LocaleKeys.error)}: $e',
-                                    ),
-                                    backgroundColor: Colors.red,
-                                  ),
+                                ToastManager.showError(
+                                  context,
+                                  '${l10n.translate(LocaleKeys.error)}: $e',
                                 );
                               }
                             }
@@ -272,13 +260,9 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                               print('Error handling logout from webview: $e');
                               if (mounted) {
                                 final l10n = AppLocalizations.of(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      '${l10n.translate(LocaleKeys.error)}: $e',
-                                    ),
-                                    backgroundColor: Colors.red,
-                                  ),
+                                ToastManager.showError(
+                                  context,
+                                  '${l10n.translate(LocaleKeys.error)}: $e',
                                 );
                               }
                             }

@@ -6,6 +6,7 @@ import '../../../../app_config/di.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../widgets/app_loading.dart';
+import '../../widgets/toast/toast_manager.dart';
 import 'pos_bloc.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
@@ -52,22 +53,12 @@ class _PosView extends StatelessWidget {
           previous.successMessage != current.successMessage,
       listener: (context, state) {
         if (state.failure != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.failure!.message),
-              backgroundColor: theme.colorScheme.error,
-            ),
-          );
+          ToastManager.showError(context, state.failure!.message);
         }
         if (state.successMessage != null) {
           // Translate success message key
           final translatedMessage = l10n.translate(state.successMessage!);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(translatedMessage),
-              backgroundColor: Colors.green,
-            ),
-          );
+          ToastManager.showSuccess(context, translatedMessage);
         }
       },
       builder: (context, state) {
