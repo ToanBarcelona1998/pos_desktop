@@ -24,7 +24,7 @@ class Application extends StatelessWidget {
           create: (_) => LanguageCubit()..init(),
         ),
         BlocProvider<AuthCubit>(
-          create: (_) => AuthCubit()..checkAuthentication(),
+          create: (_) => AuthCubit(),
         ),
       ],
       child: const ApplicationMaterialApp(),

@@ -67,4 +67,14 @@ class PosOnlineLogoutFromWebview extends PosOnlineEvent {
   const PosOnlineLogoutFromWebview();
 }
 
+/// Check authentication on first load
+class PosOnlineCheckAuthentication extends PosOnlineEvent {
+  const PosOnlineCheckAuthentication();
+}
+
+/// URL changed to login page
+class PosOnlineUrlChangedToLogin extends PosOnlineEvent {
+  const PosOnlineUrlChangedToLogin();
+}
+
 

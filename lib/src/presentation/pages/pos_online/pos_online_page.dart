@@ -8,6 +8,8 @@ import 'package:pos_final/app_config/app_config.dart';
 import 'package:pos_final/app_config/di.dart';
 import 'package:pos_final/src/application/application.dart';
 import 'package:pos_final/src/core/core.dart';
+import 'package:pos_final/src/core/localization/app_localization.dart';
+import 'package:pos_final/src/core/localization/locale_keys.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_observer.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_subject.dart';
 import 'package:pos_final/src/presentation/pages/pos/pos_page.dart';
@@ -39,6 +41,8 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   late PosOnlineBloc _posOnlineBloc;
 
   late NetworkStatusSubject _networkStatusSubject;
+  
+  bool _isFirstLoad = true;
 
   final AppConfig _appConfig = sl.get<AppConfig>();
 
@@ -201,6 +205,20 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                       onLoadStop: (controller, url) async {
                         await controller.evaluateJavascript(
                             source: _postAppReadySource);
+                        
+                        // Check authentication on first load only
+                        if (_isFirstLoad) {
+                          _isFirstLoad = false;
+                          _posOnlineBloc.add(const PosOnlineCheckAuthentication());
+                        }
+                      },
+                      onLoadStart: (controller, url) {
+                        // Listen to URL changes
+                        final urlString = url.toString();
+                        if (urlString.contains('/login')) {
+                          // URL changed to login page - logout
+                          _posOnlineBloc.add(const PosOnlineUrlChangedToLogin());
+                        }
                       },
                       onWebViewCreated: (controller) async {
                         webViewController = controller;

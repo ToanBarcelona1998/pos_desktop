@@ -30,6 +30,8 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
     on<PosOnlineHideOffline>(_onHideOffline);
     on<PosOnlineAuthCompleted>(_onAuthCompleted);
     on<PosOnlineLogoutFromWebview>(_onLogoutFromWebview);
+    on<PosOnlineCheckAuthentication>(_onCheckAuthentication);
+    on<PosOnlineUrlChangedToLogin>(_onUrlChangedToLogin);
   }
 
   Future<void> _onInitialize(
@@ -226,6 +228,28 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
       emit(state.copyWith(
         successMessage: 'logged_out_successfully',
       ));
+    } catch (e) {
+      emit(state.copyWith(
+        failure: UnknownFailure(message: e.toString()),
+      ));
+    }
+  }
+
+  Future<void> _onCheckAuthentication(
+    PosOnlineCheckAuthentication event,
+    Emitter<PosOnlineState> emit,
+  ) async {
+    // Check if user is already authenticated
+    await _authCubit.checkAuthentication();
+  }
+
+  Future<void> _onUrlChangedToLogin(
+    PosOnlineUrlChangedToLogin event,
+    Emitter<PosOnlineState> emit,
+  ) async {
+    try {
+      // URL changed to login page - logout (clear cache, delete user database, auth)
+      await _authCubit.logout();
     } catch (e) {
       emit(state.copyWith(
         failure: UnknownFailure(message: e.toString()),
