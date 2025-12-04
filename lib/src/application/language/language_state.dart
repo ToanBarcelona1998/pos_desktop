@@ -44,16 +44,6 @@ class LanguageState {
 class AppLanguages {
   static const List<LanguageOption> supportedLanguages = [
     LanguageOption(code: 'en', countryCode: 'US', name: 'English'),
-    LanguageOption(code: 'ar', countryCode: '', name: 'العربي'),
-    LanguageOption(code: 'de', countryCode: '', name: 'Deutsche'),
-    LanguageOption(code: 'fr', countryCode: '', name: 'Français'),
-    LanguageOption(code: 'es', countryCode: '', name: 'Española'),
-    LanguageOption(code: 'tr', countryCode: '', name: 'Türkçe'),
-    LanguageOption(code: 'id', countryCode: '', name: 'Indonesian'),
-    LanguageOption(code: 'be', countryCode: '', name: 'Bengali'),
-    LanguageOption(code: 'ch', countryCode: '', name: 'Chinese'),
-    LanguageOption(code: 'it', countryCode: '', name: 'Italian'),
-    LanguageOption(code: 'my', countryCode: '', name: 'မြန်မာ'),
     LanguageOption(code: 'vi', countryCode: 'VN', name: 'Vietnamese'),
   ];
 

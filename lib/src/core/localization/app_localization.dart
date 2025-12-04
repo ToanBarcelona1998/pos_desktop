@@ -87,9 +87,9 @@ class _AppLocalizationDelegate extends LocalizationsDelegate<AppLocalizations> {
 /// Extension for easy translation access
 extension LocalizationExtension on BuildContext {
   /// Translates a key (returns key if localization not available)
-  String tr(String key) => AppLocalizations.of(this)?.translate(key) ?? key;
+  String tr(String key) => AppLocalizations.of(this).translate(key);
 
   /// Translates a key with arguments
   String trArgs(String key, Map<String, dynamic> args) =>
-      AppLocalizations.of(this)?.translateWithArgs(key, args) ?? key;
+      AppLocalizations.of(this).translateWithArgs(key, args);
 }
