@@ -1,27 +1,19 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/remote/variation_remote_data_source.dart';
 import '../model/variation_model.dart';
 
 /// Implementation of [VariationRepository]
 class VariationRepositoryImpl implements VariationRepository {
   final VariationRemoteDataSource _remoteDataSource;
-  final NetworkInfo _networkInfo;
 
   const VariationRepositoryImpl({
     required VariationRemoteDataSource remoteDataSource,
-    required NetworkInfo networkInfo,
-  })  : _remoteDataSource = remoteDataSource,
-        _networkInfo = networkInfo;
+  })  : _remoteDataSource = remoteDataSource;
 
   @override
   Future<Result<VariationListResult>> getVariations(String url) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final response = await _remoteDataSource.getVariations(url);
       final entities = response.variations.map(_mapToEntity).toList();
@@ -30,34 +22,29 @@ class VariationRepositoryImpl implements VariationRepository {
         nextLink: response.nextLink,
       ));
     } catch (e) {
+      Logger.logE('Error getting variations', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
 
   @override
   Future<Result<List<VariationEntity>>> getVariationsForProduct(int productId) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       // This would need a specific endpoint - implement when available
       return const Success([]);
     } catch (e) {
+      Logger.logE('Error getting variations for product', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
 
   @override
   Future<Result<void>> syncVariations(int locationId) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       // Implement sync logic when database is set up
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error syncing variations', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

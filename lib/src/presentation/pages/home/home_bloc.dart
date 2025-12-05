@@ -194,7 +194,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
     try {
       // Check connectivity first (like old code)
-      // Note: NetworkInfo is checked inside repositories, but we can show better error messages
+      // Note: Repositories call server directly and handle errors, we can show better error messages
       
       // 1. Sync all unsynced sells first (like old code: Sell().createApiSell(syncAll: true))
       final syncSellsResult = await _sellRepository.syncSells();

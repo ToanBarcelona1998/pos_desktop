@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/local/system_local_data_source.dart';
 import '../data_source/remote/brand_remote_data_source.dart';
 import '../mapper/brand_mapper.dart';
@@ -14,17 +13,14 @@ import '../model/brand_model.dart';
 class BrandRepositoryImpl implements BrandRepository {
   final BrandRemoteDataSource _remoteDataSource;
   final SystemLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
   final BrandMapper _mapper;
 
   const BrandRepositoryImpl({
     required BrandRemoteDataSource remoteDataSource,
     required SystemLocalDataSource localDataSource,
-    required NetworkInfo networkInfo,
     BrandMapper mapper = const BrandMapper(),
   })  : _remoteDataSource = remoteDataSource,
         _localDataSource = localDataSource,
-        _networkInfo = networkInfo,
         _mapper = mapper;
 
   @override
@@ -36,48 +32,40 @@ class BrandRepositoryImpl implements BrandRepository {
       onSuccess: (localBrands) async {
         // If we have local data, return it immediately
         if (localBrands.isNotEmpty) {
-          // If online, sync in background for next time
-          if (await _networkInfo.isConnected) {
-            _syncBrandsInBackground();
-          }
+          // Sync in background for next time
+          _syncBrandsInBackground();
           return Success(localBrands);
         }
         
-        // No local data - try remote if online
-        if (await _networkInfo.isConnected) {
-          try {
-            final brandModels = await _remoteDataSource.getBrands();
-            final brandEntities = _mapper.toEntityList(brandModels);
-            
-            // Save to local
-            await syncBrands();
-            
-            return Success(brandEntities);
-          } catch (e) {
-            return Error(ExceptionHandler.handleException(e));
-          }
+        // No local data - try remote
+        try {
+          final brandModels = await _remoteDataSource.getBrands();
+          final brandEntities = _mapper.toEntityList(brandModels);
+          
+          // Save to local
+          await syncBrands();
+          
+          return Success(brandEntities);
+        } catch (e) {
+          Logger.logW('Failed to fetch brands from server', e);
+          // Offline and no local data
+          return const Success([]);
         }
-        
-        // Offline and no local data
-        return const Success([]);
       },
       onError: (failure) async {
-        // Local fetch failed - try remote if online
-        if (await _networkInfo.isConnected) {
-          try {
-            final brandModels = await _remoteDataSource.getBrands();
-            final brandEntities = _mapper.toEntityList(brandModels);
-            
-            // Save to local
-            await syncBrands();
-            
-            return Success(brandEntities);
-          } catch (e) {
-            return Error(ExceptionHandler.handleException(e));
-          }
+        // Local fetch failed - try remote
+        try {
+          final brandModels = await _remoteDataSource.getBrands();
+          final brandEntities = _mapper.toEntityList(brandModels);
+          
+          // Save to local
+          await syncBrands();
+          
+          return Success(brandEntities);
+        } catch (e) {
+          Logger.logW('Failed to fetch brands from server after local error', e);
+          return Error(failure);
         }
-        
-        return Error(failure);
       },
     );
   }
@@ -103,10 +91,6 @@ class BrandRepositoryImpl implements BrandRepository {
     String? description,
     bool? useForRepair,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = {
         'name': name,
@@ -121,6 +105,7 @@ class BrandRepositoryImpl implements BrandRepository {
       
       return Success(brandEntity);
     } catch (e) {
+      Logger.logE('Error creating brand', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -132,10 +117,6 @@ class BrandRepositoryImpl implements BrandRepository {
     String? description,
     bool? useForRepair,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = <String, dynamic>{};
       if (name != null) data['name'] = name;
@@ -150,16 +131,13 @@ class BrandRepositoryImpl implements BrandRepository {
       
       return Success(brandEntity);
     } catch (e) {
+      Logger.logE('Error updating brand', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
 
   @override
   Future<Result<void>> deleteBrand(int id) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       await _remoteDataSource.deleteBrand(id);
       
@@ -210,22 +188,19 @@ class BrandRepositoryImpl implements BrandRepository {
   /// Sync brands in background without blocking
   void _syncBrandsInBackground() {
     syncBrands().catchError((e) {
-      print('Background brand sync error: $e');
+      Logger.logW('Background brand sync error', e);
     });
   }
 
   /// Sync brands from remote to local
   Future<Result<void>> syncBrands() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final brands = await _remoteDataSource.getBrands();
       final brandsJson = brands.map((b) => b.toJson()).toList();
       await _localDataSource.insert('brand', jsonEncode(brandsJson));
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error syncing brands', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

@@ -18,11 +18,16 @@ import 'helpers/routes.dart';
 import 'locale/my_localizations.dart';
 import 'pages/notifications/view_model_manger/notifications_cubit.dart';
 
+import 'package:pos_final/src/core/app_version_manager.dart';
+
 Future<void> main() async {
   Bloc.observer = Observer();
 
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
+
+  // Check app version and clear cache/database if needed
+  await AppVersionManager.checkAndHandleVersionUpdate();
 
   await initDependencies(env: EnvConfig.environment);
 

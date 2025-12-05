@@ -1,7 +1,6 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/local/auth_local_data_source.dart';
 import '../data_source/remote/auth_remote_data_source.dart';
 import '../mapper/auth_token_mapper.dart';
@@ -11,19 +10,16 @@ import '../mapper/user_mapper.dart';
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final AuthLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
   final AuthTokenMapper _tokenMapper;
   final UserMapper _userMapper;
 
   const AuthRepositoryImpl({
     required AuthRemoteDataSource remoteDataSource,
     required AuthLocalDataSource localDataSource,
-    required NetworkInfo networkInfo,
     AuthTokenMapper tokenMapper = const AuthTokenMapper(),
     UserMapper userMapper = const UserMapper(),
   })  : _remoteDataSource = remoteDataSource,
         _localDataSource = localDataSource,
-        _networkInfo = networkInfo,
         _tokenMapper = tokenMapper,
         _userMapper = userMapper;
 
@@ -32,10 +28,6 @@ class AuthRepositoryImpl implements AuthRepository {
     required String username,
     required String password,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final tokenModel = await _remoteDataSource.login(
         username: username,
@@ -48,6 +40,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       return Success(tokenEntity);
     } catch (e) {
+      Logger.logE('Error during login', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -71,23 +64,25 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Error(AuthFailure(message: 'No token found'));
       }
 
-      if (!await _networkInfo.isConnected) {
-        // Try to get cached user
+      try {
+        final userModel =
+            await _remoteDataSource.getCurrentUser(tokenModel.accessToken);
+
+        // Cache user
+        await _localDataSource.cacheUser(userModel);
+
+        return Success(_userMapper.toEntity(userModel));
+      } catch (e) {
+        // If server call fails, try cached user
+        Logger.logW('Failed to get user from server, trying cached user', e);
         final cachedUser = await _localDataSource.getCachedUser();
         if (cachedUser != null) {
           return Success(_userMapper.toEntity(cachedUser));
         }
-        return const Error(NetworkFailure());
+        return Error(ExceptionHandler.handleException(e));
       }
-
-      final userModel =
-          await _remoteDataSource.getCurrentUser(tokenModel.accessToken);
-
-      // Cache user
-      await _localDataSource.cacheUser(userModel);
-
-      return Success(_userMapper.toEntity(userModel));
     } catch (e) {
+      Logger.logE('Error getting current user', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -138,10 +133,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Result<AuthTokenEntity>> refreshToken(String refreshToken) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final tokenModel = await _remoteDataSource.refreshToken(refreshToken);
       final tokenEntity = _tokenMapper.toEntity(tokenModel);
@@ -151,6 +142,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       return Success(tokenEntity);
     } catch (e) {
+      Logger.logE('Error refreshing token', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

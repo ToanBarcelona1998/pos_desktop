@@ -1,29 +1,21 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/remote/shipment_remote_data_source.dart';
 
 /// Implementation of [ShipmentRepository]
 class ShipmentRepositoryImpl implements ShipmentRepository {
   final ShipmentRemoteDataSource _remoteDataSource;
-  final NetworkInfo _networkInfo;
 
   const ShipmentRepositoryImpl({
     required ShipmentRemoteDataSource remoteDataSource,
-    required NetworkInfo networkInfo,
-  })  : _remoteDataSource = remoteDataSource,
-        _networkInfo = networkInfo;
+  })  : _remoteDataSource = remoteDataSource;
 
   @override
   Future<Result<List<ShipmentEntity>>> getSellsByShipmentStatus({
     required ShipmentStatus status,
     required DateTime date,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final dateStr = date.toIso8601String().split('T')[0];
       final sells = await _remoteDataSource.getSellsByShipmentStatus(
@@ -33,6 +25,7 @@ class ShipmentRepositoryImpl implements ShipmentRepository {
       final entities = sells.map(_mapToEntity).toList();
       return Success(entities);
     } catch (e) {
+      Logger.logE('Error getting sells by shipment status', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -44,10 +37,6 @@ class ShipmentRepositoryImpl implements ShipmentRepository {
     String? deliveredTo,
     String? shippingDetails,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = {
         'transaction_id': sellId,
@@ -59,6 +48,7 @@ class ShipmentRepositoryImpl implements ShipmentRepository {
       final response = await _remoteDataSource.updateShipmentStatus(data);
       return Success(_mapToEntity(response));
     } catch (e) {
+      Logger.logE('Error updating shipment status', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

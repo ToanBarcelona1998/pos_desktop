@@ -155,7 +155,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _databaseHelper.initDatabase(userId);
     } catch (e) {
       // Log error but don't fail login
-      print('Database initialization error: $e');
+      Logger.logE('Database initialization error', e);
     }
   }
 
@@ -163,7 +163,7 @@ class AuthCubit extends Cubit<AuthState> {
   void _syncSystemData() {
     // Run in background without blocking
     _syncService.syncAll().catchError((e) {
-      print('System sync error: $e');
+      Logger.logE('System sync error', e);
     });
   }
 
@@ -204,7 +204,7 @@ class AuthCubit extends Cubit<AuthState> {
       // Clear sync cache
       await _syncService.clearCache();
     } catch (e) {
-      print('Cleanup error: $e');
+      Logger.logE('Cleanup error', e);
     }
   }
 
@@ -215,7 +215,7 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       await _syncService.syncAll();
     } catch (e) {
-      print('Sync error: $e');
+      Logger.logE('Sync error', e);
     }
   }
 

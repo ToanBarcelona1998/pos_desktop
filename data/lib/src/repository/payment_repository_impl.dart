@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/local/system_local_data_source.dart';
 import '../data_source/remote/payment_remote_data_source.dart';
 
@@ -11,72 +10,57 @@ import '../data_source/remote/payment_remote_data_source.dart';
 class PaymentRepositoryImpl implements PaymentRepository {
   final PaymentRemoteDataSource _remoteDataSource;
   final SystemLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
 
   const PaymentRepositoryImpl({
     required PaymentRemoteDataSource remoteDataSource,
     required SystemLocalDataSource localDataSource,
-    required NetworkInfo networkInfo,
   })  : _remoteDataSource = remoteDataSource,
-        _localDataSource = localDataSource,
-        _networkInfo = networkInfo;
+        _localDataSource = localDataSource;
 
   @override
   Future<Result<List<PaymentMethodEntity>>> getPaymentMethods() async {
-    if (!await _networkInfo.isConnected) {
-      return getLocalPaymentMethods();
-    }
-
     try {
       final methods = await _remoteDataSource.getPaymentMethods();
       final entities = methods.map(_mapMethodToEntity).toList();
       return Success(entities);
     } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
+      Logger.logW('Failed to fetch payment methods from server, trying local', e);
+      return getLocalPaymentMethods();
     }
   }
 
   @override
   Future<Result<List<PaymentAccountEntity>>> getPaymentAccounts() async {
-    if (!await _networkInfo.isConnected) {
-      return getLocalPaymentAccounts();
-    }
-
     try {
       final accounts = await _remoteDataSource.getPaymentAccounts();
       final entities = accounts.map(_mapAccountToEntity).toList();
       return Success(entities);
     } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
+      Logger.logW('Failed to fetch payment accounts from server, trying local', e);
+      return getLocalPaymentAccounts();
     }
   }
 
   @override
   Future<Result<void>> syncPaymentMethods() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final methods = await _remoteDataSource.getPaymentMethods();
       await _localDataSource.insert('payment_methods', jsonEncode(methods));
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error syncing payment methods', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
 
   @override
   Future<Result<void>> syncPaymentAccounts() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final accounts = await _remoteDataSource.getPaymentAccounts();
       await _localDataSource.insert('payment_accounts', jsonEncode(accounts));
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error syncing payment accounts', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -122,14 +106,11 @@ class PaymentRepositoryImpl implements PaymentRepository {
 
   @override
   Future<Result<Map<String, dynamic>>> getCustomerDue(int customerId) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final response = await _remoteDataSource.getCustomerDue(customerId);
       return Success(response);
     } catch (e) {
+      Logger.logE('Error getting customer due', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -143,10 +124,6 @@ class PaymentRepositoryImpl implements PaymentRepository {
     int? accountId,
     DateTime? paidOn,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = {
         'contact_id': contactId,
@@ -160,6 +137,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
       await _remoteDataSource.postContactPayment(data);
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error posting contact payment', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

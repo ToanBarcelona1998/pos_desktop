@@ -1,32 +1,25 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/remote/unit_remote_data_source.dart';
 import '../model/unit_model.dart';
 
 /// Implementation of [UnitRepository]
 class UnitRepositoryImpl implements UnitRepository {
   final UnitRemoteDataSource _remoteDataSource;
-  final NetworkInfo _networkInfo;
 
   const UnitRepositoryImpl({
     required UnitRemoteDataSource remoteDataSource,
-    required NetworkInfo networkInfo,
-  })  : _remoteDataSource = remoteDataSource,
-        _networkInfo = networkInfo;
+  })  : _remoteDataSource = remoteDataSource;
 
   @override
   Future<Result<List<UnitEntity>>> getUnits() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final units = await _remoteDataSource.getUnits();
       final entities = units.map(_mapToEntity).toList();
       return Success(entities);
     } catch (e) {
+      Logger.logE('Error getting units', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -52,10 +45,6 @@ class UnitRepositoryImpl implements UnitRepository {
     required String shortName,
     bool allowDecimal = false,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = {
         'actual_name': actualName,
@@ -65,6 +54,7 @@ class UnitRepositoryImpl implements UnitRepository {
       final unit = await _remoteDataSource.createUnit(data);
       return Success(_mapToEntity(unit));
     } catch (e) {
+      Logger.logE('Error creating unit', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -76,10 +66,6 @@ class UnitRepositoryImpl implements UnitRepository {
     String? shortName,
     bool? allowDecimal,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = <String, dynamic>{};
       if (actualName != null) data['actual_name'] = actualName;
@@ -89,20 +75,18 @@ class UnitRepositoryImpl implements UnitRepository {
       final unit = await _remoteDataSource.updateUnit(id, data);
       return Success(_mapToEntity(unit));
     } catch (e) {
+      Logger.logE('Error updating unit', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
 
   @override
   Future<Result<void>> deleteUnit(int id) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       await _remoteDataSource.deleteUnit(id);
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error deleting unit', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

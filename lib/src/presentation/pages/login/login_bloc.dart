@@ -81,11 +81,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       // Sync system data in background
       _syncService.syncAll().catchError((e) {
         // Log error but don't fail login
-        print('System sync error: $e');
+        Logger.logE('System sync error', e);
       });
     } catch (e) {
       // Log error but don't fail login
-      print('Database initialization error: $e');
+      Logger.logE('Database initialization error', e);
     }
   }
 

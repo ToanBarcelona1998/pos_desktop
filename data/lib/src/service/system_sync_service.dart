@@ -1,6 +1,7 @@
 import 'dart:convert';
 
-import '../core/network_info.dart';
+import 'package:domain/domain.dart';
+
 import '../data_source/local/contact_local_data_source.dart';
 import '../data_source/local/product_local_data_source.dart';
 import '../data_source/local/system_local_data_source.dart';
@@ -19,7 +20,6 @@ import '../data_source/remote/tax_remote_data_source.dart';
 /// Service for syncing system data for offline mode
 /// This mirrors the functionality of the original SystemApi class
 class SystemSyncService {
-  final NetworkInfo _networkInfo;
   final SystemLocalDataSource _localDataSource;
   final BrandRemoteDataSource _brandDataSource;
   final CategoryRemoteDataSource _categoryDataSource;
@@ -35,7 +35,6 @@ class SystemSyncService {
   final ContactLocalDataSource _contactLocalDataSource;
 
   const SystemSyncService({
-    required NetworkInfo networkInfo,
     required SystemLocalDataSource localDataSource,
     required BrandRemoteDataSource brandDataSource,
     required CategoryRemoteDataSource categoryDataSource,
@@ -49,8 +48,7 @@ class SystemSyncService {
     required ProductRemoteDataSource productDataSource,
     required ProductLocalDataSource productLocalDataSource,
     required ContactLocalDataSource contactLocalDataSource,
-  })  : _networkInfo = networkInfo,
-        _localDataSource = localDataSource,
+  })  : _localDataSource = localDataSource,
         _brandDataSource = brandDataSource,
         _categoryDataSource = categoryDataSource,
         _locationDataSource = locationDataSource,
@@ -67,13 +65,6 @@ class SystemSyncService {
   /// Sync all system data from remote to local storage
   /// This should be called after login to cache data for offline use
   Future<void> syncAll() async {
-    // Check network but don't throw - allow partial sync if some data exists
-    final isConnected = await _networkInfo.isConnected;
-    if (!isConnected) {
-      print('No internet connection - skipping sync');
-      return;
-    }
-
     try {
       // Sync all data in parallel
       await Future.wait([
@@ -100,9 +91,9 @@ class SystemSyncService {
         DateTime.now().toIso8601String(),
       );
       
-      print('System sync completed successfully');
+      Logger.logI('System sync completed successfully');
     } catch (e) {
-      print('System sync error: $e');
+      Logger.logE('System sync error', e);
       // Don't throw - allow app to continue with cached data
     }
   }
@@ -113,9 +104,9 @@ class SystemSyncService {
       final brands = await _brandDataSource.getBrands();
       final brandsJson = brands.map((b) => b.toJson()).toList();
       await _localDataSource.insert('brand', jsonEncode(brandsJson));
-      print('Brands synced: ${brands.length}');
+      Logger.logI('Brands synced: ${brands.length}');
     } catch (e) {
-      print('Error syncing brands: $e');
+      Logger.logE('Error syncing brands', e);
       // Silently fail - data might not be available
     }
   }
@@ -141,9 +132,9 @@ class SystemSyncService {
           }
         }
       }
-      print('Categories synced: ${categories.length}, Sub-categories: $subCategoryCount');
+      Logger.logI('Categories synced: ${categories.length}, Sub-categories: $subCategoryCount');
     } catch (e) {
-      print('Error syncing categories: $e');
+      Logger.logE('Error syncing categories: $e');
       // Silently fail
     }
   }
@@ -167,9 +158,9 @@ class SystemSyncService {
           paymentMethodCount++;
         }
       }
-      print('Locations synced: ${locations.length}, Payment methods: $paymentMethodCount');
+      Logger.logI('Locations synced: ${locations.length}, Payment methods: $paymentMethodCount');
     } catch (e) {
-      print('Error syncing locations: $e');
+      Logger.logE('Error syncing locations: $e');
       // Silently fail
     }
   }
@@ -179,9 +170,9 @@ class SystemSyncService {
     try {
       final business = await _businessDataSource.getBusinessDetails();
       await _localDataSource.insert('business', jsonEncode([business.toJson()]));
-      print('Business details synced');
+      Logger.logI('Business details synced');
     } catch (e) {
-      print('Error syncing business details: $e');
+      Logger.logE('Error syncing business details: $e');
       // Silently fail
     }
   }
@@ -191,9 +182,9 @@ class SystemSyncService {
     try {
       final permissions = await _permissionDataSource.getUserPermissions();
       await _localDataSource.insert('user_permissions', jsonEncode(permissions));
-      print('Permissions synced: ${permissions.length}');
+      Logger.logI('Permissions synced: ${permissions.length}');
     } catch (e) {
-      print('Error syncing permissions: $e');
+      Logger.logE('Error syncing permissions: $e');
       // Silently fail
     }
   }
@@ -207,13 +198,13 @@ class SystemSyncService {
           'active-subscription',
           jsonEncode([subscription.toJson()]),
         );
-        print('Active subscription synced');
+        Logger.logI('Active subscription synced');
       } else {
         await _localDataSource.insert('active-subscription', jsonEncode([]));
-        print('No active subscription');
+        Logger.logI('No active subscription');
       }
     } catch (e) {
-      print('Error syncing subscription: $e');
+      Logger.logE('Error syncing subscription: $e');
       // Silently fail
     }
   }
@@ -226,9 +217,9 @@ class SystemSyncService {
         'payment_methods',
         jsonEncode(paymentMethods),
       );
-      print('Payment methods synced: ${paymentMethods.length}');
+      Logger.logI('Payment methods synced: ${paymentMethods.length}');
     } catch (e) {
-      print('Error syncing payment methods: $e');
+      Logger.logE('Error syncing payment methods: $e');
       // Silently fail
     }
   }
@@ -241,9 +232,9 @@ class SystemSyncService {
         'payment_accounts',
         jsonEncode(paymentAccounts),
       );
-      print('Payment accounts synced: ${paymentAccounts.length}');
+      Logger.logI('Payment accounts synced: ${paymentAccounts.length}');
     } catch (e) {
-      print('Error syncing payment accounts: $e');
+      Logger.logE('Error syncing payment accounts: $e');
       // Silently fail
     }
   }
@@ -254,9 +245,9 @@ class SystemSyncService {
       final taxes = await _taxDataSource.getTaxes();
       final taxesJson = taxes.map((t) => t.toJson()).toList();
       await _localDataSource.insert('tax', jsonEncode(taxesJson));
-      print('Taxes synced: ${taxes.length}');
+      Logger.logI('Taxes synced: ${taxes.length}');
     } catch (e) {
-      print('Error syncing taxes: $e');
+      Logger.logE('Error syncing taxes: $e');
       // Silently fail
     }
   }
@@ -267,9 +258,9 @@ class SystemSyncService {
       final contacts = await _contactDataSource.getContacts(perPage: 750);
       // Save contacts to local database
       await _contactLocalDataSource.saveContacts(contacts);
-      print('Contacts synced: ${contacts.length}');
+      Logger.logI('Contacts synced: ${contacts.length}');
     } catch (e) {
-      print('Error syncing contacts: $e');
+      Logger.logE('Error syncing contacts: $e');
       // Silently fail
     }
   }
@@ -281,7 +272,7 @@ class SystemSyncService {
       // Get all locations first
       final locations = await _locationDataSource.getLocations();
       if (locations.isEmpty) {
-        print('No locations found - skipping product sync');
+        Logger.logI('No locations found - skipping product sync');
         return;
       }
 
@@ -321,19 +312,19 @@ class SystemSyncService {
             );
             
             totalProducts += allProducts.length;
-            print('Products synced for location ${location.id} (${location.name}): ${allProducts.length}');
+            Logger.logI('Products synced for location ${location.id} (${location.name}): ${allProducts.length}');
           }
         } catch (e) {
-          print('Error syncing products for location ${location.id}: $e');
+          Logger.logE('Error syncing products for location ${location.id}: $e');
           // Continue with next location
         }
       }
 
       // Update last sync timestamp
       await _productLocalDataSource.updateLastSync();
-      print('Total products synced: $totalProducts');
+      Logger.logI('Total products synced: $totalProducts');
     } catch (e) {
-      print('Error syncing products: $e');
+      Logger.logE('Error syncing products: $e');
       // Silently fail
     }
   }
@@ -345,7 +336,7 @@ class SystemSyncService {
       if (value == null) return null;
       return DateTime.tryParse(value.toString());
     } catch (e) {
-      print('Error getting last sync time: $e');
+      Logger.logE('Error getting last sync time', e);
       return null;
     }
   }
@@ -363,9 +354,9 @@ class SystemSyncService {
       await _localDataSource.clearAll();
       await _productLocalDataSource.clearCache();
       await _contactLocalDataSource.clearCache();
-      print('System cache cleared');
+      Logger.logI('System cache cleared');
     } catch (e) {
-      print('Error clearing cache: $e');
+      Logger.logE('Error clearing cache', e);
     }
   }
 }

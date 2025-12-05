@@ -1,7 +1,6 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/local/contact_local_data_source.dart';
 import '../data_source/remote/contact_remote_data_source.dart';
 import '../mapper/contact_mapper.dart';
@@ -11,17 +10,14 @@ import '../mapper/contact_mapper.dart';
 class ContactRepositoryImpl implements ContactRepository {
   final ContactRemoteDataSource _remoteDataSource;
   final ContactLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
   final ContactMapper _mapper;
 
   const ContactRepositoryImpl({
     required ContactRemoteDataSource remoteDataSource,
     required ContactLocalDataSource localDataSource,
-    required NetworkInfo networkInfo,
     ContactMapper mapper = const ContactMapper(),
   })  : _remoteDataSource = remoteDataSource,
         _localDataSource = localDataSource,
-        _networkInfo = networkInfo,
         _mapper = mapper;
 
   @override
@@ -39,48 +35,40 @@ class ContactRepositoryImpl implements ContactRepository {
         
         // If we have local data, return it immediately
         if (filteredContacts.isNotEmpty) {
-          // If online, sync in background for next time
-          if (await _networkInfo.isConnected) {
-            _syncContactsInBackground(type: type);
-          }
+          // Sync in background for next time
+          _syncContactsInBackground(type: type);
           return Success(filteredContacts);
         }
         
-        // No local data - try remote if online
-        if (await _networkInfo.isConnected) {
-          try {
-            final contacts = await _remoteDataSource.getContacts(type: type, perPage: 750);
-            final entities = _mapper.toEntityList(contacts);
-            
-            // Save to local
-            await syncContacts();
-            
-            return Success(entities);
-          } catch (e) {
-            return Error(ExceptionHandler.handleException(e));
-          }
+        // No local data - try remote
+        try {
+          final contacts = await _remoteDataSource.getContacts(type: type, perPage: 750);
+          final entities = _mapper.toEntityList(contacts);
+          
+          // Save to local
+          await syncContacts();
+          
+          return Success(entities);
+        } catch (e) {
+          Logger.logW('Failed to fetch contacts from server', e);
+          // Offline and no local data
+          return const Success([]);
         }
-        
-        // Offline and no local data
-        return const Success([]);
       },
       onError: (failure) async {
-        // Local fetch failed - try remote if online
-        if (await _networkInfo.isConnected) {
-          try {
-            final contacts = await _remoteDataSource.getContacts(type: type, perPage: 750);
-            final entities = _mapper.toEntityList(contacts);
-            
-            // Save to local
-            await syncContacts();
-            
-            return Success(entities);
-          } catch (e) {
-            return Error(ExceptionHandler.handleException(e));
-          }
+        // Local fetch failed - try remote
+        try {
+          final contacts = await _remoteDataSource.getContacts(type: type, perPage: 750);
+          final entities = _mapper.toEntityList(contacts);
+          
+          // Save to local
+          await syncContacts();
+          
+          return Success(entities);
+        } catch (e) {
+          Logger.logW('Failed to fetch contacts from server after local error', e);
+          return Error(failure);
         }
-        
-        return Error(failure);
       },
     );
   }
@@ -94,28 +82,21 @@ class ContactRepositoryImpl implements ContactRepository {
         return Success(_mapper.toEntity(contact));
       }
     } catch (e) {
-      print('Error getting local contact: $e');
+      Logger.logW('Error getting local contact', e);
     }
 
-    // If online, try remote
-    if (await _networkInfo.isConnected) {
-      try {
-        final contact = await _remoteDataSource.getContactById(id);
-        return Success(_mapper.toEntity(contact));
-      } catch (e) {
-        return Error(ExceptionHandler.handleException(e));
-      }
+    // Try remote
+    try {
+      final contact = await _remoteDataSource.getContactById(id);
+      return Success(_mapper.toEntity(contact));
+    } catch (e) {
+      Logger.logW('Failed to get contact from server', e);
+      return const Error(NotFoundFailure(message: 'Contact not found'));
     }
-
-    return const Error(NotFoundFailure(message: 'Contact not found'));
   }
 
   @override
   Future<Result<ContactEntity>> createContact(ContactEntity contact) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final model = _mapper.toModel(contact);
       final createdContact = await _remoteDataSource.createContact(model.toJson());
@@ -126,16 +107,13 @@ class ContactRepositoryImpl implements ContactRepository {
       
       return Success(entity);
     } catch (e) {
+      Logger.logE('Error creating contact', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
 
   @override
   Future<Result<ContactEntity>> updateContact(ContactEntity contact) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final model = _mapper.toModel(contact);
       final updatedContact = await _remoteDataSource.updateContact(
@@ -149,16 +127,13 @@ class ContactRepositoryImpl implements ContactRepository {
       
       return Success(entity);
     } catch (e) {
+      Logger.logE('Error updating contact', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
 
   @override
   Future<Result<void>> deleteContact(int id) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       await _remoteDataSource.deleteContact(id);
       
@@ -167,6 +142,7 @@ class ContactRepositoryImpl implements ContactRepository {
       
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error deleting contact', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -186,11 +162,13 @@ class ContactRepositoryImpl implements ContactRepository {
         return Success(filtered);
       },
       onError: (failure) async {
-        // If online, try remote search
-        if (await _networkInfo.isConnected) {
-          return getContacts();
+        // Try remote search
+        try {
+          return await getContacts();
+        } catch (e) {
+          Logger.logW('Failed to search contacts from server', e);
+          return Error(failure);
         }
-        return Error(failure);
       },
     );
   }
@@ -198,16 +176,12 @@ class ContactRepositoryImpl implements ContactRepository {
   /// Sync contacts in background without blocking
   void _syncContactsInBackground({String? type}) {
     syncContacts().catchError((e) {
-      print('Background contact sync error: $e');
+      Logger.logW('Background contact sync error', e);
     });
   }
 
   @override
   Future<Result<void>> syncContacts() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       // Fetch all contacts (customers)
       final contacts = await _remoteDataSource.getContacts(type: 'customer', perPage: 750);
@@ -217,6 +191,7 @@ class ContactRepositoryImpl implements ContactRepository {
       
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error syncing contacts', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

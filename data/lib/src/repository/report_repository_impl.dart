@@ -1,20 +1,16 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/remote/report_remote_data_source.dart';
 import '../model/report_model.dart';
 
 /// Implementation of [ReportRepository]
 class ReportRepositoryImpl implements ReportRepository {
   final ReportRemoteDataSource _remoteDataSource;
-  final NetworkInfo _networkInfo;
 
   const ReportRepositoryImpl({
     required ReportRemoteDataSource remoteDataSource,
-    required NetworkInfo networkInfo,
-  })  : _remoteDataSource = remoteDataSource,
-        _networkInfo = networkInfo;
+  })  : _remoteDataSource = remoteDataSource;
 
   @override
   Future<Result<ProfitLossReportEntity>> getProfitLossReport({
@@ -22,10 +18,6 @@ class ReportRepositoryImpl implements ReportRepository {
     DateTime? endDate,
     int? locationId,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final query = <String, dynamic>{};
       if (startDate != null) query['start_date'] = startDate.toIso8601String().split('T')[0];
@@ -35,6 +27,7 @@ class ReportRepositoryImpl implements ReportRepository {
       final report = await _remoteDataSource.getProfitLossReport(query: query);
       return Success(_mapProfitLossToEntity(report));
     } catch (e) {
+      Logger.logE('Error getting profit loss report', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -43,10 +36,6 @@ class ReportRepositoryImpl implements ReportRepository {
   Future<Result<List<ProductStockReportEntity>>> getProductStockReport({
     int? locationId,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final query = <String, dynamic>{};
       if (locationId != null) query['location_id'] = locationId;
@@ -55,6 +44,7 @@ class ReportRepositoryImpl implements ReportRepository {
       final entities = reports.map(_mapProductStockToEntity).toList();
       return Success(entities);
     } catch (e) {
+      Logger.logE('Error getting product stock report', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

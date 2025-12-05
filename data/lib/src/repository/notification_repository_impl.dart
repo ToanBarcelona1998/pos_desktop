@@ -1,32 +1,25 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/remote/notification_remote_data_source.dart';
 import '../model/notification_model.dart';
 
 /// Implementation of [NotificationRepository]
 class NotificationRepositoryImpl implements NotificationRepository {
   final NotificationRemoteDataSource _remoteDataSource;
-  final NetworkInfo _networkInfo;
 
   const NotificationRepositoryImpl({
     required NotificationRemoteDataSource remoteDataSource,
-    required NetworkInfo networkInfo,
-  })  : _remoteDataSource = remoteDataSource,
-        _networkInfo = networkInfo;
+  })  : _remoteDataSource = remoteDataSource;
 
   @override
   Future<Result<List<NotificationEntity>>> getNotifications() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final notifications = await _remoteDataSource.getNotifications();
       final entities = notifications.map(_mapToEntity).toList();
       return Success(entities);
     } catch (e) {
+      Logger.logE('Error getting notifications', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -45,24 +38,17 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
   @override
   Future<Result<void>> markAsRead(String id) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       await _remoteDataSource.markAsRead(id);
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error marking notification as read', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
 
   @override
   Future<Result<void>> markAllAsRead() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final result = await getNotifications();
       return result.fold(
@@ -75,20 +61,18 @@ class NotificationRepositoryImpl implements NotificationRepository {
         onError: (failure) => Error(failure),
       );
     } catch (e) {
+      Logger.logE('Error marking all notifications as read', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
 
   @override
   Future<Result<void>> deleteNotification(String id) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       // Delete implementation - depends on API support
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error deleting notification', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

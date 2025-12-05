@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/local/system_local_data_source.dart';
 import '../data_source/remote/business_remote_data_source.dart';
 import '../model/business_model.dart';
@@ -12,50 +11,41 @@ import '../model/business_model.dart';
 class BusinessRepositoryImpl implements BusinessRepository {
   final BusinessRemoteDataSource _remoteDataSource;
   final SystemLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
 
   const BusinessRepositoryImpl({
     required BusinessRemoteDataSource remoteDataSource,
     required SystemLocalDataSource localDataSource,
-    required NetworkInfo networkInfo,
   })  : _remoteDataSource = remoteDataSource,
-        _localDataSource = localDataSource,
-        _networkInfo = networkInfo;
+        _localDataSource = localDataSource;
 
   @override
   Future<Result<BusinessEntity>> getBusinessDetails() async {
-    if (!await _networkInfo.isConnected) {
-      final localResult = await getLocalBusinessDetails();
-      return localResult.fold(
-        onSuccess: (business) {
-          if (business == null) {
-            return const Error(NetworkFailure());
-          }
-          return Success(business);
-        },
-        onError: (failure) => Error(failure),
-      );
-    }
-
     try {
       final business = await _remoteDataSource.getBusinessDetails();
       return Success(_mapToEntity(business));
     } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
+      // If server call fails, try local
+      final localResult = await getLocalBusinessDetails();
+      return localResult.fold(
+        onSuccess: (business) {
+          if (business == null) {
+            return Error(ExceptionHandler.handleException(e));
+          }
+          return Success(business);
+        },
+        onError: (failure) => Error(ExceptionHandler.handleException(e)),
+      );
     }
   }
 
   @override
   Future<Result<void>> syncBusinessDetails() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final business = await _remoteDataSource.getBusinessDetails();
       await _localDataSource.insert('business', jsonEncode([business.toJson()]));
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error syncing business details', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

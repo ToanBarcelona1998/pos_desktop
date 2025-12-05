@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/local/system_local_data_source.dart';
 import '../data_source/remote/category_remote_data_source.dart';
 import '../model/category_model.dart';
@@ -13,15 +12,12 @@ import '../model/category_model.dart';
 class CategoryRepositoryImpl implements CategoryRepository {
   final CategoryRemoteDataSource _remoteDataSource;
   final SystemLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
 
   const CategoryRepositoryImpl({
     required CategoryRemoteDataSource remoteDataSource,
     required SystemLocalDataSource localDataSource,
-    required NetworkInfo networkInfo,
   })  : _remoteDataSource = remoteDataSource,
-        _localDataSource = localDataSource,
-        _networkInfo = networkInfo;
+        _localDataSource = localDataSource;
 
   @override
   Future<Result<List<CategoryEntity>>> getCategories() async {
@@ -32,48 +28,40 @@ class CategoryRepositoryImpl implements CategoryRepository {
       onSuccess: (localCategories) async {
         // If we have local data, return it immediately
         if (localCategories.isNotEmpty) {
-          // If online, sync in background for next time
-          if (await _networkInfo.isConnected) {
-            _syncCategoriesInBackground();
-          }
+          // Sync in background for next time
+          _syncCategoriesInBackground();
           return Success(localCategories);
         }
         
-        // No local data - try remote if online
-        if (await _networkInfo.isConnected) {
-          try {
-            final categories = await _remoteDataSource.getCategories();
-            final entities = categories.map(_mapToEntity).toList();
-            
-            // Save to local
-            await syncCategories();
-            
-            return Success(entities);
-          } catch (e) {
-            return Error(ExceptionHandler.handleException(e));
-          }
+        // No local data - try remote
+        try {
+          final categories = await _remoteDataSource.getCategories();
+          final entities = categories.map(_mapToEntity).toList();
+          
+          // Save to local
+          await syncCategories();
+          
+          return Success(entities);
+        } catch (e) {
+          Logger.logW('Failed to fetch categories from server', e);
+          // Offline and no local data
+          return const Success([]);
         }
-        
-        // Offline and no local data
-        return const Success([]);
       },
       onError: (failure) async {
-        // Local fetch failed - try remote if online
-        if (await _networkInfo.isConnected) {
-          try {
-            final categories = await _remoteDataSource.getCategories();
-            final entities = categories.map(_mapToEntity).toList();
-            
-            // Save to local
-            await syncCategories();
-            
-            return Success(entities);
-          } catch (e) {
-            return Error(ExceptionHandler.handleException(e));
-          }
+        // Local fetch failed - try remote
+        try {
+          final categories = await _remoteDataSource.getCategories();
+          final entities = categories.map(_mapToEntity).toList();
+          
+          // Save to local
+          await syncCategories();
+          
+          return Success(entities);
+        } catch (e) {
+          Logger.logW('Failed to fetch categories from server after local error', e);
+          return Error(failure);
         }
-        
-        return Error(failure);
       },
     );
   }
@@ -96,16 +84,12 @@ class CategoryRepositoryImpl implements CategoryRepository {
   /// Sync categories in background without blocking
   void _syncCategoriesInBackground() {
     syncCategories().catchError((e) {
-      print('Background category sync error: $e');
+      Logger.logW('Background category sync error', e);
     });
   }
 
   @override
   Future<Result<void>> syncCategories() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final categories = await _remoteDataSource.getCategories();
       final categoriesJson = categories.map((c) => c.toJson()).toList();
@@ -125,6 +109,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
       }
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error syncing categories', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

@@ -56,7 +56,6 @@ Future<void> initDependencies({Environment env = Environment.development}) async
 
   // ============== Core ==============
   sl.register<AppConfig>(config);
-  sl.register<NetworkInfo>(NetworkInfoImpl());
   sl.register<DatabaseHelper>(DatabaseHelper.instance);
   sl.registerLazy<ApiClient>(() => ApiClient(baseUrl: config.baseUrl));
 
@@ -210,112 +209,92 @@ void _registerRepositories() {
   sl.registerLazy<AuthRepository>(() => AuthRepositoryImpl(
         remoteDataSource: sl.get<AuthRemoteDataSource>(),
         localDataSource: sl.get<AuthLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<BrandRepository>(() => BrandRepositoryImpl(
         remoteDataSource: sl.get<BrandRemoteDataSource>(),
         localDataSource: sl.get<SystemLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<ContactRepository>(() => ContactRepositoryImpl(
         remoteDataSource: sl.get<ContactRemoteDataSource>(),
         localDataSource: sl.get<ContactLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<AttendanceRepository>(() => AttendanceRepositoryImpl(
         remoteDataSource: sl.get<AttendanceRemoteDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<TaxRepository>(() => TaxRepositoryImpl(
         remoteDataSource: sl.get<TaxRemoteDataSource>(),
         localDataSource: sl.get<SystemLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<UnitRepository>(() => UnitRepositoryImpl(
         remoteDataSource: sl.get<UnitRemoteDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<ExpenseRepository>(() => ExpenseRepositoryImpl(
         remoteDataSource: sl.get<ExpenseRemoteDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<FieldForceRepository>(() => FieldForceRepositoryImpl(
         remoteDataSource: sl.get<FieldForceRemoteDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<FollowUpRepository>(() => FollowUpRepositoryImpl(
         remoteDataSource: sl.get<FollowUpRemoteDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<ShipmentRepository>(() => ShipmentRepositoryImpl(
         remoteDataSource: sl.get<ShipmentRemoteDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<CategoryRepository>(() => CategoryRepositoryImpl(
         remoteDataSource: sl.get<CategoryRemoteDataSource>(),
         localDataSource: sl.get<SystemLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<LocationRepository>(() => LocationRepositoryImpl(
         remoteDataSource: sl.get<LocationRemoteDataSource>(),
         localDataSource: sl.get<SystemLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<BusinessRepository>(() => BusinessRepositoryImpl(
         remoteDataSource: sl.get<BusinessRemoteDataSource>(),
         localDataSource: sl.get<SystemLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<PaymentRepository>(() => PaymentRepositoryImpl(
         remoteDataSource: sl.get<PaymentRemoteDataSource>(),
         localDataSource: sl.get<SystemLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<VariationRepository>(() => VariationRepositoryImpl(
         remoteDataSource: sl.get<VariationRemoteDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<ReportRepository>(() => ReportRepositoryImpl(
         remoteDataSource: sl.get<ReportRemoteDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<SubscriptionRepository>(() => SubscriptionRepositoryImpl(
         remoteDataSource: sl.get<SubscriptionRemoteDataSource>(),
         localDataSource: sl.get<SystemLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<PermissionRepository>(() => PermissionRepositoryImpl(
         remoteDataSource: sl.get<PermissionRemoteDataSource>(),
         localDataSource: sl.get<SystemLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<ProductRepository>(() => ProductRepositoryImpl(
         remoteDataSource: sl.get<ProductRemoteDataSource>(),
         localDataSource: sl.get<ProductLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<PurchaseRepository>(() => PurchaseRepositoryImpl(
         remoteDataSource: sl.get<PurchaseRemoteDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<SellLocalDataSource>(() => SellLocalDataSourceImpl(
@@ -329,13 +308,11 @@ void _registerRepositories() {
 
   sl.registerLazy<NotificationRepository>(() => NotificationRepositoryImpl(
         remoteDataSource: sl.get<NotificationRemoteDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 }
 
 void _registerServices() {
   sl.registerLazy<SystemSyncService>(() => SystemSyncService(
-        networkInfo: sl.get<NetworkInfo>(),
         localDataSource: sl.get<SystemLocalDataSource>(),
         brandDataSource: sl.get<BrandRemoteDataSource>(),
         categoryDataSource: sl.get<CategoryRemoteDataSource>(),

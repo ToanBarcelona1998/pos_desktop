@@ -1,7 +1,6 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/local/product_local_data_source.dart';
 import '../data_source/remote/product_remote_data_source.dart';
 import '../model/product_model.dart';
@@ -11,15 +10,12 @@ import '../model/product_model.dart';
 class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDataSource _remoteDataSource;
   final ProductLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
 
   const ProductRepositoryImpl({
     required ProductRemoteDataSource remoteDataSource,
     required ProductLocalDataSource localDataSource,
-    required NetworkInfo networkInfo,
   })  : _remoteDataSource = remoteDataSource,
-        _localDataSource = localDataSource,
-        _networkInfo = networkInfo;
+        _localDataSource = localDataSource;
 
   @override
   Future<Result<List<ProductEntity>>> getProducts({
@@ -41,38 +37,33 @@ class ProductRepositoryImpl implements ProductRepository {
         // Return local data immediately
         final entities = cachedProducts.map(_mapToEntity).toList();
         
-        // If online, sync in background for next time
-        if (await _networkInfo.isConnected) {
-          _syncProductsInBackground(locationId);
-        }
+        // Sync in background for next time
+        _syncProductsInBackground(locationId);
         
         return Success(entities);
       }
     } catch (e) {
-      print('Error getting cached products: $e');
+      Logger.logW('Error getting cached products', e);
     }
 
-    // If no local data and online, fetch from remote
-    if (await _networkInfo.isConnected) {
-      try {
-        final response = await _remoteDataSource.getProducts(
-          locationId: locationId,
-          page: page,
-          perPage: perPage,
-        );
-        final entities = response.products.map(_mapToEntity).toList();
-        
-        // Save to local for offline use
-        await _localDataSource.saveProducts(response.products, locationId);
-        
-        return Success(entities);
-      } catch (e) {
-        return Error(ExceptionHandler.handleException(e));
-      }
+    // If no local data, fetch from remote
+    try {
+      final response = await _remoteDataSource.getProducts(
+        locationId: locationId,
+        page: page,
+        perPage: perPage,
+      );
+      final entities = response.products.map(_mapToEntity).toList();
+      
+      // Save to local for offline use
+      await _localDataSource.saveProducts(response.products, locationId);
+      
+      return Success(entities);
+    } catch (e) {
+      Logger.logW('Failed to fetch products from server', e);
+      // Offline and no local data
+      return const Success([]);
     }
-
-    // Offline and no local data
-    return const Success([]);
   }
 
   @override
@@ -89,16 +80,14 @@ class ProductRepositoryImpl implements ProductRepository {
       );
       return Success(_mapToEntity(product));
     } catch (_) {
-      // If online, try remote
-      if (await _networkInfo.isConnected) {
-        try {
-          final product = await _remoteDataSource.getProductById(id);
-          return Success(_mapToEntity(product));
-        } catch (e) {
-          return Error(ExceptionHandler.handleException(e));
-        }
+      // Try remote
+      try {
+        final product = await _remoteDataSource.getProductById(id);
+        return Success(_mapToEntity(product));
+      } catch (e) {
+        Logger.logW('Failed to get product from server', e);
+        return const Error(NotFoundFailure(message: 'Product not found'));
       }
-      return const Error(NotFoundFailure(message: 'Product not found'));
     }
   }
 
@@ -131,30 +120,27 @@ class ProductRepositoryImpl implements ProductRepository {
         return Success(result);
       }
     } catch (e) {
-      print('Error searching local products: $e');
+      Logger.logW('Error searching local products', e);
     }
 
-    // If online and no local results, try remote
-    if (await _networkInfo.isConnected) {
-      return getProducts(locationId: locationId, perPage: 100, searchQuery: query);
+    // If no local results, try remote
+    try {
+      return await getProducts(locationId: locationId, perPage: 100, searchQuery: query);
+    } catch (e) {
+      Logger.logW('Failed to search products from server', e);
+      return const Success([]);
     }
-
-    return const Success([]);
   }
 
   /// Sync products in background without blocking
   void _syncProductsInBackground(int locationId) {
     syncProducts(locationId).catchError((e) {
-      print('Background product sync error: $e');
+      Logger.logW('Background product sync error', e);
     });
   }
 
   @override
   Future<Result<void>> syncProducts(int locationId) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       int page = 1;
       bool hasMore = true;

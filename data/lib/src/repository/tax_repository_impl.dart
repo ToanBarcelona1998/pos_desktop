@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/local/system_local_data_source.dart';
 import '../data_source/remote/tax_remote_data_source.dart';
 import '../model/tax_model.dart';
@@ -13,15 +12,12 @@ import '../model/tax_model.dart';
 class TaxRepositoryImpl implements TaxRepository {
   final TaxRemoteDataSource _remoteDataSource;
   final SystemLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
 
   const TaxRepositoryImpl({
     required TaxRemoteDataSource remoteDataSource,
     required SystemLocalDataSource localDataSource,
-    required NetworkInfo networkInfo,
   })  : _remoteDataSource = remoteDataSource,
-        _localDataSource = localDataSource,
-        _networkInfo = networkInfo;
+        _localDataSource = localDataSource;
 
   @override
   Future<Result<List<TaxEntity>>> getTaxes() async {
@@ -32,48 +28,40 @@ class TaxRepositoryImpl implements TaxRepository {
       onSuccess: (localTaxes) async {
         // If we have local data, return it immediately
         if (localTaxes.isNotEmpty) {
-          // If online, sync in background for next time
-          if (await _networkInfo.isConnected) {
-            _syncTaxesInBackground();
-          }
+          // Sync in background for next time
+          _syncTaxesInBackground();
           return Success(localTaxes);
         }
         
-        // No local data - try remote if online
-        if (await _networkInfo.isConnected) {
-          try {
-            final taxes = await _remoteDataSource.getTaxes();
-            final entities = taxes.map(_mapToEntity).toList();
-            
-            // Save to local
-            await syncTaxes();
-            
-            return Success(entities);
-          } catch (e) {
-            return Error(ExceptionHandler.handleException(e));
-          }
+        // No local data - try remote
+        try {
+          final taxes = await _remoteDataSource.getTaxes();
+          final entities = taxes.map(_mapToEntity).toList();
+          
+          // Save to local
+          await syncTaxes();
+          
+          return Success(entities);
+        } catch (e) {
+          Logger.logW('Failed to fetch taxes from server', e);
+          // Offline and no local data
+          return const Success([]);
         }
-        
-        // Offline and no local data
-        return const Success([]);
       },
       onError: (failure) async {
-        // Local fetch failed - try remote if online
-        if (await _networkInfo.isConnected) {
-          try {
-            final taxes = await _remoteDataSource.getTaxes();
-            final entities = taxes.map(_mapToEntity).toList();
-            
-            // Save to local
-            await syncTaxes();
-            
-            return Success(entities);
-          } catch (e) {
-            return Error(ExceptionHandler.handleException(e));
-          }
+        // Local fetch failed - try remote
+        try {
+          final taxes = await _remoteDataSource.getTaxes();
+          final entities = taxes.map(_mapToEntity).toList();
+          
+          // Save to local
+          await syncTaxes();
+          
+          return Success(entities);
+        } catch (e) {
+          Logger.logW('Failed to fetch taxes from server after local error', e);
+          return Error(failure);
         }
-        
-        return Error(failure);
       },
     );
   }
@@ -96,22 +84,19 @@ class TaxRepositoryImpl implements TaxRepository {
   /// Sync taxes in background without blocking
   void _syncTaxesInBackground() {
     syncTaxes().catchError((e) {
-      print('Background tax sync error: $e');
+      Logger.logW('Background tax sync error', e);
     });
   }
 
   @override
   Future<Result<void>> syncTaxes() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final taxes = await _remoteDataSource.getTaxes();
       final taxesJson = taxes.map((t) => t.toJson()).toList();
       await _localDataSource.insert('tax', jsonEncode(taxesJson));
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error syncing taxes', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

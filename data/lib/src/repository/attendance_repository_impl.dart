@@ -1,19 +1,15 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/remote/attendance_remote_data_source.dart';
 
 /// Implementation of [AttendanceRepository]
 class AttendanceRepositoryImpl implements AttendanceRepository {
   final AttendanceRemoteDataSource _remoteDataSource;
-  final NetworkInfo _networkInfo;
 
   const AttendanceRepositoryImpl({
     required AttendanceRemoteDataSource remoteDataSource,
-    required NetworkInfo networkInfo,
-  })  : _remoteDataSource = remoteDataSource,
-        _networkInfo = networkInfo;
+  })  : _remoteDataSource = remoteDataSource;
 
   @override
   Future<Result<AttendanceEntity>> clockIn({
@@ -23,10 +19,6 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     String? note,
     String? ipAddress,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = {
         'user_id': userId,
@@ -40,6 +32,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       final entity = _mapToEntity(response);
       return Success(entity);
     } catch (e) {
+      Logger.logE('Error clocking in', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -52,10 +45,6 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     String? note,
     String? ipAddress,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = {
         'user_id': userId,
@@ -69,21 +58,19 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       final entity = _mapToEntity(response);
       return Success(entity);
     } catch (e) {
+      Logger.logE('Error clocking out', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
 
   @override
   Future<Result<List<AttendanceEntity>>> getAttendanceDetails(int userId) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final response = await _remoteDataSource.getAttendanceDetails(userId);
       final entities = response.map(_mapToEntity).toList();
       return Success(entities);
     } catch (e) {
+      Logger.logE('Error getting attendance details', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

@@ -1,19 +1,15 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/remote/field_force_remote_data_source.dart';
 
 /// Implementation of [FieldForceRepository]
 class FieldForceRepositoryImpl implements FieldForceRepository {
   final FieldForceRemoteDataSource _remoteDataSource;
-  final NetworkInfo _networkInfo;
 
   const FieldForceRepositoryImpl({
     required FieldForceRemoteDataSource remoteDataSource,
-    required NetworkInfo networkInfo,
-  })  : _remoteDataSource = remoteDataSource,
-        _networkInfo = networkInfo;
+  })  : _remoteDataSource = remoteDataSource;
 
   @override
   Future<Result<FieldForceVisitEntity>> createVisit({
@@ -24,10 +20,6 @@ class FieldForceRepositoryImpl implements FieldForceRepository {
     double? longitude,
     String? address,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = {
         'contact_id': contactId,
@@ -41,6 +33,7 @@ class FieldForceRepositoryImpl implements FieldForceRepository {
       final response = await _remoteDataSource.createVisit(data);
       return Success(_mapToEntity(response));
     } catch (e) {
+      Logger.logE('Error creating visit', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -52,10 +45,6 @@ class FieldForceRepositoryImpl implements FieldForceRepository {
     String? note,
     DateTime? checkOutTime,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = {
         'status': status,
@@ -66,6 +55,7 @@ class FieldForceRepositoryImpl implements FieldForceRepository {
       final response = await _remoteDataSource.updateVisitStatus(visitId, data);
       return Success(_mapToEntity(response));
     } catch (e) {
+      Logger.logE('Error updating visit status', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -77,10 +67,6 @@ class FieldForceRepositoryImpl implements FieldForceRepository {
     DateTime? endDate,
     String? status,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final query = <String, dynamic>{};
       if (userId != null) query['user_id'] = userId;
@@ -92,6 +78,7 @@ class FieldForceRepositoryImpl implements FieldForceRepository {
       final entities = visits.map(_mapToEntity).toList();
       return Success(entities);
     } catch (e) {
+      Logger.logE('Error getting visits', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

@@ -1,31 +1,24 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/remote/expense_remote_data_source.dart';
 
 /// Implementation of [ExpenseRepository]
 class ExpenseRepositoryImpl implements ExpenseRepository {
   final ExpenseRemoteDataSource _remoteDataSource;
-  final NetworkInfo _networkInfo;
 
   const ExpenseRepositoryImpl({
     required ExpenseRemoteDataSource remoteDataSource,
-    required NetworkInfo networkInfo,
-  })  : _remoteDataSource = remoteDataSource,
-        _networkInfo = networkInfo;
+  })  : _remoteDataSource = remoteDataSource;
 
   @override
   Future<Result<List<ExpenseCategoryEntity>>> getExpenseCategories() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final categories = await _remoteDataSource.getExpenseCategories();
       final entities = categories.map(_mapCategoryToEntity).toList();
       return Success(entities);
     } catch (e) {
+      Logger.logE('Error getting expense categories', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -40,10 +33,6 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     int? contactId,
     DateTime? transactionDate,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = {
         'location_id': locationId,
@@ -59,6 +48,7 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
       final response = await _remoteDataSource.createExpense(data);
       return Success(_mapExpenseToEntity(response));
     } catch (e) {
+      Logger.logE('Error creating expense', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -69,10 +59,6 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final query = <String, dynamic>{};
       if (locationId != null) query['location_id'] = locationId;
@@ -83,6 +69,7 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
       final entities = expenses.map(_mapExpenseToEntity).toList();
       return Success(entities);
     } catch (e) {
+      Logger.logE('Error getting expenses', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

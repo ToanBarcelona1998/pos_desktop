@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/local/system_local_data_source.dart';
 import '../data_source/remote/subscription_remote_data_source.dart';
 import '../model/subscription_model.dart';
@@ -12,22 +11,15 @@ import '../model/subscription_model.dart';
 class SubscriptionRepositoryImpl implements SubscriptionRepository {
   final SubscriptionRemoteDataSource _remoteDataSource;
   final SystemLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
 
   const SubscriptionRepositoryImpl({
     required SubscriptionRemoteDataSource remoteDataSource,
     required SystemLocalDataSource localDataSource,
-    required NetworkInfo networkInfo,
   })  : _remoteDataSource = remoteDataSource,
-        _localDataSource = localDataSource,
-        _networkInfo = networkInfo;
+        _localDataSource = localDataSource;
 
   @override
   Future<Result<SubscriptionEntity?>> getActiveSubscription() async {
-    if (!await _networkInfo.isConnected) {
-      return getLocalActiveSubscription();
-    }
-
     try {
       final subscription = await _remoteDataSource.getActiveSubscription();
       if (subscription == null) {
@@ -35,16 +27,13 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
       }
       return Success(_mapToEntity(subscription));
     } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
+      Logger.logW('Failed to get active subscription from server, trying local', e);
+      return getLocalActiveSubscription();
     }
   }
 
   @override
   Future<Result<void>> syncActiveSubscription() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final subscription = await _remoteDataSource.getActiveSubscription();
       if (subscription != null) {
@@ -57,6 +46,7 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
       }
       return const Success(null);
     } catch (e) {
+      Logger.logE('Error syncing active subscription', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }

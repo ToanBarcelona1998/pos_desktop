@@ -1,26 +1,18 @@
 import 'package:domain/domain.dart';
 
 import '../core/exception_handler.dart';
-import '../core/network_info.dart';
 import '../data_source/remote/follow_up_remote_data_source.dart';
 
 /// Implementation of [FollowUpRepository]
 class FollowUpRepositoryImpl implements FollowUpRepository {
   final FollowUpRemoteDataSource _remoteDataSource;
-  final NetworkInfo _networkInfo;
 
   const FollowUpRepositoryImpl({
     required FollowUpRemoteDataSource remoteDataSource,
-    required NetworkInfo networkInfo,
-  })  : _remoteDataSource = remoteDataSource,
-        _networkInfo = networkInfo;
+  })  : _remoteDataSource = remoteDataSource;
 
   @override
   Future<Result<FollowUpEntity>> getFollowUpById(int id) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final response = await _remoteDataSource.getFollowUpById(id);
       if (response.isEmpty) {
@@ -28,6 +20,7 @@ class FollowUpRepositoryImpl implements FollowUpRepository {
       }
       return Success(_mapToEntity(response));
     } catch (e) {
+      Logger.logE('Error getting follow up by id', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -39,10 +32,6 @@ class FollowUpRepositoryImpl implements FollowUpRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final query = <String, dynamic>{};
       if (contactId != null) query['contact_id'] = contactId;
@@ -54,6 +43,7 @@ class FollowUpRepositoryImpl implements FollowUpRepository {
       final entities = followUps.map(_mapToEntity).toList();
       return Success(entities);
     } catch (e) {
+      Logger.logE('Error getting follow ups', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -67,10 +57,6 @@ class FollowUpRepositoryImpl implements FollowUpRepository {
     DateTime? endDateTime,
     int? categoryId,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = {
         'contact_id': contactId,
@@ -84,6 +70,7 @@ class FollowUpRepositoryImpl implements FollowUpRepository {
       final response = await _remoteDataSource.createFollowUp(data);
       return Success(_mapToEntity(response));
     } catch (e) {
+      Logger.logE('Error creating follow up', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -98,10 +85,6 @@ class FollowUpRepositoryImpl implements FollowUpRepository {
     DateTime? endDateTime,
     int? categoryId,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = <String, dynamic>{};
       if (title != null) data['title'] = title;
@@ -114,21 +97,19 @@ class FollowUpRepositoryImpl implements FollowUpRepository {
       final response = await _remoteDataSource.updateFollowUp(id, data);
       return Success(_mapToEntity(response));
     } catch (e) {
+      Logger.logE('Error updating follow up', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
 
   @override
   Future<Result<List<FollowUpCategoryEntity>>> getFollowUpCategories() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final categories = await _remoteDataSource.getFollowUpCategories();
       final entities = categories.map(_mapCategoryToEntity).toList();
       return Success(entities);
     } catch (e) {
+      Logger.logE('Error getting follow up categories', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -141,10 +122,6 @@ class FollowUpRepositoryImpl implements FollowUpRepository {
     int? duration,
     String? note,
   }) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     try {
       final data = {
         'contact_id': contactId,
@@ -157,6 +134,7 @@ class FollowUpRepositoryImpl implements FollowUpRepository {
       final success = await _remoteDataSource.syncCallLog(data);
       return Success(success);
     } catch (e) {
+      Logger.logE('Error syncing call log', e);
       return Error(ExceptionHandler.handleException(e));
     }
   }
