@@ -35,11 +35,43 @@ class SellRemoteDataSourceImpl implements SellRemoteDataSource {
     // Remove shipping fields from data before sending
     final cleanedData = _removeShippingFields(data);
     final response = await _apiClient.post(_endpoint, body: cleanedData);
-    final sellData = response['data'];
-    if (sellData is List && sellData.isNotEmpty) {
-      return SellModel.fromJson(sellData.first as Map<String, dynamic>);
+    
+    // API response structure: {'data': [sellObject]} or {'data': sellObject}
+    final responseData = response['data'];
+    
+    // Handle List response (most common case)
+    if (responseData is List) {
+      if (responseData.isNotEmpty) {
+        final firstItem = responseData.first;
+        // Ensure firstItem is a Map
+        if (firstItem is Map<String, dynamic>) {
+          return SellModel.fromJson(firstItem);
+        } else if (firstItem is Map) {
+          // Convert dynamic Map to Map<String, dynamic>
+          return SellModel.fromJson(Map<String, dynamic>.from(firstItem));
+        } else {
+          throw Exception('Invalid response format: expected Map, got ${firstItem.runtimeType}');
+        }
+      } else {
+        throw Exception('Empty response data list');
+      }
     }
-    return SellModel.fromJson(sellData ?? response);
+    
+    // Handle Map response
+    if (responseData is Map<String, dynamic>) {
+      return SellModel.fromJson(responseData);
+    } else if (responseData is Map) {
+      return SellModel.fromJson(Map<String, dynamic>.from(responseData));
+    }
+    
+    // If response['data'] is null, try using response directly
+    if (response is Map<String, dynamic>) {
+      return SellModel.fromJson(response);
+    } else if (response is Map) {
+      return SellModel.fromJson(Map<String, dynamic>.from(response));
+    }
+    
+    throw Exception('Invalid API response format: ${response.runtimeType}');
   }
 
   @override
@@ -75,11 +107,30 @@ class SellRemoteDataSourceImpl implements SellRemoteDataSource {
 
   Map<String, dynamic> _removeShippingFields(Map<String, dynamic> data) {
     final cleaned = Map<String, dynamic>.from(data);
-    cleaned['shipping_charges'] = 0.0;
-    cleaned['shipping_details'] = null;
-    cleaned['shipping_address'] = null;
-    cleaned['shipping_status'] = null;
-    cleaned['delivered_to'] = null;
+    
+    // Handle case where data contains 'sells' array (like {'sells': [sellData]})
+    if (cleaned.containsKey('sells') && cleaned['sells'] is List) {
+      cleaned['sells'] = (cleaned['sells'] as List).map((sell) {
+        if (sell is Map) {
+          final sellMap = Map<String, dynamic>.from(sell);
+          sellMap['shipping_charges'] = 0.0;
+          sellMap['shipping_details'] = null;
+          sellMap['shipping_address'] = null;
+          sellMap['shipping_status'] = null;
+          sellMap['delivered_to'] = null;
+          return sellMap;
+        }
+        return sell;
+      }).toList();
+    } else {
+      // Remove shipping fields from top level
+      cleaned['shipping_charges'] = 0.0;
+      cleaned['shipping_details'] = null;
+      cleaned['shipping_address'] = null;
+      cleaned['shipping_status'] = null;
+      cleaned['delivered_to'] = null;
+    }
+    
     return cleaned;
   }
 }

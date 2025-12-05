@@ -167,5 +167,10 @@ class PosDeleteSuspendedSell extends PosEvent {
   const PosDeleteSuspendedSell(this.sellId);
 }
 
+/// Clear print invoice flag
+class PosClearPrintFlag extends PosEvent {
+  const PosClearPrintFlag();
+}
+
 
 

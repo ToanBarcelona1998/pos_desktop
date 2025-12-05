@@ -2,6 +2,7 @@ import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/core.dart';
+import '../../../core/localization/locale_keys.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
 
@@ -58,6 +59,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     on<PosLoadSuspendedSells>(_onLoadSuspendedSells);
     on<PosLoadSuspendedSell>(_onLoadSuspendedSell);
     on<PosDeleteSuspendedSell>(_onDeleteSuspendedSell);
+    on<PosClearPrintFlag>(_onClearPrintFlag);
   }
 
   static const int _perPage = 50;
@@ -308,7 +310,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     if (!state.canSubmit) {
       emit(state.copyWith(
         failure: ValidationFailure(
-            message: 'Please select customer and add items'),
+            message: LocaleKeys.pleaseSelectCustomerAndAddItems),
       ));
       return;
     }
@@ -383,6 +385,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
       result.fold(
         onSuccess: (createdSell) {
+          // Only print if not suspended and printInvoice is true
+          final shouldPrint = event.printInvoice && !state.isSuspended;
+          
           emit(state.copyWith(
             isSubmitting: false,
             successMessage: event.isCredit
@@ -392,6 +397,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
                     : (state.isSuspended
                         ? LocaleKeys.saleSuspendedSuccessfully
                         : LocaleKeys.saleCompletedSuccessfully)),
+            createdSellId: createdSell.id, // Store created sell ID for printing
+            shouldPrintInvoice: shouldPrint, // Flag to trigger printing
             cartItems: [],
             discountAmount: 0,
             discountType: DiscountType.fixed,
@@ -914,7 +921,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       taxRate: taxRate,
       isSuspended: true,
       invoiceType: invoiceType,
-      successMessage: 'Suspended sale loaded successfully',
+      successMessage: LocaleKeys.suspendedSaleLoaded,
     ));
   }
 
@@ -929,13 +936,20 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         // Reload suspended sells
         add(const PosLoadSuspendedSells());
         emit(state.copyWith(
-          successMessage: 'Suspended sale deleted successfully',
+          successMessage: LocaleKeys.suspendedSaleDeleted,
         ));
       },
       onError: (failure) {
         emit(state.copyWith(failure: failure));
       },
     );
+  }
+
+  void _onClearPrintFlag(
+    PosClearPrintFlag event,
+    Emitter<PosState> emit,
+  ) {
+    emit(state.copyWith(shouldPrintInvoice: false));
   }
 
   String _generateInvoiceNo() {

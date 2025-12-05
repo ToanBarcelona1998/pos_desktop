@@ -103,6 +103,8 @@ class PosState {
   // Feedback
   final Failure? failure;
   final String? successMessage;
+  final int? createdSellId; // ID of the last created sell (for printing)
+  final bool shouldPrintInvoice; // Flag to trigger invoice printing
 
   const PosState({
     this.isLoading = false,
@@ -137,6 +139,8 @@ class PosState {
     this.currencySymbol = '\$',
     this.failure,
     this.successMessage,
+    this.createdSellId,
+    this.shouldPrintInvoice = false,
   });
 
   factory PosState.initial() => const PosState(isLoading: true);
@@ -214,6 +218,8 @@ class PosState {
     String? currencySymbol,
     Failure? failure,
     String? successMessage,
+    int? createdSellId,
+    bool? shouldPrintInvoice,
     bool clearCustomer = false,
     bool clearCategoryId = false,
     bool clearBrandId = false,
@@ -257,6 +263,8 @@ class PosState {
       failure: clearMessages ? null : (failure ?? this.failure),
       successMessage:
           clearMessages ? null : (successMessage ?? this.successMessage),
+      createdSellId: createdSellId ?? this.createdSellId,
+      shouldPrintInvoice: shouldPrintInvoice ?? this.shouldPrintInvoice,
     );
   }
 }

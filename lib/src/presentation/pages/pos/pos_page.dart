@@ -2,6 +2,9 @@ import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:http/http.dart' as http;
+import 'package:pos_final/src/core/services/print_service.dart';
+
 import '../../../../app_config/di.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/localization/locale_keys.dart';
@@ -51,7 +54,9 @@ class _PosView extends StatelessWidget {
     return BlocConsumer<PosBloc, PosState>(
       listenWhen: (previous, current) =>
           previous.failure != current.failure ||
-          previous.successMessage != current.successMessage,
+          previous.successMessage != current.successMessage ||
+          previous.shouldPrintInvoice != current.shouldPrintInvoice ||
+          previous.createdSellId != current.createdSellId,
       listener: (context, state) {
         if (state.failure != null) {
           ToastManager.showError(context, state.failure!.message);
@@ -60,6 +65,19 @@ class _PosView extends StatelessWidget {
           // Translate success message key
           final translatedMessage = l10n.translate(state.successMessage!);
           ToastManager.showSuccess(context, translatedMessage);
+        }
+        
+        // Handle invoice printing
+        if (state.shouldPrintInvoice && state.createdSellId != null) {
+          // Reset the flag immediately to prevent multiple prints
+          context.read<PosBloc>().add(const PosClearPrintFlag());
+          
+          // Show print dialog
+          _showPrintInvoiceDialog(
+            context,
+            state.createdSellId!,
+            state.taxId,
+          );
         }
       },
       builder: (context, state) {
@@ -217,6 +235,72 @@ class _PosView extends StatelessWidget {
       ),
       actions: [],
       width: 500,
+    );
+  }
+
+  /// Show print invoice dialog
+  void _showPrintInvoiceDialog(
+    BuildContext context,
+    int sellId,
+    int? taxId,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    DialogProvider.showConfirmDialog(
+      context,
+      title: l10n.translate(LocaleKeys.printInvoice),
+      message: l10n.translate(LocaleKeys.printInvoiceConfirmation),
+      confirmText: l10n.translate(LocaleKeys.yes),
+      cancelText: l10n.translate(LocaleKeys.no),
+      confirmColor: Colors.blue,
+      onConfirm: () async {
+        try {
+          // Try to get invoice URL from database if available
+          String? invoiceHtml;
+          try {
+            final sellRepository = sl.get<SellRepository>();
+            final sellsResult = await sellRepository.getLocalSells();
+            sellsResult.fold(
+              onSuccess: (sells) async{
+                final sell = sells.firstWhere(
+                  (s) => s.id == sellId,
+                  orElse: () => sells.first,
+                );
+                if (sell.invoiceUrl != null && sell.invoiceUrl!.isNotEmpty) {
+                  // Fetch HTML from URL
+                  final response = await http.Client()
+                      .get(Uri.parse(sell.invoiceUrl!));
+                  if (response.statusCode == 200) {
+                    invoiceHtml = response.body;
+                  }
+                }
+              },
+              onError: (_) {},
+            );
+          } catch (_) {
+            // If fetching fails, will use local generation
+          }
+
+          if(context.mounted){
+            await PrintService.printInvoice(
+              sellId: sellId,
+              taxId: taxId,
+              context: context,
+              invoiceHtml: invoiceHtml,
+            );
+          }
+
+        } catch (e) {
+          if (context.mounted) {
+            ToastManager.showError(
+              context,
+              '${l10n.translate(LocaleKeys.error)}: $e',
+            );
+          }
+        }
+      },
+      onCancel: () {
+        // User cancelled printing
+      },
     );
   }
 
