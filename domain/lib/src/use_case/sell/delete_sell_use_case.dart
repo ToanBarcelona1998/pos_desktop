@@ -21,7 +21,7 @@ class DeleteSellUseCase implements UseCase<void, int> {
     }
 
     // Always delete locally (whether online or offline)
-    return await _repository.deleteSellLocally(sellId);
+    return _repository.deleteSellLocally(sellId);
   }
 }
 
