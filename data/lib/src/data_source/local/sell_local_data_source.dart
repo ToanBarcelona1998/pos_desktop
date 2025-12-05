@@ -11,6 +11,7 @@ abstract class SellLocalDataSource {
     required List<Map<String, dynamic>> sellLines,
     required List<Map<String, dynamic>> payments,
     required bool isFinalOrSuspended,
+    bool isSynced = false,
   });
 
   /// Gets unsynced sells
@@ -54,6 +55,7 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
     required List<Map<String, dynamic>> sellLines,
     required List<Map<String, dynamic>> payments,
     required bool isFinalOrSuspended,
+    bool isSynced = false,
   }) async {
     final db = await _dbHelper.database;
 
@@ -66,8 +68,10 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
         ..remove('shipping_status')
         ..remove('delivered_to');
 
-      // Ensure is_synced is 0 for new sells
-      cleanedSellData['is_synced'] = 0;
+      // Set is_synced based on parameter (if not already set in sellData)
+      if (!cleanedSellData.containsKey('is_synced')) {
+        cleanedSellData['is_synced'] = isSynced ? 1 : 0;
+      }
 
       // Insert sell
       final sellId = await txn.insert(

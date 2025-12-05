@@ -24,7 +24,6 @@ class SellRepositoryImpl implements SellRepository {
   @override
   Future<Result<SellEntity>> createSell(SellEntity sell) async {
     try {
-      // Always save locally first (offline-first)
       final sellData = _entityToMap(sell);
       final sellLines = sell.sellLines.map(_sellLineToMap).toList();
       final payments = sell.payments.map(_paymentToMap).toList();
@@ -32,12 +31,104 @@ class SellRepositoryImpl implements SellRepository {
       // Determine if this is a final or suspended sale (affects stock update)
       final isFinalOrSuspended = (sell.status == 'final' || sell.isSuspend);
 
-      // Save to local database
+      // Try to submit to server first if online
+      bool isSynced = false;
+      int? transactionId;
+      String? invoiceUrl;
+      List<Map<String, dynamic>>? paymentLines;
+
+      if (await _networkInfo.isConnected) {
+        try {
+          // Format products for API
+          final formattedProducts = sellLines.map((p) => {
+            'product_id': p['product_id'],
+            'variation_id': p['variation_id'],
+            'quantity': p['quantity'],
+            'unit_price': p['unit_price'],
+            'tax_rate_id': p['tax_rate_id'] == 0 ? null : p['tax_rate_id'],
+            'discount_amount': p['discount_amount'] ?? 0.0,
+            'discount_type': p['discount_type'] ?? 'fixed',
+          }).toList();
+
+          // Format payments for API
+          final formattedPayments = payments.map((p) => {
+            'method': p['method'],
+            'amount': p['amount'],
+            'note': p['note'] ?? '',
+            'account_id': p['account_id'],
+            'is_return': p['is_return'] ?? 0,
+            'card_number': p['card_number'],
+            'card_type': p['card_type'],
+            'card_holder_name': p['card_holder_name'],
+          }).toList();
+
+          // Prepare API data
+          final apiData = {
+            'location_id': sell.locationId,
+            'contact_id': sell.contactId,
+            'transaction_date': sell.transactionDate,
+            'invoice_no': sell.invoiceNo,
+            'status': sell.status,
+            'sub_status': sell.isQuotation ? 'quotation' : null,
+            'tax_rate_id': sell.taxRateId == 0 ? null : sell.taxRateId,
+            'discount_amount': sell.discountAmount ?? 0.0,
+            'discount_type': sell.discountType ?? 'fixed',
+            'change_return': sell.changeReturn ?? 0.0,
+            'products': formattedProducts,
+            'sale_note': sell.saleNote,
+            'staff_note': sell.staffNote,
+            'is_quotation': sell.isQuotation ? 1 : 0,
+            'is_suspend': sell.isSuspend ? 1 : 0,
+            'payments': formattedPayments,
+          };
+
+          // Try to create on server
+          final model = await _remoteDataSource.createSell({'sells': [apiData]});
+          isSynced = true;
+          transactionId = model.id;
+          invoiceUrl = model.invoiceUrl;
+          paymentLines = model.paymentLines;
+        } catch (e) {
+          // Server submission failed - will save locally as unsynced
+          print('Failed to create sell on server: $e');
+          isSynced = false;
+        }
+      }
+
+      // Save to local database with sync status
+      // If synced, mark as synced and include server response data
+      if (isSynced) {
+        sellData['is_synced'] = 1;
+        sellData['transaction_id'] = transactionId;
+        if (invoiceUrl != null) {
+          sellData['invoice_url'] = invoiceUrl;
+        }
+      } else {
+        sellData['is_synced'] = 0;
+      }
+
+      // If synced and we have payment lines from server, use those instead of local payments
+      final paymentsToSave = isSynced && paymentLines != null && paymentLines.isNotEmpty
+          ? paymentLines.map((p) => {
+              'method': p['method'],
+              'amount': p['amount'],
+              'note': p['note'] ?? '',
+              'payment_id': p['id'],
+              'is_return': p['is_return'] ?? 0,
+              'account_id': p['account_id'],
+              'card_number': p['card_number'],
+              'card_type': p['card_type'],
+              'card_holder_name': p['card_holder_name'],
+              'transaction_date': sell.transactionDate,
+            }).toList()
+          : payments;
+
       final sellId = await _localDataSource.saveSell(
         sellData: sellData,
         sellLines: sellLines,
-        payments: payments,
+        payments: paymentsToSave,
         isFinalOrSuspended: isFinalOrSuspended,
+        isSynced: isSynced,
       );
 
       // Get the saved sell
@@ -50,11 +141,6 @@ class SellRepositoryImpl implements SellRepository {
       final sellLinesData = await _localDataSource.getSellLines(sellId);
       final paymentsData = await _localDataSource.getPayments(sellId);
       final entity = _mapToEntityFromLocal(savedSell, sellLinesData, paymentsData);
-
-      // Sync to API in background if online (non-blocking)
-      if (await _networkInfo.isConnected) {
-        _syncSellInBackground(sellId);
-      }
 
       return Success(entity);
     } catch (e) {
@@ -262,6 +348,13 @@ class SellRepositoryImpl implements SellRepository {
 
   @override
   Future<Result<SellEntity>> saveSellLocally(SellEntity sell) async {
+    // saveSellLocally should also try server first (same as createSell)
+    // This ensures all sells follow the same sync logic
+    return createSell(sell);
+  }
+
+  /// Internal method to save sell locally only (used by createSell)
+  Future<Result<SellEntity>> _saveSellLocallyOnly(SellEntity sell) async {
     try {
       final sellData = _entityToMap(sell);
       final sellLines = sell.sellLines.map(_sellLineToMap).toList();
