@@ -2,7 +2,6 @@ import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/core.dart';
-import '../../../core/localization/locale_keys.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
 
@@ -336,8 +335,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       final adjustedInvoiceAmount = state.adjustedInvoiceAmount;
 
       // Determine status (like old code: isCredit ? 'pending' : invoiceType)
-      final saleStatus = event.isCredit 
-          ? SellStatus.pending 
+      final saleStatus = event.isCredit
+          ? SellStatus.pending
           : state.invoiceType.toSellStatus();
 
       // Create sell entity - use state values, no hardcoded values
@@ -365,7 +364,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         // Determine payment method (like old code: isCredit ? 'card' : 'cash')
         final paymentMethod = event.paymentMethod ??
             (event.isCredit ? PaymentMethod.card : PaymentMethod.cash);
-        
+
         // Payment amount (like old code: isCredit ? 0 : adjustedInvoiceAmount)
         final paymentAmount = event.isCredit ? 0.0 : adjustedInvoiceAmount;
 

@@ -199,22 +199,21 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                         headers: _requiredHeaders,
                       ),
                       onLoadStop: (controller, url) async {
-                        await controller.evaluateJavascript(
-                            source: _postAppReadySource);
-                        
-                        // Check authentication on first load only
-                        if (_isFirstLoad) {
-                          _isFirstLoad = false;
-                          _posOnlineBloc.add(const PosOnlineCheckAuthentication());
-                        }
-                      },
-                      onLoadStart: (controller, url) {
                         // Listen to URL changes
                         final urlString = url.toString();
                         if (urlString.contains('/login')) {
                           // URL changed to login page - logout
                           _posOnlineBloc.add(const PosOnlineUrlChangedToLogin());
+                        }else{
+                          // Check authentication on first load only
+                          if (_isFirstLoad) {
+                            _isFirstLoad = false;
+                            _posOnlineBloc.add(const PosOnlineCheckAuthentication());
+                          }
                         }
+
+                        await controller.evaluateJavascript(
+                            source: _postAppReadySource);
                       },
                       onWebViewCreated: (controller) async {
                         webViewController = controller;

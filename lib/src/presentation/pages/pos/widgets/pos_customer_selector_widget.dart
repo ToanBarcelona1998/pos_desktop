@@ -122,7 +122,6 @@ class _PosCustomerSelectorWidgetState extends State<PosCustomerSelectorWidget> {
                         selectedCustomer: widget.selectedCustomer,
                         onCustomerSelected: (customer) {
                           widget.onCustomerSelected?.call(customer);
-                          Navigator.of(context).pop();
                         },
                         theme: theme,
                       ),
