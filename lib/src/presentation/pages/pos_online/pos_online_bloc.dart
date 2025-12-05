@@ -48,58 +48,21 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
   ) async {
     emit(state.copyWith(isSyncing: true, showSyncDialog: true, clearFailure: true));
 
-    // Check for unsynced sells first
-    final unsyncedSellsResult = await _sellRepository.getLocalSells();
+    try{
+      await _syncService.syncAll();
 
-    await unsyncedSellsResult.fold(
-      onSuccess: (unsyncedSells) async {
-        try {
-          if (unsyncedSells.isNotEmpty) {
-            // Sync sells first
-            final syncSellsResult = await _sellRepository.syncSells();
-            await syncSellsResult.fold(
-              onSuccess: (_) {},
-              onError: (failure) {
-                // Continue with system sync even if sell sync fails
-                print('Sell sync error: ${failure.message}');
-              },
-            );
-          }
-
-          // Sync system data
-          await _syncService.syncAll();
-
-          emit(state.copyWith(
-            isSyncing: false,
-            showSyncDialog: false,
-            successMessage: LocaleKeys.syncCompletedSuccessfully,
-          ));
-        } catch (e) {
-          emit(state.copyWith(
-            isSyncing: false,
-            showSyncDialog: false,
-            failure: UnknownFailure(message: e.toString()),
-          ));
-        }
-      },
-      onError: (failure) async {
-        // On error, still try to sync system data
-        try {
-          await _syncService.syncAll();
-          emit(state.copyWith(
-            isSyncing: false,
-            showSyncDialog: false,
-            successMessage: LocaleKeys.syncCompletedSuccessfully,
-          ));
-        } catch (e) {
-          emit(state.copyWith(
-            isSyncing: false,
-            showSyncDialog: false,
-            failure: UnknownFailure(message: e.toString()),
-          ));
-        }
-      },
-    );
+      emit(state.copyWith(
+        isSyncing: false,
+        showSyncDialog: false,
+        successMessage: LocaleKeys.syncCompletedSuccessfully,
+      ));
+    }catch(e){
+      emit(state.copyWith(
+        isSyncing: false,
+        showSyncDialog: false,
+        failure: UnknownFailure(message: e.toString()),
+      ));
+    }
   }
 
   Future<void> _onLogout(

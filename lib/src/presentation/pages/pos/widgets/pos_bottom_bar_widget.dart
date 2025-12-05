@@ -58,12 +58,12 @@ class PosBottomBarWidget extends StatelessWidget {
         child: Row(
           children: [
             // Quick action buttons
-            _ActionButton(
-              icon: Icons.drafts_outlined,
-              label: l10n.translate(LocaleKeys.draft),
-              color: Colors.lightBlue,
-              onTap: onQuotation,
-            ),
+            // _ActionButton(
+            //   icon: Icons.drafts_outlined,
+            //   label: l10n.translate(LocaleKeys.draft),
+            //   color: Colors.lightBlue,
+            //   onTap: onQuotation,
+            // ),
             _ActionButton(
               icon: Icons.description_outlined,
               label: l10n.translate(LocaleKeys.quotation),

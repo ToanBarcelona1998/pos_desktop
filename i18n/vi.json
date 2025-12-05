@@ -511,9 +511,7 @@
   "duration_type": "Loại thời hạn",
   "linked_products": "Sản phẩm liên kết",
   "select_invoice_type": "Chọn loại hóa đơn",
-  "suspended_sales": "Bán hàng tạm hoãn",
   "suspended_sale_added": "Đã thêm bán hàng tạm hoãn",
-  "suspended_sale_deleted": "Đã xóa bán hàng tạm hoãn",
   "no_suspended_sales": "Không có bán hàng tạm hoãn",
   "resume_sale": "Tiếp tục bán hàng",
   "failed_to_load_suspended_sales": "Không thể tải bán hàng tạm hoãn",
@@ -613,7 +611,6 @@
   "quotation_created_successfully": "Tạo báo giá thành công",
   "sale_suspended_successfully": "Tạm dừng bán hàng thành công",
   "sale_completed_successfully": "Hoàn tất bán hàng thành công",
-  "products_refreshed": "Đã làm mới sản phẩm",
   "category": "Danh mục",
   "brand": "Thương hiệu",
   "all_categories": "Tất cả danh mục",
@@ -623,6 +620,5 @@
   "methods": "Phương thức",
   "history": "Lịch sử",
   "filters": "Bộ lọc",
-  "subtotal": "Tổng phụ",
-  "product": "Sản phẩm"
+  "subtotal": "Tổng phụ"
 }

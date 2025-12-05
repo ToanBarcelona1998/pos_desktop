@@ -236,7 +236,6 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                                     ),
                                   );
                             } catch (e) {
-                              print('Error handling auth from webview: $e');
                               if (mounted) {
                                 final l10n = AppLocalizations.of(context);
                                 ToastManager.showError(
@@ -254,13 +253,11 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                           handlerName: 'logout',
                           callback: (args) async {
                             try {
-                              print('Received logout message from webview');
                               // Dispatch event to bloc
                               context.read<PosOnlineBloc>().add(
                                     const PosOnlineLogoutFromWebview(),
                                   );
                             } catch (e) {
-                              print('Error handling logout from webview: $e');
                               if (mounted) {
                                 final l10n = AppLocalizations.of(context);
                                 ToastManager.showError(
@@ -316,24 +313,13 @@ class _PosOnlinePageState extends State<PosOnlinePage>
       }),
       actions: [
         BaseDialogAction(
-          text: l10n.translate(LocaleKeys.syncAndLogout),
+          text: l10n.translate(LocaleKeys.sync),
           isPrimary: true,
           color: Colors.blue,
           onPressed: () {
             Navigator.pop(context);
             context.read<PosOnlineBloc>().add(
                   const PosOnlineLogoutWithSync(),
-                );
-          },
-        ),
-        BaseDialogAction(
-          text: l10n.translate(LocaleKeys.logoutWithoutSync),
-          isPrimary: false,
-          color: Colors.red,
-          onPressed: () {
-            Navigator.pop(context);
-            context.read<PosOnlineBloc>().add(
-                  const PosOnlineLogoutWithoutSync(),
                 );
           },
         ),
