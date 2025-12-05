@@ -1,6 +1,7 @@
 import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/core.dart';
 import '../../../core/localization/locale_keys.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
@@ -271,11 +272,11 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     emit(state.copyWith(
       cartItems: [],
       discountAmount: 0,
-      discountType: 'fixed',
+      discountType: DiscountType.fixed,
       taxId: null,
       taxRate: 0,
       clearCustomer: true,
-      invoiceType: 'final',
+      invoiceType: InvoiceType.final_,
       isQuotation: false,
       isSuspended: false,
     ));
@@ -326,7 +327,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           unitPrice: item.unitPrice,
           taxRateId: item.taxId ?? state.taxId,
           discountAmount: item.discountAmount,
-          discountType: item.discountType,
+          discountType: item.discountType.value,
         );
       }).toList();
 
@@ -335,7 +336,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       final adjustedInvoiceAmount = state.adjustedInvoiceAmount;
 
       // Determine status (like old code: isCredit ? 'pending' : invoiceType)
-      final saleStatus = event.isCredit ? 'pending' : state.invoiceType;
+      final saleStatus = event.isCredit 
+          ? SellStatus.pending 
+          : state.invoiceType.toSellStatus();
 
       // Create sell entity - use state values, no hardcoded values
       final invoiceNo = _generateInvoiceNo();
@@ -345,10 +348,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer!.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: saleStatus, // Dynamic: isCredit ? 'pending' : invoiceType
+        status: saleStatus.value, // Dynamic: isCredit ? 'pending' : invoiceType
         taxRateId: state.taxId,
         discountAmount: state.discountAmount, // Use raw discount amount
-        discountType: state.discountType,
+        discountType: state.discountType.value,
         invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (after discount, before tax)
         pendingAmount: event.isCredit ? adjustedInvoiceAmount : 0.0, // Like old code
         isQuotation: state.isQuotation, // Use state value
@@ -361,7 +364,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       if (!state.isQuotation && !state.isSuspended) {
         // Determine payment method (like old code: isCredit ? 'card' : 'cash')
         final paymentMethod = event.paymentMethod ??
-            (event.isCredit ? 'card' : 'cash');
+            (event.isCredit ? PaymentMethod.card : PaymentMethod.cash);
         
         // Payment amount (like old code: isCredit ? 0 : adjustedInvoiceAmount)
         final paymentAmount = event.isCredit ? 0.0 : adjustedInvoiceAmount;
@@ -369,7 +372,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         payments.add(SellPaymentEntity(
           id: 0,
           sellId: null,
-          method: paymentMethod, // Dynamic: based on isCredit or provided
+          method: paymentMethod.value, // Dynamic: based on isCredit or provided
           amount: paymentAmount, // Dynamic: isCredit ? 0 : adjustedInvoiceAmount
           transactionDate: DateTime.now().toIso8601String(),
         ));
@@ -392,11 +395,11 @@ class PosBloc extends Bloc<PosEvent, PosState> {
                         : LocaleKeys.saleCompletedSuccessfully)),
             cartItems: [],
             discountAmount: 0,
-            discountType: 'fixed',
+            discountType: DiscountType.fixed,
             taxId: null,
             taxRate: 0,
             clearCustomer: true,
-            invoiceType: 'final',
+            invoiceType: InvoiceType.final_,
             isQuotation: false,
             isSuspended: false,
           ));
@@ -450,7 +453,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           unitPrice: item.unitPrice,
           taxRateId: item.taxId ?? state.taxId,
           discountAmount: item.discountAmount,
-          discountType: item.discountType,
+          discountType: item.discountType.value,
         );
       }).toList();
 
@@ -465,10 +468,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer!.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: 'quotation', // Quotation always uses 'quotation' status
+        status: SellStatus.quotation.value, // Quotation always uses 'quotation' status
         taxRateId: state.taxId,
         discountAmount: state.discountAmount, // Use raw discount amount
-        discountType: state.discountType,
+        discountType: state.discountType.value,
         invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (like old code)
         isQuotation: true, // Quotation always has isQuotation = true
         isSuspend: state.isSuspended, // Use state value
@@ -528,7 +531,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           unitPrice: item.unitPrice,
           taxRateId: item.taxId ?? state.taxId,
           discountAmount: item.discountAmount,
-          discountType: item.discountType,
+          discountType: item.discountType.value,
         );
       }).toList();
 
@@ -543,10 +546,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer?.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: 'suspended', // Suspended sale always uses 'suspended' status
+        status: SellStatus.suspended.value, // Suspended sale always uses 'suspended' status
         taxRateId: state.taxId,
         discountAmount: state.discountAmount, // Use raw discount amount
-        discountType: state.discountType,
+        discountType: state.discountType.value,
         invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (like old code)
         isQuotation: state.isQuotation, // Use state value
         isSuspend: true, // Suspended sale always has isSuspend = true
@@ -783,7 +786,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     emit(state.copyWith(isLoadingCustomers: true));
 
-    final result = await _contactRepository.getContacts(type: 'customer');
+    final result = await _contactRepository.getContacts(type: ContactType.customer.value);
 
     result.fold(
       onSuccess: (customers) {
@@ -875,7 +878,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
               quantity: line.quantity!.toInt(),
               unitPrice: line.unitPrice!,
               discountAmount: line.discountAmount ?? 0,
-              discountType: line.discountType ?? 'fixed',
+              discountType: DiscountTypeExtension.fromString(line.discountType) ?? DiscountType.fixed,
               taxId: line.taxRateId,
             ));
           }
@@ -886,7 +889,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
     // Set discount and tax
     final discountAmount = sell.discountAmount ?? 0;
-    final discountType = sell.discountType ?? 'fixed';
+    final discountType = DiscountTypeExtension.fromString(sell.discountType) ?? DiscountType.fixed;
     final taxId = sell.taxRateId;
 
     // Get tax rate if taxId is available
@@ -896,6 +899,13 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       // For now, we'll need to calculate from the sell amount
     }
 
+    // Determine invoice type from sell status
+    final invoiceType = SellStatusExtension.fromString(sell.status) != null
+        ? (SellStatusExtension.fromString(sell.status) == SellStatus.suspended
+            ? InvoiceType.suspended
+            : InvoiceType.final_)
+        : InvoiceType.suspended;
+
     emit(state.copyWith(
       selectedCustomer: customer,
       cartItems: cartItems,
@@ -904,7 +914,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       taxId: taxId,
       taxRate: taxRate,
       isSuspended: true,
-      invoiceType: sell.status ?? 'suspended',
+      invoiceType: invoiceType,
       successMessage: 'Suspended sale loaded successfully',
     ));
   }

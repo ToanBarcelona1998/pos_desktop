@@ -1,4 +1,5 @@
 import 'package:domain/domain.dart';
+import 'package:pos_final/src/core/core.dart';
 
 import '../../base/base_event.dart';
 
@@ -61,7 +62,7 @@ class PosClearCart extends PosEvent {
 /// Apply discount
 class PosApplyDiscount extends PosEvent {
   final double amount;
-  final String type; // 'fixed' or 'percentage'
+  final DiscountType type;
   const PosApplyDiscount({required this.amount, required this.type});
 }
 
@@ -76,7 +77,7 @@ class PosSetTax extends PosEvent {
 class PosSubmitSale extends PosEvent {
   final bool isCredit;
   final bool printInvoice;
-  final String? paymentMethod; // Optional payment method, defaults based on isCredit
+  final PaymentMethod? paymentMethod; // Optional payment method, defaults based on isCredit
   const PosSubmitSale({
     this.isCredit = false,
     this.printInvoice = true,

@@ -5,6 +5,7 @@ export 'entity.dart';
 export 'failure.dart';
 export 'result.dart';
 export 'use_case.dart';
+export 'enums/enums.dart';
 
 
 

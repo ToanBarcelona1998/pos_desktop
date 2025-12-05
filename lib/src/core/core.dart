@@ -2,6 +2,7 @@
 library;
 
 export 'constants/constants.dart';
+export 'enums/enums.dart';
 export 'localization/localization.dart';
 export 'navigation/navigation.dart';
 export 'theme/theme.dart';

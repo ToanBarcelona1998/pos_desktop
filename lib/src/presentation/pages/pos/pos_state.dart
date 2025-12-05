@@ -1,4 +1,5 @@
 import 'package:domain/domain.dart';
+import 'package:pos_final/src/core/core.dart';
 
 /// Cart item model
 class CartItem {
@@ -8,7 +9,7 @@ class CartItem {
   int quantity;
   double unitPrice;
   double discountAmount;
-  String discountType;
+  DiscountType discountType;
   int? taxId;
 
   CartItem({
@@ -18,12 +19,12 @@ class CartItem {
     this.quantity = 1,
     required this.unitPrice,
     this.discountAmount = 0,
-    this.discountType = 'fixed',
+    this.discountType = DiscountType.fixed,
     this.taxId,
   });
 
   double get lineTotal {
-    final discount = discountType == 'percentage'
+    final discount = discountType == DiscountType.percentage
         ? unitPrice * quantity * discountAmount / 100
         : discountAmount;
     return (unitPrice * quantity) - discount;
@@ -36,7 +37,7 @@ class CartItem {
     int? quantity,
     double? unitPrice,
     double? discountAmount,
-    String? discountType,
+    DiscountType? discountType,
     int? taxId,
   }) {
     return CartItem(
@@ -83,12 +84,12 @@ class PosState {
   // Cart
   final List<CartItem> cartItems;
   final double discountAmount;
-  final String discountType;
+  final DiscountType discountType;
   final int? taxId;
   final double taxRate;
 
   // Invoice
-  final String invoiceType; // 'final', 'quotation', 'suspended'
+  final InvoiceType invoiceType;
   final bool isQuotation;
   final bool isSuspended;
 
@@ -125,10 +126,10 @@ class PosState {
     this.isLoadingMore = false,
     this.cartItems = const [],
     this.discountAmount = 0,
-    this.discountType = 'fixed',
+    this.discountType = DiscountType.fixed,
     this.taxId,
     this.taxRate = 0,
-    this.invoiceType = 'final',
+    this.invoiceType = InvoiceType.final_,
     this.isQuotation = false,
     this.isSuspended = false,
     this.suspendedSells = const [],
@@ -145,7 +146,7 @@ class PosState {
 
   /// Calculate discount on invoice
   double get invoiceDiscount {
-    if (discountType == 'percentage') {
+    if (discountType == DiscountType.percentage) {
       return subtotal * discountAmount / 100;
     }
     return discountAmount;
@@ -162,7 +163,7 @@ class PosState {
   /// Where invoiceAmount is the total (subtotal + tax)
   /// So: adjustedInvoiceAmount = total - discount
   double get adjustedInvoiceAmount {
-    if (discountType == 'percentage') {
+    if (discountType == DiscountType.percentage) {
       return total - (total * discountAmount / 100);
     }
     return total - discountAmount;
@@ -202,10 +203,10 @@ class PosState {
     bool? isLoadingMore,
     List<CartItem>? cartItems,
     double? discountAmount,
-    String? discountType,
+    DiscountType? discountType,
     int? taxId,
     double? taxRate,
-    String? invoiceType,
+    InvoiceType? invoiceType,
     bool? isQuotation,
     bool? isSuspended,
     List<SellEntity>? suspendedSells,
