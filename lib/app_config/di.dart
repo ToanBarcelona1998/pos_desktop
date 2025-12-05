@@ -325,7 +325,6 @@ void _registerRepositories() {
   sl.registerLazy<SellRepository>(() => SellRepositoryImpl(
         remoteDataSource: sl.get<SellRemoteDataSource>(),
         localDataSource: sl.get<SellLocalDataSource>(),
-        networkInfo: sl.get<NetworkInfo>(),
       ));
 
   sl.registerLazy<NotificationRepository>(() => NotificationRepositoryImpl(
@@ -403,7 +402,9 @@ void _registerUseCases() {
   // Sell
   sl.registerLazy<GetLocalSellsUseCase>(() => GetLocalSellsUseCase(sl.get<SellRepository>()));
   sl.registerLazy<GetSellsByIdsUseCase>(() => GetSellsByIdsUseCase(sl.get<SellRepository>()));
-  sl.registerLazy<CreateSellUseCase>(() => CreateSellUseCase(
+  sl.registerLazy<CreateSellUseCase>(() => CreateSellUseCase(sl.get<SellRepository>()));
+  sl.registerLazy<GetSuspendedSellsUseCase>(() => GetSuspendedSellsUseCase(sl.get<SellRepository>()));
+  sl.registerLazy<DeleteSellUseCase>(() => DeleteSellUseCase(
     sl.get<SellRepository>(),
   ));
 

@@ -1,23 +1,20 @@
 import 'package:domain/domain.dart';
-import '../core/network_info.dart';
+
 import '../data_source/local/sell_local_data_source.dart';
 import '../data_source/remote/sell_remote_data_source.dart';
 import '../model/sell_model.dart';
 
 /// Implementation of [SellRepository]
-/// Implements offline-first approach: always saves locally first, then syncs if online
+/// Handles data operations only - business logic is in use cases
 class SellRepositoryImpl implements SellRepository {
   final SellRemoteDataSource _remoteDataSource;
   final SellLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
 
   const SellRepositoryImpl({
     required SellRemoteDataSource remoteDataSource,
     required SellLocalDataSource localDataSource,
-    required NetworkInfo networkInfo,
   })  : _remoteDataSource = remoteDataSource,
-        _localDataSource = localDataSource,
-        _networkInfo = networkInfo;
+        _localDataSource = localDataSource;
 
   @override
   Future<Result<SellEntity>> createSellOnServer(SellEntity sell) async {
@@ -76,8 +73,6 @@ class SellRepositoryImpl implements SellRepository {
 
   /// Sync a specific sell by ID
   Future<void> syncSellById(int sellId) async {
-    if (!await _networkInfo.isConnected) return;
-
     final sell = await _localDataSource.getSellById(sellId);
     if (sell == null || sell['is_synced'] == 1) return;
 
@@ -153,10 +148,6 @@ class SellRepositoryImpl implements SellRepository {
 
   @override
   Future<Result<SellEntity>> updateSell(SellEntity sell) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     final data = _entityToMap(sell);
     final model = await _remoteDataSource.updateSell(sell.id, data);
     return Success(_mapToEntity(model));
@@ -164,11 +155,14 @@ class SellRepositoryImpl implements SellRepository {
 
   @override
   Future<Result<void>> deleteSell(int id) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
+    // Delete from server only
     await _remoteDataSource.deleteSell(id);
+    return const Success(null);
+  }
+
+  @override
+  Future<Result<void>> deleteSellLocally(int id) async {
+    // Delete from local database only
     await _localDataSource.deleteSell(id);
     return const Success(null);
   }
@@ -184,12 +178,10 @@ class SellRepositoryImpl implements SellRepository {
       return Success(entity);
     }
 
-    // If not found locally and online, try remote
-    if (await _networkInfo.isConnected) {
-      final sells = await _remoteDataSource.getSpecifiedSells([id]);
-      if (sells.isNotEmpty) {
-        return Success(_mapToEntity(sells.first));
-      }
+    // If not found locally, try remote
+    final sells = await _remoteDataSource.getSpecifiedSells([id]);
+    if (sells.isNotEmpty) {
+      return Success(_mapToEntity(sells.first));
     }
 
     return const Error(NotFoundFailure(message: 'Sell not found'));
@@ -197,10 +189,6 @@ class SellRepositoryImpl implements SellRepository {
 
   @override
   Future<Result<List<SellEntity>>> getSellsByIds(List<int> ids) async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     final sells = await _remoteDataSource.getSpecifiedSells(ids);
     return Success(sells.map(_mapToEntity).toList());
   }
@@ -221,10 +209,6 @@ class SellRepositoryImpl implements SellRepository {
 
   @override
   Future<Result<void>> syncSells() async {
-    if (!await _networkInfo.isConnected) {
-      return const Error(NetworkFailure());
-    }
-
     final unsyncedSells = await _localDataSource.getUnsyncedSells();
     for (var sell in unsyncedSells) {
       await syncSellById(sell['id'] as int);

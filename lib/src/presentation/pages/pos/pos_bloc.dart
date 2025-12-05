@@ -14,7 +14,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   final BrandRepository _brandRepository;
   final ContactRepository _contactRepository;
   final CreateSellUseCase _createSellUseCase;
-  final SellRepository _sellRepository;
+  final GetSuspendedSellsUseCase _getSuspendedSellsUseCase;
+  final DeleteSellUseCase _deleteSellUseCase;
   final BusinessRepository _businessRepository;
 
   PosBloc({
@@ -24,7 +25,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     required BrandRepository brandRepository,
     required ContactRepository contactRepository,
     required CreateSellUseCase createSellUseCase,
-    required SellRepository sellRepository,
+    required GetSuspendedSellsUseCase getSuspendedSellsUseCase,
+    required DeleteSellUseCase deleteSellUseCase,
     required BusinessRepository businessRepository,
   })  : _locationRepository = locationRepository,
         _productRepository = productRepository,
@@ -32,7 +34,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         _brandRepository = brandRepository,
         _contactRepository = contactRepository,
         _createSellUseCase = createSellUseCase,
-        _sellRepository = sellRepository,
+        _getSuspendedSellsUseCase = getSuspendedSellsUseCase,
+        _deleteSellUseCase = deleteSellUseCase,
         _businessRepository = businessRepository,
         super(PosState.initial()) {
     on<PosInitialize>(_onInitialize);
@@ -903,7 +906,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     emit(state.copyWith(isLoadingSuspendedSells: true));
 
-    final result = await _sellRepository.getSuspendedSells();
+    final result = await _getSuspendedSellsUseCase.call();
 
     result.fold(
       onSuccess: (sells) {
@@ -1009,7 +1012,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosDeleteSuspendedSell event,
     Emitter<PosState> emit,
   ) async {
-    final result = await _sellRepository.deleteSell(event.sellId);
+    final result = await _deleteSellUseCase.call(event.sellId);
 
     result.fold(
       onSuccess: (_) {

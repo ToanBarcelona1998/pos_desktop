@@ -47,6 +47,8 @@ export 'report/get_profit_loss_report_use_case.dart';
 // Sell use cases
 export 'sell/create_sell_use_case.dart';
 export 'sell/get_sells_use_case.dart';
+export 'sell/get_suspended_sells_use_case.dart';
+export 'sell/delete_sell_use_case.dart';
 
 // Tax use cases
 export 'tax/get_taxes_use_case.dart';

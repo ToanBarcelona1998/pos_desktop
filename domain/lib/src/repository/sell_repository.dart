@@ -10,8 +10,11 @@ abstract class SellRepository {
   /// Updates an existing sell
   Future<Result<SellEntity>> updateSell(SellEntity sell);
 
-  /// Deletes a sell
+  /// Deletes a sell from server
   Future<Result<void>> deleteSell(int id);
+
+  /// Deletes a sell locally only
+  Future<Result<void>> deleteSellLocally(int id);
 
   /// Gets a sell by ID
   Future<Result<SellEntity>> getSellById(int id);
