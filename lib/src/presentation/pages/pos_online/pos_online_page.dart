@@ -340,7 +340,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   void update(bool newState) {
-    if (!newState && mounted) {
+    if (!newState && mounted && !_posOnlineBloc.state.showOfflinePos) {
       final l10n = AppLocalizations.of(context);
       DialogProvider.showConfirmDialog(
         context,

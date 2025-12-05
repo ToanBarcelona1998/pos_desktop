@@ -178,6 +178,9 @@ class _PosView extends StatelessWidget {
             onCreditPayment: () {
               context.read<PosBloc>().add(const PosSubmitCreditSale());
             },
+            onDraft: () {
+              context.read<PosBloc>().add(const PosCreateDraft());
+            },
             onQuotation: () {
               context.read<PosBloc>().add(const PosCreateQuotation());
             },

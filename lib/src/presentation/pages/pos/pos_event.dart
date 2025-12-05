@@ -90,6 +90,11 @@ class PosSubmitCreditSale extends PosEvent {
   const PosSubmitCreditSale();
 }
 
+/// Create draft
+class PosCreateDraft extends PosEvent {
+  const PosCreateDraft();
+}
+
 /// Create quotation
 class PosCreateQuotation extends PosEvent {
   const PosCreateQuotation();

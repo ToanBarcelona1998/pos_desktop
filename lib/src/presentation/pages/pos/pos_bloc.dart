@@ -2,7 +2,6 @@ import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/core.dart';
-import '../../../core/localization/locale_keys.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
 
@@ -46,6 +45,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     on<PosSetTax>(_onSetTax);
     on<PosSubmitSale>(_onSubmitSale);
     on<PosSubmitCreditSale>(_onSubmitCreditSale);
+    on<PosCreateDraft>(_onCreateDraft);
     on<PosCreateQuotation>(_onCreateQuotation);
     on<PosSuspendSale>(_onSuspendSale);
     on<PosCancelSale>(_onCancelSale);
@@ -432,6 +432,85 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     // Credit sale is now handled by PosSubmitSale with isCredit=true
     // This method redirects to the unified submit method
     add(PosSubmitSale(isCredit: true));
+  }
+
+  Future<void> _onCreateDraft(
+    PosCreateDraft event,
+    Emitter<PosState> emit,
+  ) async {
+    if (!state.canSubmit) {
+      emit(state.copyWith(
+        failure: ValidationFailure(
+            message: LocaleKeys.pleaseSelectCustomerAndAddItems),
+      ));
+      return;
+    }
+
+    emit(state.copyWith(isSubmitting: true, clearMessages: true));
+
+    try {
+      // Create sell lines from cart items (like old code)
+      final sellLines = state.cartItems.map((item) {
+        return SellLineEntity(
+          id: 0,
+          productId: item.productId,
+          variationId: item.variationId,
+          quantity: item.quantity.toDouble(),
+          unitPrice: item.unitPrice,
+          taxRateId: item.taxId ?? state.taxId,
+          discountAmount: item.discountAmount,
+          discountType: item.discountType.value,
+        );
+      }).toList();
+
+      // Calculate adjusted invoice amount (like old code)
+      final adjustedInvoiceAmount = state.adjustedInvoiceAmount;
+
+      // Create sell entity - draft uses 'draft' status
+      final invoiceNo = _generateInvoiceNo();
+      final sell = SellEntity(
+        id: 0,
+        locationId: state.selectedLocationId,
+        contactId: state.selectedCustomer!.id,
+        transactionDate: DateTime.now().toIso8601String(),
+        invoiceNo: invoiceNo,
+        status: SellStatus.draft.value, // Draft always uses 'draft' status
+        taxRateId: state.taxId,
+        discountAmount: state.discountAmount, // Use raw discount amount
+        discountType: state.discountType.value,
+        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (like old code)
+        isQuotation: false, // Draft is not a quotation
+        isSuspend: false, // Draft is not suspended
+        sellLines: sellLines,
+      );
+
+      // No payment for drafts (like old code: !isQuotation && !isSuspend)
+
+      // Save locally first
+      final localResult = await _sellRepository.saveSellLocally(sell);
+
+      localResult.fold(
+        onSuccess: (_) {
+          emit(state.copyWith(
+            isSubmitting: false,
+            successMessage: LocaleKeys.draftCreatedSuccessfully,
+            cartItems: [],
+            clearCustomer: true,
+          ));
+        },
+        onError: (failure) {
+          emit(state.copyWith(
+            isSubmitting: false,
+            failure: failure,
+          ));
+        },
+      );
+    } catch (e) {
+      emit(state.copyWith(
+        isSubmitting: false,
+        failure: UnknownFailure(message: e.toString()),
+      ));
+    }
   }
 
   Future<void> _onCreateQuotation(

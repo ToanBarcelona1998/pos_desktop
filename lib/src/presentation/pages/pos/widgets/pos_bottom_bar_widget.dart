@@ -15,6 +15,7 @@ class PosBottomBarWidget extends StatelessWidget {
   final bool canSubmit;
   final VoidCallback? onCashPayment;
   final VoidCallback? onCreditPayment;
+  final VoidCallback? onDraft;
   final VoidCallback? onQuotation;
   final VoidCallback? onSuspend;
   final VoidCallback? onCancel;
@@ -27,6 +28,7 @@ class PosBottomBarWidget extends StatelessWidget {
     this.canSubmit = false,
     this.onCashPayment,
     this.onCreditPayment,
+    this.onDraft,
     this.onQuotation,
     this.onSuspend,
     this.onCancel,
@@ -58,12 +60,12 @@ class PosBottomBarWidget extends StatelessWidget {
         child: Row(
           children: [
             // Quick action buttons
-            // _ActionButton(
-            //   icon: Icons.drafts_outlined,
-            //   label: l10n.translate(LocaleKeys.draft),
-            //   color: Colors.lightBlue,
-            //   onTap: onQuotation,
-            // ),
+            _ActionButton(
+              icon: Icons.drafts_outlined,
+              label: l10n.translate(LocaleKeys.draft),
+              color: Colors.lightBlue,
+              onTap: onDraft,
+            ),
             _ActionButton(
               icon: Icons.description_outlined,
               label: l10n.translate(LocaleKeys.quotation),

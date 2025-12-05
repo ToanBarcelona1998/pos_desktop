@@ -398,6 +398,7 @@ abstract final class LocaleKeys {
   static const String pleaseSelectCustomerAndAddItems = 'please_select_customer_and_add_items';
   static const String cartIsEmpty = 'cart_is_empty';
   static const String creditSaleCreatedSuccessfully = 'credit_sale_created_successfully';
+  static const String draftCreatedSuccessfully = 'draft_created_successfully';
   static const String quotationCreatedSuccessfully = 'quotation_created_successfully';
   static const String saleSuspendedSuccessfully = 'sale_suspended_successfully';
   static const String saleCompletedSuccessfully = 'sale_completed_successfully';

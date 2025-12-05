@@ -606,6 +606,7 @@
   "please_select_customer_and_add_items": "Please select customer and add items",
   "cart_is_empty": "Cart is empty",
   "credit_sale_created_successfully": "Credit sale created successfully",
+  "draft_created_successfully": "Draft created successfully",
   "quotation_created_successfully": "Quotation created successfully",
   "sale_suspended_successfully": "Sale suspended successfully",
   "sale_completed_successfully": "Sale completed successfully",

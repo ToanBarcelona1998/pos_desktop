@@ -608,6 +608,7 @@
   "please_select_customer_and_add_items": "Vui lòng chọn khách hàng và thêm sản phẩm",
   "cart_is_empty": "Giỏ hàng trống",
   "credit_sale_created_successfully": "Tạo bán hàng trả chậm thành công",
+  "draft_created_successfully": "Tạo nháp thành công",
   "quotation_created_successfully": "Tạo báo giá thành công",
   "sale_suspended_successfully": "Tạm dừng bán hàng thành công",
   "sale_completed_successfully": "Hoàn tất bán hàng thành công",
