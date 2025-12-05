@@ -850,7 +850,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
     // Load products and create cart items from sell lines
     final cartItems = <CartItem>[];
-    if (sell.sellLines!.isNotEmpty) {
+    if (sell.sellLines.isNotEmpty) {
       // Get all products for the location to find product details
       final productsResult = await _productRepository.getProducts(
         locationId: sell.locationId!,
@@ -860,7 +860,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
       productsResult.fold(
         onSuccess: (products) {
-          for (final line in sell.sellLines!) {
+          for (final line in sell.sellLines) {
             // Find matching product
             final product = products.firstWhere(
               (p) => (p.productId ?? p.id) == line.productId &&
