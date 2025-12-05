@@ -43,6 +43,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   late NetworkStatusSubject _networkStatusSubject;
   
   bool _isFirstLoad = true;
+  bool _syncDialogShowing = false;
 
   final AppConfig _appConfig = sl.get<AppConfig>();
 
@@ -129,10 +130,12 @@ class _PosOnlinePageState extends State<PosOnlinePage>
             }
 
             // Show sync dialog when syncing starts
-            if (state.showSyncDialog && mounted) {
+            if (state.showSyncDialog && !_syncDialogShowing && mounted) {
               _showSyncDialog(context, state);
-            } else if (!state.showSyncDialog && mounted) {
-              // Close sync dialog when sync completes - only if dialog is actually showing
+              _syncDialogShowing = true;
+            } else if (!state.showSyncDialog && _syncDialogShowing && mounted) {
+              // Close sync dialog when sync completes - only if we actually showed it
+              _syncDialogShowing = false;
               if (Navigator.of(context, rootNavigator: true).canPop()) {
                 Navigator.of(context, rootNavigator: true).pop();
               }
