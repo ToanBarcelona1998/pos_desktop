@@ -180,7 +180,8 @@ class ApiClient {
 
   /// Builds URI with query parameters
   Uri _buildUri(String endpoint, Map<String, dynamic>? queryParams) {
-    final fullUrl = endpoint.startsWith('http') ? endpoint : '$baseUrl$endpoint';
+    final fullUrl =
+        endpoint.startsWith('http') ? endpoint : '$baseUrl$endpoint';
     final uri = Uri.parse(fullUrl);
 
     if (queryParams == null || queryParams.isEmpty) {
@@ -196,35 +197,37 @@ class ApiClient {
 
   /// Handles HTTP response
   Map<String, dynamic> _handleResponse(http.Response response) {
-    final body = response.body.isNotEmpty
-        ? jsonDecode(response.body) as Map<String, dynamic>
-        : <String, dynamic>{};
-
     if (response.statusCode >= 200 && response.statusCode < 300) {
+      final body = jsonDecode(response.body);
+
+      if (body is List) {
+        return Map<String, dynamic>.from(body[0]);
+      }
+
       return body;
     }
 
     switch (response.statusCode) {
       case 400:
         throw BadRequestException(
-          body['message'] ?? 'Bad request',
-          errors: body['errors'],
+          'Bad request',
+          errors: 'Bad request',
         );
       case 401:
-        throw UnauthorizedException(body['message'] ?? 'Unauthorized');
+        throw UnauthorizedException('Unauthorized');
       case 403:
-        throw ForbiddenException(body['message'] ?? 'Forbidden');
+        throw ForbiddenException('Forbidden');
       case 404:
-        throw NotFoundException(body['message'] ?? 'Not found');
+        throw NotFoundException('Not found');
       case 422:
         throw ValidationException(
-          body['message'] ?? 'Validation error',
-          errors: body['errors'],
+          'Validation error',
+          errors: 'errors',
         );
       case 500:
       case 502:
       case 503:
-        throw ServerException(body['message'] ?? 'Server error');
+        throw ServerException('Server error');
       default:
         throw ServerException(
           'Unexpected error: ${response.statusCode}',
@@ -237,15 +240,3 @@ class ApiClient {
     _client.close();
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-

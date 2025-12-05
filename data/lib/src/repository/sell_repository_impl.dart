@@ -329,10 +329,10 @@ class SellRepositoryImpl implements SellRepository {
     final payments = model.paymentLines != null
         ? model.paymentLines!.map((p) => SellPaymentEntity(
             id: 0,
-            sellId: null,
+            sellId: p['transaction_id'],
             paymentId: p['id'] as int?,
             method: p['method'] as String?,
-            amount: (p['amount'] as num?)?.toDouble(),
+            amount: double.tryParse(p['amount'] ?? ''),
             note: p['note'] as String?,
             accountId: p['account_id'] as int?,
             isReturn: (p['is_return'] as int? ?? 0) == 1,

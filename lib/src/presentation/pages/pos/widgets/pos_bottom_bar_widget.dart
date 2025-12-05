@@ -114,7 +114,8 @@ class PosBottomBarWidget extends StatelessWidget {
                       label: l10n.translate(LocaleKeys.cancel),
                       color: Colors.red,
                       icon: Icons.cancel,
-                      onTap: onCancel,
+                      isLoading: isSubmitting,
+                      onTap: canSubmit ? onCashPayment : null,
                     ),
                   ),
                 ],
@@ -224,31 +225,14 @@ class _MainActionButton extends StatelessWidget {
           borderRadius: AppRadius.borderRadiusSm,
         ),
       ),
-      child: isLoading
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(Colors.white),
-              ),
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 18),
-                SizedBox(width: AppSpacing.xs),
-                Text(label, style: AppTypography.labelMedium),
-              ],
-            ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 18),
+          SizedBox(width: AppSpacing.xs),
+          Text(label, style: AppTypography.labelMedium),
+        ],
+      ),
     );
   }
 }
-
-
-
-
-
-
-
-

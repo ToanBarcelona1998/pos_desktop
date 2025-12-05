@@ -20,34 +20,31 @@ class PrintService {
     required int sellId,
     int? taxId,
     required BuildContext context,
-    String? invoiceHtml,
+    required String invoiceHtml,
+    required String name,
   }) async {
     try {
-      // Get sell data
-      final sell = await SellDatabase().getSellBySellId(sellId);
-      if (sell.isEmpty) {
-        throw Exception('Sale not found');
-      }
-      final sellData = sell[0];
+      final pdf = pd.Document();
 
-      // Generate invoice HTML if not provided
-      String invoice = invoiceHtml ??
-          await InvoiceFormatter().generateInvoice(sellId, taxId, context);
-
-      // Append additional fields to invoice HTML
-      final additionalInfo = _buildAdditionalInfo(sellData, context);
-
-      // Insert additional info into the invoice HTML
-      invoice = invoice.replaceFirst('</body>', '$additionalInfo</body>');
-
+      pdf.addPage(pd.Page(build: (ct) {
+        return pd.Column(
+          children: [
+            pd.Text('Test'),
+            pd.Text('Test'),
+            pd.Text('Test'),
+            pd.Text('Test'),
+            pd.Text('Test'),
+            pd.Text('Test'),
+            pd.Text('Test'),
+          ],
+        );
+      }));
       // Print the invoice
       await Printing.layoutPdf(
-        onLayout: (pd.PdfPageFormat format) async {
-          return await Printing.convertHtml(
-            format: format,
-            html: invoice,
-          );
+        onLayout: (pd.PdfPageFormat format) {
+          return pdf.save();
         },
+        name: name,
       );
     } catch (e) {
       throw Exception('Failed to print invoice: $e');

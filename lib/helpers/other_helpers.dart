@@ -15,6 +15,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../app_config/di.dart';
 import '../config.dart';
 import '../locale/my_localizations.dart';
 import '../models/invoice.dart';
@@ -22,6 +23,7 @@ import '../models/sell_database.dart';
 import '../models/system.dart';
 import 'app_theme.dart';
 import 'size_config.dart';
+import 'package:domain/domain.dart';
 
 class Helper {
   static int themeType = 1;
@@ -155,14 +157,41 @@ class Helper {
     double? quantity,
   }) async {
     double disAmt = 0.0, tax = 0.00, taxAmt = 0.00;
-    await System().get('tax').then((value) {
-      for (var element in value) {
-        if (element['id'] == taxId) {
-          tax = double.tryParse(element['amount'].toString()) ?? 0.0;
-          break;
+    
+    // Get tax from repository using new architecture
+    if (taxId != null && taxId != 0) {
+      try {
+        final taxRepository = sl.get<TaxRepository>();
+        final taxResult = await taxRepository.getTaxById(taxId);
+        final taxFound = taxResult.fold(
+          onSuccess: (taxEntity) {
+            tax = taxEntity.amount;
+            return true;
+          },
+          onError: (_) => false,
+        );
+        
+        // Fallback to old System().get('tax') if repository fails
+        if (!taxFound) {
+          final value = await System().get('tax');
+          for (var element in value) {
+            if (element['id'] == taxId) {
+              tax = double.tryParse(element['amount'].toString()) ?? 0.0;
+              break;
+            }
+          }
+        }
+      } catch (e) {
+        // Fallback to old System().get('tax') if repository not available
+        final value = await System().get('tax');
+        for (var element in value) {
+          if (element['id'] == taxId) {
+            tax = double.tryParse(element['amount'].toString()) ?? 0.0;
+            break;
+          }
         }
       }
-    });
+    }
 
     double totalPrice = (unitPrice ?? 0.0) * (quantity ?? 1.0);
     if (discountType == 'fixed') {
@@ -190,14 +219,40 @@ class Helper {
     discountAmount = double.tryParse(discountAmount?.toString() ?? '0.0') ?? 0.0;
     quantity = double.tryParse(quantity?.toString() ?? '1.0') ?? 1.0;
 
-    await System().get('tax').then((value) {
-      for (var element in value) {
-        if (element['id'] == taxId) {
-          tax = double.tryParse(element['amount'].toString()) ?? 0.0;
-          break;
+    // Get tax from repository using new architecture
+    if (taxId != null && taxId != 0) {
+      try {
+        final taxRepository = sl.get<TaxRepository>();
+        final taxResult = await taxRepository.getTaxById(taxId);
+        final taxFound = taxResult.fold(
+          onSuccess: (taxEntity) {
+            tax = taxEntity.amount;
+            return true;
+          },
+          onError: (_) => false,
+        );
+        
+        // Fallback to old System().get('tax') if repository fails
+        if (!taxFound) {
+          final value = await System().get('tax');
+          for (var element in value) {
+            if (element['id'] == taxId) {
+              tax = double.tryParse(element['amount'].toString()) ?? 0.0;
+              break;
+            }
+          }
+        }
+      } catch (e) {
+        // Fallback to old System().get('tax') if repository not available
+        final value = await System().get('tax');
+        for (var element in value) {
+          if (element['id'] == taxId) {
+            tax = double.tryParse(element['amount'].toString()) ?? 0.0;
+            break;
+          }
         }
       }
-    });
+    }
 
     double totalPrice = unitPrice * quantity;
     if (discountType == 'fixed') {

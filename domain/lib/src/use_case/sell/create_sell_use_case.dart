@@ -1,3 +1,5 @@
+import 'package:domain/domain.dart';
+
 import '../../core/result.dart';
 import '../../core/use_case.dart';
 import '../../entity/sell_entity.dart';

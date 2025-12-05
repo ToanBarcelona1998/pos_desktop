@@ -20,10 +20,14 @@ final class ConnectionUtils {
     if (connectivityResult.contains(ConnectivityResult.mobile) ||
         connectivityResult.contains(ConnectivityResult.wifi) ||
         connectivityResult.contains(ConnectivityResult.ethernet)) {
-      final result = await InternetAddress.lookup('google.com')
-          .timeout(Duration(seconds: 5));
-      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        return true;
+      try{
+        final result = await InternetAddress.lookup('google.com')
+            .timeout(Duration(seconds: 5));
+        if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+          return true;
+        }
+      }catch(e){
+        return false;
       }
     }
 

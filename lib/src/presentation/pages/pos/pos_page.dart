@@ -50,7 +50,6 @@ class _PosView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
 
     return BlocConsumer<PosBloc, PosState>(
       listenWhen: (previous, current) =>
@@ -99,7 +98,12 @@ class _PosView extends StatelessWidget {
               context.read<PosBloc>().add(PosSelectLocation(locationId));
             },
             onRefresh: () {
-              context.read<PosBloc>().add(const PosRefreshProducts());
+              _showPrintInvoiceDialog(
+                context,
+                state.createdSellId!,
+                state.taxId,
+              );
+              //context.read<PosBloc>().add(const PosRefreshProducts());
             },
             onSuspendedSales: () => _showSuspendedSalesBottomSheet(context),
           ),
@@ -262,12 +266,13 @@ class _PosView extends StatelessWidget {
           final invoiceService = InvoiceService();
           final invoiceHtml = await invoiceService.fetchInvoiceHtml(sellId);
 
-          if (context.mounted) {
+          if (context.mounted && invoiceHtml != null) {
             await PrintService.printInvoice(
               sellId: sellId,
               taxId: taxId,
               context: context,
               invoiceHtml: invoiceHtml,
+              name: l10n.translate(LocaleKeys.invoice),
             );
           }
         } catch (e) {
