@@ -403,7 +403,9 @@ void _registerUseCases() {
   // Sell
   sl.registerLazy<GetLocalSellsUseCase>(() => GetLocalSellsUseCase(sl.get<SellRepository>()));
   sl.registerLazy<GetSellsByIdsUseCase>(() => GetSellsByIdsUseCase(sl.get<SellRepository>()));
-  sl.registerLazy<CreateSellUseCase>(() => CreateSellUseCase(sl.get<SellRepository>()));
+  sl.registerLazy<CreateSellUseCase>(() => CreateSellUseCase(
+    sl.get<SellRepository>(),
+  ));
 
   // Tax
   sl.registerLazy<GetTaxesUseCase>(() => GetTaxesUseCase(sl.get<TaxRepository>()));

@@ -3,8 +3,9 @@ import '../entity/sell_entity.dart';
 
 /// Abstract repository for sell/transaction operations.
 abstract class SellRepository {
-  /// Creates a new sell transaction
-  Future<Result<SellEntity>> createSell(SellEntity sell);
+  /// Creates a new sell transaction on server
+  /// Returns the created sell from server with transaction_id and invoice_url
+  Future<Result<SellEntity>> createSellOnServer(SellEntity sell);
 
   /// Updates an existing sell
   Future<Result<SellEntity>> updateSell(SellEntity sell);
@@ -26,6 +27,12 @@ abstract class SellRepository {
 
   /// Saves sell locally
   Future<Result<SellEntity>> saveSellLocally(SellEntity sell);
+
+  /// Saves sell locally with sync status and server response data
+  Future<Result<SellEntity>> saveSellLocallyWithSyncData(
+    SellEntity sell,
+    SellEntity syncedSell,
+  );
 
   /// Gets draft sells
   Future<Result<List<SellEntity>>> getDraftSells();

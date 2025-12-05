@@ -18,7 +18,7 @@ class SellModel extends BaseModel {
   final int isSuspend;
   final String? invoiceUrl;
   final double? changeReturn;
-  final List<dynamic>? paymentLines;
+  final List<Map<String, dynamic>>? paymentLines;
   final String? createdAt;
   final String? updatedAt;
 
@@ -62,7 +62,9 @@ class SellModel extends BaseModel {
       isSuspend: json['is_suspend'] as int? ?? 0,
       invoiceUrl: json['invoice_url'] as String?,
       changeReturn: _parseDouble(json['change_return']),
-      paymentLines: json['payment_lines'] as List<dynamic>?,
+      paymentLines: json['payment_lines'] != null
+          ? List<Map<String, dynamic>>.from(json['payment_lines'])
+          : null,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
     );
@@ -101,15 +103,3 @@ class SellModel extends BaseModel {
     return 0.0;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-

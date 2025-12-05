@@ -2,6 +2,7 @@ import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/core.dart';
+import '../../../core/localization/locale_keys.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
 
@@ -486,10 +487,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
       // No payment for drafts (like old code: !isQuotation && !isSuspend)
 
-      // Save locally first
-      final localResult = await _sellRepository.saveSellLocally(sell);
+      // Use use case to create sell (handles server-first logic)
+      final result = await _createSellUseCase.call(sell);
 
-      localResult.fold(
+      result.fold(
         onSuccess: (_) {
           emit(state.copyWith(
             isSubmitting: false,
@@ -565,10 +566,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
       // No payment for quotations (like old code: !isQuotation && !isSuspend)
 
-      // Save locally first
-      final localResult = await _sellRepository.saveSellLocally(sell);
+      // Use use case to create sell (handles server-first logic)
+      final result = await _createSellUseCase.call(sell);
 
-      localResult.fold(
+      result.fold(
         onSuccess: (_) {
           emit(state.copyWith(
             isSubmitting: false,
@@ -643,10 +644,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
       // No payment for suspended sales (like old code: !isQuotation && !isSuspend)
 
-      // Save locally
-      final localResult = await _sellRepository.saveSellLocally(sell);
+      // Use use case to create sell (handles server-first logic)
+      final result = await _createSellUseCase.call(sell);
 
-      localResult.fold(
+      result.fold(
         onSuccess: (_) {
           emit(state.copyWith(
             isSubmitting: false,

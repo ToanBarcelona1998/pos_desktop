@@ -1,6 +1,4 @@
 import 'package:domain/domain.dart';
-
-import '../core/exception_handler.dart';
 import '../core/network_info.dart';
 import '../data_source/local/sell_local_data_source.dart';
 import '../data_source/remote/sell_remote_data_source.dart';
@@ -22,219 +20,135 @@ class SellRepositoryImpl implements SellRepository {
         _networkInfo = networkInfo;
 
   @override
-  Future<Result<SellEntity>> createSell(SellEntity sell) async {
-    try {
-      final sellData = _entityToMap(sell);
-      final sellLines = sell.sellLines.map(_sellLineToMap).toList();
-      final payments = sell.payments.map(_paymentToMap).toList();
+  Future<Result<SellEntity>> createSellOnServer(SellEntity sell) async {
+    final sellLines = sell.sellLines.map(_sellLineToMap).toList();
+    final payments = sell.payments.map(_paymentToMap).toList();
 
-      // Determine if this is a final or suspended sale (affects stock update)
-      final isFinalOrSuspended = (sell.status == 'final' || sell.isSuspend);
+    // Format products for API
+    final formattedProducts = sellLines.map((p) => {
+      'product_id': p['product_id'],
+      'variation_id': p['variation_id'],
+      'quantity': p['quantity'],
+      'unit_price': p['unit_price'],
+      'tax_rate_id': p['tax_rate_id'] == 0 ? null : p['tax_rate_id'],
+      'discount_amount': p['discount_amount'] ?? 0.0,
+      'discount_type': p['discount_type'] ?? 'fixed',
+    }).toList();
 
-      // Try to submit to server first if online
-      bool isSynced = false;
-      int? transactionId;
-      String? invoiceUrl;
-      List<Map<String, dynamic>>? paymentLines;
+    // Format payments for API
+    final formattedPayments = payments.map((p) => {
+      'method': p['method'],
+      'amount': p['amount'],
+      'note': p['note'] ?? '',
+      'account_id': p['account_id'],
+      'is_return': p['is_return'] ?? 0,
+      'card_number': p['card_number'],
+      'card_type': p['card_type'],
+      'card_holder_name': p['card_holder_name'],
+    }).toList();
 
-      if (await _networkInfo.isConnected) {
-        try {
-          // Format products for API
-          final formattedProducts = sellLines.map((p) => {
-            'product_id': p['product_id'],
-            'variation_id': p['variation_id'],
-            'quantity': p['quantity'],
-            'unit_price': p['unit_price'],
-            'tax_rate_id': p['tax_rate_id'] == 0 ? null : p['tax_rate_id'],
-            'discount_amount': p['discount_amount'] ?? 0.0,
-            'discount_type': p['discount_type'] ?? 'fixed',
-          }).toList();
+    // Prepare API data
+    final apiData = {
+      'location_id': sell.locationId,
+      'contact_id': sell.contactId,
+      'transaction_date': sell.transactionDate,
+      'invoice_no': sell.invoiceNo,
+      'status': sell.status,
+      'sub_status': sell.isQuotation ? 'quotation' : null,
+      'tax_rate_id': sell.taxRateId == 0 ? null : sell.taxRateId,
+      'discount_amount': sell.discountAmount ?? 0.0,
+      'discount_type': sell.discountType ?? 'fixed',
+      'change_return': sell.changeReturn ?? 0.0,
+      'products': formattedProducts,
+      'sale_note': sell.saleNote,
+      'staff_note': sell.staffNote,
+      'is_quotation': sell.isQuotation ? 1 : 0,
+      'is_suspend': sell.isSuspend ? 1 : 0,
+      'payments': formattedPayments,
+    };
 
-          // Format payments for API
-          final formattedPayments = payments.map((p) => {
-            'method': p['method'],
-            'amount': p['amount'],
-            'note': p['note'] ?? '',
-            'account_id': p['account_id'],
-            'is_return': p['is_return'] ?? 0,
-            'card_number': p['card_number'],
-            'card_type': p['card_type'],
-            'card_holder_name': p['card_holder_name'],
-          }).toList();
+    // Create on server
+    final model = await _remoteDataSource.createSell({'sells': [apiData]});
 
-          // Prepare API data
-          final apiData = {
-            'location_id': sell.locationId,
-            'contact_id': sell.contactId,
-            'transaction_date': sell.transactionDate,
-            'invoice_no': sell.invoiceNo,
-            'status': sell.status,
-            'sub_status': sell.isQuotation ? 'quotation' : null,
-            'tax_rate_id': sell.taxRateId == 0 ? null : sell.taxRateId,
-            'discount_amount': sell.discountAmount ?? 0.0,
-            'discount_type': sell.discountType ?? 'fixed',
-            'change_return': sell.changeReturn ?? 0.0,
-            'products': formattedProducts,
-            'sale_note': sell.saleNote,
-            'staff_note': sell.staffNote,
-            'is_quotation': sell.isQuotation ? 1 : 0,
-            'is_suspend': sell.isSuspend ? 1 : 0,
-            'payments': formattedPayments,
-          };
-
-          // Try to create on server
-          final model = await _remoteDataSource.createSell({'sells': [apiData]});
-          isSynced = true;
-          transactionId = model.id;
-          invoiceUrl = model.invoiceUrl;
-          paymentLines = model.paymentLines;
-        } catch (e) {
-          // Server submission failed - will save locally as unsynced
-          print('Failed to create sell on server: $e');
-          isSynced = false;
-        }
-      }
-
-      // Save to local database with sync status
-      // If synced, mark as synced and include server response data
-      if (isSynced) {
-        sellData['is_synced'] = 1;
-        sellData['transaction_id'] = transactionId;
-        if (invoiceUrl != null) {
-          sellData['invoice_url'] = invoiceUrl;
-        }
-      } else {
-        sellData['is_synced'] = 0;
-      }
-
-      // If synced and we have payment lines from server, use those instead of local payments
-      final paymentsToSave = isSynced && paymentLines != null && paymentLines.isNotEmpty
-          ? paymentLines.map((p) => {
-              'method': p['method'],
-              'amount': p['amount'],
-              'note': p['note'] ?? '',
-              'payment_id': p['id'],
-              'is_return': p['is_return'] ?? 0,
-              'account_id': p['account_id'],
-              'card_number': p['card_number'],
-              'card_type': p['card_type'],
-              'card_holder_name': p['card_holder_name'],
-              'transaction_date': sell.transactionDate,
-            }).toList()
-          : payments;
-
-      final sellId = await _localDataSource.saveSell(
-        sellData: sellData,
-        sellLines: sellLines,
-        payments: paymentsToSave,
-        isFinalOrSuspended: isFinalOrSuspended,
-        isSynced: isSynced,
-      );
-
-      // Get the saved sell
-      final savedSell = await _localDataSource.getSellById(sellId);
-      if (savedSell == null) {
-        return const Error(UnknownFailure(message: 'Failed to save sell locally'));
-      }
-
-      // Map to entity
-      final sellLinesData = await _localDataSource.getSellLines(sellId);
-      final paymentsData = await _localDataSource.getPayments(sellId);
-      final entity = _mapToEntityFromLocal(savedSell, sellLinesData, paymentsData);
-
-      return Success(entity);
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
-    }
-  }
-
-  /// Sync a sell to API in background
-  void _syncSellInBackground(int sellId) {
-    syncSellById(sellId).catchError((e) {
-      print('Background sell sync error: $e');
-    });
+    // Map server response to entity
+    return Success(_mapToEntity(model));
   }
 
   /// Sync a specific sell by ID
   Future<void> syncSellById(int sellId) async {
-    try {
-      if (!await _networkInfo.isConnected) return;
+    if (!await _networkInfo.isConnected) return;
 
-      final sell = await _localDataSource.getSellById(sellId);
-      if (sell == null || sell['is_synced'] == 1) return;
+    final sell = await _localDataSource.getSellById(sellId);
+    if (sell == null || sell['is_synced'] == 1) return;
 
-      final sellLines = await _localDataSource.getSellLines(sellId);
-      final payments = await _localDataSource.getPayments(sellId);
+    final sellLines = await _localDataSource.getSellLines(sellId);
+    final payments = await _localDataSource.getPayments(sellId);
 
-      // Format products for API (like old code)
-      final formattedProducts = sellLines.map((p) => {
-        'product_id': p['product_id'],
-        'variation_id': p['variation_id'],
-        'quantity': p['quantity'],
-        'unit_price': p['unit_price'],
-        'tax_rate_id': p['tax_rate_id'] == 0 ? null : p['tax_rate_id'],
-        'discount_amount': p['discount_amount'] ?? 0.0,
-        'discount_type': p['discount_type'] ?? 'fixed',
-      }).toList();
+    // Format products for API (like old code)
+    final formattedProducts = sellLines.map((p) => {
+      'product_id': p['product_id'],
+      'variation_id': p['variation_id'],
+      'quantity': p['quantity'],
+      'unit_price': p['unit_price'],
+      'tax_rate_id': p['tax_rate_id'] == 0 ? null : p['tax_rate_id'],
+      'discount_amount': p['discount_amount'] ?? 0.0,
+      'discount_type': p['discount_type'] ?? 'fixed',
+    }).toList();
 
-      // Format payments for API
-      final formattedPayments = payments.map((p) => {
-        'method': p['method'],
-        'amount': p['amount'],
-        'note': p['note'] ?? '',
-        'account_id': p['account_id'],
-        'is_return': p['is_return'] ?? 0,
-        'card_number': p['card_number'],
-        'card_type': p['card_type'],
-        'card_holder_name': p['card_holder_name'],
-      }).toList();
+    // Format payments for API
+    final formattedPayments = payments.map((p) => {
+      'method': p['method'],
+      'amount': p['amount'],
+      'note': p['note'] ?? '',
+      'account_id': p['account_id'],
+      'is_return': p['is_return'] ?? 0,
+      'card_number': p['card_number'],
+      'card_type': p['card_type'],
+      'card_holder_name': p['card_holder_name'],
+    }).toList();
 
-      // Prepare API data (like old code format)
-      final sellData = {
-        'location_id': sell['location_id'],
-        'contact_id': sell['contact_id'],
-        'transaction_date': sell['transaction_date'],
-        'invoice_no': sell['invoice_no'],
-        'status': sell['status'],
-        'sub_status': sell['is_quotation'] == 1 ? 'quotation' : null,
-        'tax_rate_id': sell['tax_rate_id'] == 0 ? null : sell['tax_rate_id'],
-        'discount_amount': sell['discount_amount'] ?? 0.0,
-        'discount_type': sell['discount_type'] ?? 'fixed',
-        'change_return': sell['change_return'] ?? 0.0,
-        'products': formattedProducts,
-        'sale_note': sell['sale_note'],
-        'staff_note': sell['staff_note'],
-        'is_quotation': sell['is_quotation'] ?? 0,
-        'is_suspend': sell['is_suspend'] ?? 0,
-        'payments': formattedPayments,
-      };
+    // Prepare API data (like old code format)
+    final sellData = {
+      'location_id': sell['location_id'],
+      'contact_id': sell['contact_id'],
+      'transaction_date': sell['transaction_date'],
+      'invoice_no': sell['invoice_no'],
+      'status': sell['status'],
+      'sub_status': sell['is_quotation'] == 1 ? 'quotation' : null,
+      'tax_rate_id': sell['tax_rate_id'] == 0 ? null : sell['tax_rate_id'],
+      'discount_amount': sell['discount_amount'] ?? 0.0,
+      'discount_type': sell['discount_type'] ?? 'fixed',
+      'change_return': sell['change_return'] ?? 0.0,
+      'products': formattedProducts,
+      'sale_note': sell['sale_note'],
+      'staff_note': sell['staff_note'],
+      'is_quotation': sell['is_quotation'] ?? 0,
+      'is_suspend': sell['is_suspend'] ?? 0,
+      'payments': formattedPayments,
+    };
 
-      SellModel model;
-      if (sell['transaction_id'] != null) {
-        // Update existing
-        model = await _remoteDataSource.updateSell(
-          sell['transaction_id'] as int,
-          sellData,
-        );
-      } else {
-        // Create new - API expects {'sells': [sellData]}
-        model = await _remoteDataSource.createSell({'sells': [sellData]});
-      }
-
-      // Update local sell after successful sync
-      await _localDataSource.updateSellAfterSync(sellId, {
-        'is_synced': 1,
-        'transaction_id': model.id,
-        'invoice_url': model.invoiceUrl,
-        'status': model.status,
-        'is_quotation': model.isQuotation,
-        'is_suspend': model.isSuspend,
-        'payment_lines': model.paymentLines,
-      });
-    } catch (e) {
-      print('Error syncing sell $sellId: $e');
-      // Don't throw - allow retry later
+    SellModel model;
+    if (sell['transaction_id'] != null) {
+      // Update existing
+      model = await _remoteDataSource.updateSell(
+        sell['transaction_id'] as int,
+        sellData,
+      );
+    } else {
+      // Create new - API expects {'sells': [sellData]}
+      model = await _remoteDataSource.createSell({'sells': [sellData]});
     }
+
+    // Update local sell after successful sync
+    await _localDataSource.updateSellAfterSync(sellId, {
+      'is_synced': 1,
+      'transaction_id': model.id,
+      'invoice_url': model.invoiceUrl,
+      'status': model.status,
+      'is_quotation': model.isQuotation,
+      'is_suspend': model.isSuspend,
+      'payment_lines': model.paymentLines,
+    });
   }
 
   @override
@@ -243,13 +157,9 @@ class SellRepositoryImpl implements SellRepository {
       return const Error(NetworkFailure());
     }
 
-    try {
-      final data = _entityToMap(sell);
-      final model = await _remoteDataSource.updateSell(sell.id, data);
-      return Success(_mapToEntity(model));
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
-    }
+    final data = _entityToMap(sell);
+    final model = await _remoteDataSource.updateSell(sell.id, data);
+    return Success(_mapToEntity(model));
   }
 
   @override
@@ -258,39 +168,27 @@ class SellRepositoryImpl implements SellRepository {
       return const Error(NetworkFailure());
     }
 
-    try {
-      await _remoteDataSource.deleteSell(id);
-      await _localDataSource.deleteSell(id);
-      return const Success(null);
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
-    }
+    await _remoteDataSource.deleteSell(id);
+    await _localDataSource.deleteSell(id);
+    return const Success(null);
   }
 
   @override
   Future<Result<SellEntity>> getSellById(int id) async {
     // Try local first
-    try {
-      final localSell = await _localDataSource.getSellById(id);
-      if (localSell != null) {
-        final sellLines = await _localDataSource.getSellLines(id);
-        final payments = await _localDataSource.getPayments(id);
-        final entity = _mapToEntityFromLocal(localSell, sellLines, payments);
-        return Success(entity);
-      }
-    } catch (e) {
-      print('Error getting local sell: $e');
+    final localSell = await _localDataSource.getSellById(id);
+    if (localSell != null) {
+      final sellLines = await _localDataSource.getSellLines(id);
+      final payments = await _localDataSource.getPayments(id);
+      final entity = _mapToEntityFromLocal(localSell, sellLines, payments);
+      return Success(entity);
     }
 
     // If not found locally and online, try remote
     if (await _networkInfo.isConnected) {
-      try {
-        final sells = await _remoteDataSource.getSpecifiedSells([id]);
-        if (sells.isNotEmpty) {
-          return Success(_mapToEntity(sells.first));
-        }
-      } catch (e) {
-        return Error(ExceptionHandler.handleException(e));
+      final sells = await _remoteDataSource.getSpecifiedSells([id]);
+      if (sells.isNotEmpty) {
+        return Success(_mapToEntity(sells.first));
       }
     }
 
@@ -303,30 +201,22 @@ class SellRepositoryImpl implements SellRepository {
       return const Error(NetworkFailure());
     }
 
-    try {
-      final sells = await _remoteDataSource.getSpecifiedSells(ids);
-      return Success(sells.map(_mapToEntity).toList());
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
-    }
+    final sells = await _remoteDataSource.getSpecifiedSells(ids);
+    return Success(sells.map(_mapToEntity).toList());
   }
 
   @override
   Future<Result<List<SellEntity>>> getLocalSells() async {
-    try {
-      final sells = await _localDataSource.getUnsyncedSells();
-      final entities = <SellEntity>[];
+    final sells = await _localDataSource.getUnsyncedSells();
+    final entities = <SellEntity>[];
 
-      for (var sell in sells) {
-        final sellLines = await _localDataSource.getSellLines(sell['id'] as int);
-        final payments = await _localDataSource.getPayments(sell['id'] as int);
-        entities.add(_mapToEntityFromLocal(sell, sellLines, payments));
-      }
-
-      return Success(entities);
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
+    for (var sell in sells) {
+      final sellLines = await _localDataSource.getSellLines(sell['id'] as int);
+      final payments = await _localDataSource.getPayments(sell['id'] as int);
+      entities.add(_mapToEntityFromLocal(sell, sellLines, payments));
     }
+
+    return Success(entities);
   }
 
   @override
@@ -335,53 +225,84 @@ class SellRepositoryImpl implements SellRepository {
       return const Error(NetworkFailure());
     }
 
-    try {
-      final unsyncedSells = await _localDataSource.getUnsyncedSells();
-      for (var sell in unsyncedSells) {
-        await syncSellById(sell['id'] as int);
-      }
-      return const Success(null);
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
+    final unsyncedSells = await _localDataSource.getUnsyncedSells();
+    for (var sell in unsyncedSells) {
+      await syncSellById(sell['id'] as int);
     }
+    return const Success(null);
   }
 
   @override
   Future<Result<SellEntity>> saveSellLocally(SellEntity sell) async {
-    // saveSellLocally should also try server first (same as createSell)
-    // This ensures all sells follow the same sync logic
-    return createSell(sell);
+    final sellData = _entityToMap(sell);
+    final sellLines = sell.sellLines.map(_sellLineToMap).toList();
+    final payments = sell.payments.map(_paymentToMap).toList();
+
+    final isFinalOrSuspended = (sell.status == 'final' || sell.isSuspend);
+
+    // Ensure is_synced is 0 for local saves
+    sellData['is_synced'] = 0;
+
+    final sellId = await _localDataSource.saveSell(
+      sellData: sellData,
+      sellLines: sellLines,
+      payments: payments,
+      isFinalOrSuspended: isFinalOrSuspended,
+      isSynced: false,
+    );
+
+    final savedSell = await _localDataSource.getSellById(sellId);
+    if (savedSell == null) {
+      return const Error(UnknownFailure(message: 'Failed to save sell locally'));
+    }
+
+    final sellLinesData = await _localDataSource.getSellLines(sellId);
+    final paymentsData = await _localDataSource.getPayments(sellId);
+    final entity = _mapToEntityFromLocal(savedSell, sellLinesData, paymentsData);
+
+    return Success(entity);
   }
 
-  /// Internal method to save sell locally only (used by createSell)
-  Future<Result<SellEntity>> _saveSellLocallyOnly(SellEntity sell) async {
-    try {
-      final sellData = _entityToMap(sell);
-      final sellLines = sell.sellLines.map(_sellLineToMap).toList();
-      final payments = sell.payments.map(_paymentToMap).toList();
+  @override
+  Future<Result<SellEntity>> saveSellLocallyWithSyncData(
+    SellEntity sell,
+    SellEntity syncedSell,
+  ) async {
+    final sellData = _entityToMap(sell);
+    final sellLines = sell.sellLines.map(_sellLineToMap).toList();
+    
+    // Use payment lines from synced sell if available, otherwise use original
+    final payments = syncedSell.payments.isNotEmpty
+        ? syncedSell.payments.map(_paymentToMap).toList()
+        : sell.payments.map(_paymentToMap).toList();
 
-      final isFinalOrSuspended = (sell.status == 'final' || sell.isSuspend);
+    final isFinalOrSuspended = (sell.status == 'final' || sell.isSuspend);
 
-      final sellId = await _localDataSource.saveSell(
-        sellData: sellData,
-        sellLines: sellLines,
-        payments: payments,
-        isFinalOrSuspended: isFinalOrSuspended,
-      );
-
-      final savedSell = await _localDataSource.getSellById(sellId);
-      if (savedSell == null) {
-        return const Error(UnknownFailure(message: 'Failed to save sell locally'));
-      }
-
-      final sellLinesData = await _localDataSource.getSellLines(sellId);
-      final paymentsData = await _localDataSource.getPayments(sellId);
-      final entity = _mapToEntityFromLocal(savedSell, sellLinesData, paymentsData);
-
-      return Success(entity);
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
+    // Mark as synced and include server response data
+    sellData['is_synced'] = 1;
+    sellData['transaction_id'] = syncedSell.transactionId;
+    if (syncedSell.invoiceUrl != null) {
+      sellData['invoice_url'] = syncedSell.invoiceUrl;
     }
+
+    final sellId = await _localDataSource.saveSell(
+      sellData: sellData,
+      sellLines: sellLines,
+      payments: payments,
+      isFinalOrSuspended: isFinalOrSuspended,
+      isSynced: true,
+    );
+
+    final savedSell = await _localDataSource.getSellById(sellId);
+    if (savedSell == null) {
+      return const Error(UnknownFailure(message: 'Failed to save sell locally'));
+    }
+
+    final sellLinesData = await _localDataSource.getSellLines(sellId);
+    final paymentsData = await _localDataSource.getPayments(sellId);
+    final entity = _mapToEntityFromLocal(savedSell, sellLinesData, paymentsData);
+
+    return Success(entity);
   }
 
   @override
@@ -393,41 +314,48 @@ class SellRepositoryImpl implements SellRepository {
 
   @override
   Future<Result<List<SellEntity>>> getQuotations() async {
-    try {
-      final quotations = await _localDataSource.getQuotations();
-      final entities = <SellEntity>[];
+    final quotations = await _localDataSource.getQuotations();
+    final entities = <SellEntity>[];
 
-      for (var quotation in quotations) {
-        final sellLines = await _localDataSource.getSellLines(quotation['id'] as int);
-        final payments = await _localDataSource.getPayments(quotation['id'] as int);
-        entities.add(_mapToEntityFromLocal(quotation, sellLines, payments));
-      }
-
-      return Success(entities);
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
+    for (var quotation in quotations) {
+      final sellLines = await _localDataSource.getSellLines(quotation['id'] as int);
+      final payments = await _localDataSource.getPayments(quotation['id'] as int);
+      entities.add(_mapToEntityFromLocal(quotation, sellLines, payments));
     }
+
+    return Success(entities);
   }
 
   @override
   Future<Result<List<SellEntity>>> getSuspendedSells() async {
-    try {
-      final suspended = await _localDataSource.getSuspendedSells();
-      final entities = <SellEntity>[];
+    final suspended = await _localDataSource.getSuspendedSells();
+    final entities = <SellEntity>[];
 
-      for (var sell in suspended) {
-        final sellLines = await _localDataSource.getSellLines(sell['id'] as int);
-        final payments = await _localDataSource.getPayments(sell['id'] as int);
-        entities.add(_mapToEntityFromLocal(sell, sellLines, payments));
-      }
-
-      return Success(entities);
-    } catch (e) {
-      return Error(ExceptionHandler.handleException(e));
+    for (var sell in suspended) {
+      final sellLines = await _localDataSource.getSellLines(sell['id'] as int);
+      final payments = await _localDataSource.getPayments(sell['id'] as int);
+      entities.add(_mapToEntityFromLocal(sell, sellLines, payments));
     }
+
+    return Success(entities);
   }
 
   SellEntity _mapToEntity(SellModel model) {
+    // Map payment lines from server response
+    final payments = model.paymentLines != null
+        ? model.paymentLines!.map((p) => SellPaymentEntity(
+            id: 0,
+            sellId: null,
+            paymentId: p['id'] as int?,
+            method: p['method'] as String?,
+            amount: (p['amount'] as num?)?.toDouble(),
+            note: p['note'] as String?,
+            accountId: p['account_id'] as int?,
+            isReturn: (p['is_return'] as int? ?? 0) == 1,
+            transactionDate: model.transactionDate,
+          )).toList()
+        : <SellPaymentEntity>[];
+
     return SellEntity(
       id: model.id,
       transactionDate: model.transactionDate,
@@ -443,6 +371,8 @@ class SellRepositoryImpl implements SellRepository {
       invoiceUrl: model.invoiceUrl,
       isSynced: true,
       transactionId: model.id,
+      payments: payments,
+      // Note: sellLines are not in server response, will use original sell's lines
     );
   }
 

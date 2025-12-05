@@ -2,7 +2,6 @@ import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:http/http.dart' as http;
 import 'package:pos_final/src/core/services/print_service.dart';
 
 import '../../../../app_config/di.dart';
@@ -11,6 +10,7 @@ import '../../../core/localization/locale_keys.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/toast/toast_manager.dart';
 import '../../widgets/dialog/dialog_provider.dart';
+import '../../services/invoice_service.dart';
 import 'pos_bloc.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
@@ -257,33 +257,11 @@ class _PosView extends StatelessWidget {
       confirmColor: Colors.blue,
       onConfirm: () async {
         try {
-          // Try to get invoice URL from database if available
-          String? invoiceHtml;
-          try {
-            final sellRepository = sl.get<SellRepository>();
-            final sellsResult = await sellRepository.getLocalSells();
-            sellsResult.fold(
-              onSuccess: (sells) async{
-                final sell = sells.firstWhere(
-                  (s) => s.id == sellId,
-                  orElse: () => sells.first,
-                );
-                if (sell.invoiceUrl != null && sell.invoiceUrl!.isNotEmpty) {
-                  // Fetch HTML from URL
-                  final response = await http.Client()
-                      .get(Uri.parse(sell.invoiceUrl!));
-                  if (response.statusCode == 200) {
-                    invoiceHtml = response.body;
-                  }
-                }
-              },
-              onError: (_) {},
-            );
-          } catch (_) {
-            // If fetching fails, will use local generation
-          }
+          // Fetch invoice HTML using service
+          final invoiceService = InvoiceService();
+          final invoiceHtml = await invoiceService.fetchInvoiceHtml(sellId);
 
-          if(context.mounted){
+          if (context.mounted) {
             await PrintService.printInvoice(
               sellId: sellId,
               taxId: taxId,
@@ -291,7 +269,6 @@ class _PosView extends StatelessWidget {
               invoiceHtml: invoiceHtml,
             );
           }
-
         } catch (e) {
           if (context.mounted) {
             ToastManager.showError(
