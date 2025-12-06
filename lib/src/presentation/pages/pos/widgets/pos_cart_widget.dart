@@ -123,7 +123,7 @@ class _CustomerSelectorSection extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: theme.disabledColor),
+            Icon(Icons.chevron_right, color: theme.primaryColor),
           ],
         ),
       ),

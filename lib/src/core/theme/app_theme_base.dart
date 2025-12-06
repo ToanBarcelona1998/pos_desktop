@@ -19,7 +19,7 @@ abstract class AppThemeBuilder {
       fontFamily: AppTypography.fontFamily,
       brightness: isDark ? Brightness.dark : Brightness.light,
       primaryColor: colorScheme.primary,
-      scaffoldBackgroundColor: colorScheme.background,
+      scaffoldBackgroundColor: colorScheme.backgroundSecondary,
       canvasColor: Colors.transparent,
       cardColor: colorScheme.card,
       dividerColor: colorScheme.divider,
@@ -84,7 +84,7 @@ abstract class AppThemeBuilder {
 
   AppBarTheme _buildAppBarTheme() {
     return AppBarTheme(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: colorScheme.background,
       foregroundColor: colorScheme.textPrimary,
       elevation: 0,
       iconTheme: IconThemeData(color: colorScheme.textPrimary, size: 24),
@@ -219,7 +219,7 @@ abstract class AppThemeBuilder {
 
   DialogThemeData _buildDialogTheme() {
     return DialogThemeData(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: colorScheme.background,
       elevation: 24,
       shape: RoundedRectangleBorder(
         borderRadius: AppRadius.borderRadiusMd,

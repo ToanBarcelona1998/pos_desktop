@@ -3,14 +3,13 @@ import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:pos_final/helpers/other_helpers.dart';
 import 'package:pos_final/src/core/constants/app_sizes.dart';
+import 'package:pos_final/src/presentation/presentation.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/localization/app_localization.dart';
 import '../../../../core/localization/locale_keys.dart';
-import '../../../widgets/app_loading.dart';
-import '../pos_state.dart';
 import 'pos_filter_drawer.dart';
 
 /// POS product grid widget
@@ -112,46 +111,47 @@ class _PosProductGridWidgetState extends State<PosProductGridWidget>
     return Stack(
       children: [
         // Main content
-        Column(
-          children: [
-            // Filter buttons
-            _FilterSection(
-              selectedCategoryId: widget.selectedCategoryId,
-              selectedBrandId: widget.selectedBrandId,
-              onFilterTap: _toggleFilterDrawer,
-              l10n: l10n,
-            ),
-            // SizedBox(height: AppSpacing.sm),
-            // // Search
-            // Padding(
-            //   padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            //   child: AppSearchField(
-            //     hintText: l10n?.translate(LocaleKeys.searchProducts) ?? 'Search products...',
-            //     onChanged: widget.onSearch,
-            //   ),
-            // ),
-            SizedBox(height: AppSpacing.sm),
-            // Product grid with refresh
-            Expanded(
-              child: widget.isLoading
-                  ? const AppLoadingCenter()
-                  : RefreshIndicator(
-                      onRefresh: () async {
-                        widget.onRefresh?.call();
-                      },
-                      child: widget.products.isEmpty
-                          ? _EmptyProducts(l10n: l10n)
-                          : _ProductGrid(
-                              products: widget.products,
-                              cartItems: widget.cartItems,
-                              onProductTap: widget.onProductTap,
-                              isLoadingMore: widget.isLoadingMore,
-                              hasMore: widget.hasMore,
-                              onLoadMore: widget.onLoadMore,
-                            ),
-                    ),
-            ),
-          ],
+        Padding(
+          padding: EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.sm),
+          child: Column(
+            children: [
+              // Filter buttons
+              _FilterSection(
+                selectedCategoryId: widget.selectedCategoryId,
+                selectedBrandId: widget.selectedBrandId,
+                onFilterTap: _toggleFilterDrawer,
+                l10n: l10n,
+              ),
+              // SizedBox(height: AppSpacing.sm),
+              // // Search
+              // Padding(
+              //   padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+              //   child: AppSearchField(
+              //     hintText: l10n.translate(LocaleKeys.searchProducts),
+              //     onChanged: widget.onSearch,
+              //   ),
+              // ),
+              Expanded(
+                child: widget.isLoading
+                    ? const AppLoadingCenter()
+                    : RefreshIndicator(
+                        onRefresh: () async {
+                          widget.onRefresh?.call();
+                        },
+                        child: widget.products.isEmpty
+                            ? _EmptyProducts(l10n: l10n)
+                            : _ProductGrid(
+                                products: widget.products,
+                                cartItems: widget.cartItems,
+                                onProductTap: widget.onProductTap,
+                                isLoadingMore: widget.isLoadingMore,
+                                hasMore: widget.hasMore,
+                                onLoadMore: widget.onLoadMore,
+                              ),
+                      ),
+              ),
+            ],
+          ),
         ),
         // Filter drawer overlay
         if (_isFilterDrawerOpen)
@@ -365,7 +365,7 @@ class _ProductGrid extends StatelessWidget {
           crossAxisCount: 4,
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
-          childAspectRatio: 1,
+          childAspectRatio: 0.95,
         ),
         itemCount: products.length + (isLoadingMore ? 2 : 0),
         itemBuilder: (context, index) {

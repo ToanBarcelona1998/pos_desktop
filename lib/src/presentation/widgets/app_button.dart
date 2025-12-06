@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos_final/src/core/core.dart';
 
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_spacing.dart';
@@ -220,12 +221,12 @@ class AppGradientButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final appColor = AppThemes.light;
     final defaultGradient = gradient ??
         LinearGradient(
           colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.primary.withOpacity(0.8),
+            appColor.primaryColor,
+            appColor.primaryColor.withAlpha((0.8 * 255).round()),
           ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
@@ -289,14 +290,14 @@ class AppGradientButton extends StatelessWidget {
         children: [
           if (leading != null) ...[
             leading!,
-            SizedBox(width: AppSpacing.xs),
+            if(text.isNotEmpty) SizedBox(width: AppSpacing.xs),
           ],
           Text(
             text,
             style: defaultTextStyle,
           ),
           if (suffix != null) ...[
-            SizedBox(width: AppSpacing.xs),
+            if(text.isNotEmpty) SizedBox(width: AppSpacing.xs),
             suffix!,
           ],
         ],

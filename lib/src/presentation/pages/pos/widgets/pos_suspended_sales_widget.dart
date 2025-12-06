@@ -11,13 +11,13 @@ import '../../../widgets/app_button.dart';
 import '../../../widgets/icon_wrapper_widget.dart';
 
 /// Bottom sheet for suspended sales
-class PosSuspendedSalesBottomSheet extends StatelessWidget {
+class PosSuspendedSalesWidget extends StatelessWidget {
   final List<SellEntity> suspendedSells;
   final bool isLoading;
   final ValueChanged<SellEntity>? onContinue;
   final ValueChanged<int>? onDelete;
 
-  const PosSuspendedSalesBottomSheet({
+  const PosSuspendedSalesWidget({
     super.key,
     required this.suspendedSells,
     this.isLoading = false,
@@ -45,22 +45,16 @@ class PosSuspendedSalesBottomSheet extends StatelessWidget {
           // Header
           Row(
             children: [
-              IconWrapper(
-                icon: Icons.pause_circle_outline,
-                iconColor: theme.colorScheme.primary,
-                backgroundColor: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
-                onTap: null,
-              ),
-              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   l10n.translate(LocaleKeys.suspendedSales),
                   style: AppTypography.titleLarge,
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).pop(),
+              IconWrapper(
+                icon: Icons.close,
+                iconColor: theme.colorScheme.primary,
+                onTap: () => Navigator.of(context).pop(),
               ),
             ],
           ),

@@ -1,6 +1,9 @@
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pos_final/src/presentation/presentation.dart';
+import 'package:pos_final/src/presentation/widgets/icon_wrapper_widget.dart';
+import 'package:pos_final/src/presentation/widgets/live_clock_widget.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_radius.dart';
@@ -14,6 +17,7 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final ValueChanged<int>? onLocationChanged;
   final VoidCallback? onRefresh;
   final VoidCallback? onSuspendedSales;
+  final VoidCallback? onOpenFullScreen;
 
   const PosAppBarWidget({
     super.key,
@@ -22,6 +26,7 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     this.onLocationChanged,
     this.onRefresh,
     this.onSuspendedSales,
+    this.onOpenFullScreen,
   });
 
   @override
@@ -48,6 +53,9 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
               borderRadius: AppRadius.borderRadiusSm,
               // border: Border.all(color: theme.dividerColor),
             ),
+            // child: Text(
+            //   l10n.translate(LocaleKeys.selectLocation),
+            // ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
                 value: selectedLocationId,
@@ -68,54 +76,56 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           ),
           SizedBox(width: AppSpacing.md),
           // Date/time display
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xs,
-            ),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: AppRadius.borderRadiusSm,
-            ),
-            child: Row(
+          AppGradientButton(
+            text: '',
+            leading: Row(
               children: [
                 const Icon(Icons.calendar_today, color: Colors.white, size: 16),
-                SizedBox(width: AppSpacing.xs),
-                Text(
-                  DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                const SizedBox(
+                  width: AppSpacing.xs,
                 ),
+                const LiveClockWidget()
               ],
             ),
           ),
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          onPressed: onRefresh,
+        IconWrapper(
+          icon: Icons.refresh,
+          onTap: onRefresh,
           tooltip: l10n.translate(LocaleKeys.refresh),
+          iconColor: Colors.purple,
         ),
-        IconButton(
-          icon: const Icon(Icons.pause_circle_outline),
-          onPressed: onSuspendedSales,
+        const SizedBox(
+          width: AppSpacing.xs,
+        ),
+        IconWrapper(
+          icon: Icons.pause_circle_outline,
+          onTap: onSuspendedSales,
           tooltip: l10n.translate(LocaleKeys.suspendedSales),
+          iconColor: Colors.grey,
         ),
-        IconButton(
-          icon: const Icon(Icons.fullscreen),
-          onPressed: () {
-            // Toggle fullscreen
-          },
+        const SizedBox(
+          width: AppSpacing.xs,
         ),
-        IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
+        IconWrapper(
+          icon: Icons.fullscreen,
+          onTap: onOpenFullScreen,
+          iconColor: Colors.blueAccent,
+        ),
+        const SizedBox(
+          width: AppSpacing.xs,
+        ),
+        IconWrapper(
+          icon: Icons.close,
+          onTap: (){},
+          iconColor: Colors.red,
+        ),
+        const SizedBox(
+          width: AppSpacing.sm,
         ),
       ],
     );
   }
 }
-
-
-
-

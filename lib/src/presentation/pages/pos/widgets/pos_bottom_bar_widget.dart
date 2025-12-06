@@ -127,6 +127,7 @@ class PosBottomBarWidget extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
+                    flex: 2,
                     child: Text(
                       '${l10n.translate(LocaleKeys.totalPayable)}: $currencySymbol${total.toStringAsFixed(2)}',
                       style: AppTypography.headlineSmall.copyWith(
@@ -135,17 +136,19 @@ class PosBottomBarWidget extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  IntrinsicHeight(
-                    child: AppGradientButton(
-                      leading: Icon(Icons.history),
-                      text: l10n.translate(LocaleKeys.history),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                        vertical: AppSpacing.xs,
+                  Expanded(
+                    child: IntrinsicHeight(
+                      child: AppGradientButton(
+                        leading: Icon(Icons.history),
+                        text: l10n.translate(LocaleKeys.history),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
+                        ),
+                        onPressed: () {
+                          // Show history
+                        },
                       ),
-                      onPressed: () {
-                        // Show history
-                      },
                     ),
                   ),
                 ],

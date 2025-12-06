@@ -6,7 +6,6 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/localization/app_localization.dart';
 import '../../../../core/localization/locale_keys.dart';
-import '../../../widgets/app_button.dart';
 import '../../../widgets/icon_wrapper_widget.dart';
 
 /// Customer selector dialog widget
@@ -68,13 +67,6 @@ class _PosCustomerSelectorWidgetState extends State<PosCustomerSelectorWidget> {
           // Header
           Row(
             children: [
-              IconWrapper(
-                icon: Icons.person,
-                iconColor: theme.colorScheme.primary,
-                backgroundColor: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
-                onTap: null,
-              ),
-              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   l10n.translate(LocaleKeys.selectCustomer),
@@ -83,13 +75,15 @@ class _PosCustomerSelectorWidgetState extends State<PosCustomerSelectorWidget> {
               ),
               if (widget.onAddCustomer != null)
                 IconButton(
-                  icon: Icon(Icons.person_add,
-                      color: theme.colorScheme.primary),
+                  icon: Icon(
+                    Icons.person_add,
+                    color: Colors.black,
+                  ),
                   onPressed: widget.onAddCustomer,
                   tooltip: l10n.translate(LocaleKeys.addCustomer),
                 ),
               IconButton(
-                icon: const Icon(Icons.close),
+                icon: const Icon(Icons.close, color: Colors.black,),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -100,8 +94,7 @@ class _PosCustomerSelectorWidgetState extends State<PosCustomerSelectorWidget> {
             controller: _searchController,
             decoration: InputDecoration(
               hintText: l10n.translate(LocaleKeys.search),
-              prefixIcon:
-                  Icon(Icons.search, color: theme.colorScheme.primary),
+              prefixIcon: Icon(Icons.search, color: theme.colorScheme.primary),
               border: OutlineInputBorder(
                 borderRadius: AppRadius.borderRadiusSm,
               ),
@@ -182,7 +175,8 @@ class _CustomerList extends StatelessWidget {
 
         return ListTile(
           leading: CircleAvatar(
-            backgroundColor: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
+            backgroundColor:
+                theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
             child: Icon(
               Icons.person,
               color: theme.colorScheme.primary,
@@ -204,7 +198,8 @@ class _CustomerList extends StatelessWidget {
               ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
               : null,
           selected: isSelected,
-          selectedTileColor: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
+          selectedTileColor:
+              theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
           onTap: () => onCustomerSelected(customer),
         );
       },

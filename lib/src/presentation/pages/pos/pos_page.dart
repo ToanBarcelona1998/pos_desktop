@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:pos_final/src/core/services/print_service.dart';
+import 'package:pos_final/src/core/utils/window_manager_utils.dart';
 
 import '../../../../app_config/di.dart';
 import '../../../core/localization/app_localization.dart';
@@ -19,7 +20,7 @@ import 'widgets/pos_bottom_bar_widget.dart';
 import 'widgets/pos_cart_widget.dart';
 import 'widgets/pos_product_grid_widget.dart';
 import 'widgets/pos_customer_selector_widget.dart';
-import 'widgets/pos_suspended_sales_bottom_sheet.dart';
+import 'widgets/pos_suspended_sales_widget.dart';
 
 /// POS page
 class PosPage extends StatelessWidget {
@@ -92,19 +93,18 @@ class _PosView extends StatelessWidget {
         }
 
         return Scaffold(
+          backgroundColor: const Color(0xffdcdee3),
           appBar: PosAppBarWidget(
             locations: state.locations,
             selectedLocationId: state.selectedLocationId,
+            onOpenFullScreen: (){
+              WindowManagerUtils.openFullScreen();
+            },
             onLocationChanged: (locationId) {
               context.read<PosBloc>().add(PosSelectLocation(locationId));
             },
             onRefresh: () {
-              _showPrintInvoiceDialog(
-                context,
-                state.createdSellId!,
-                state.taxId,
-              );
-              //context.read<PosBloc>().add(const PosRefreshProducts());
+              context.read<PosBloc>().add(const PosRefreshProducts());
             },
             onSuspendedSales: () => _showSuspendedSalesBottomSheet(context),
           ),
@@ -297,17 +297,13 @@ class _PosView extends StatelessWidget {
       bloc.add(const PosLoadSuspendedSells());
     }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => BlocProvider.value(
+    DialogProvider.showAppDialog(
+      context,
+      messageWidget: BlocProvider.value(
         value: bloc,
         child: BlocBuilder<PosBloc, PosState>(
           builder: (context, state) {
-            return PosSuspendedSalesBottomSheet(
+            return PosSuspendedSalesWidget(
               suspendedSells: state.suspendedSells,
               isLoading: state.isLoadingSuspendedSells,
               onContinue: (sell) {
@@ -320,6 +316,8 @@ class _PosView extends StatelessWidget {
           },
         ),
       ),
+      actions: [],
+      width: 500,
     );
   }
 }

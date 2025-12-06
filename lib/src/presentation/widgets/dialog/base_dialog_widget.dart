@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos_final/src/core/constants/app_radius.dart';
 import '../app_button.dart';
 
 class BaseDialogAction {
@@ -49,8 +50,8 @@ class BaseDialogWidget extends StatelessWidget {
         assert(messageWidget != null ||
             messageText != null ||
             (messageWidget == null && messageText == null)),
-        this.borderRadius =
-            borderRadius ?? const BorderRadius.all(Radius.circular(16));
+        borderRadius =
+            borderRadius ?? AppRadius.borderRadiusMd;
 
   // Hàm xây dựng Widget cho Text/Title
   Widget _buildText(String? text, TextStyle style,
@@ -66,6 +67,7 @@ class BaseDialogWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: borderRadius),
       child: Container(
         width: width,
