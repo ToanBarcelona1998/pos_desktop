@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:pos_final/app_config/app_config.dart';
@@ -150,7 +151,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                     horizontal: AppSpacing.sm,
                     vertical: AppSpacing.xxs,
                   ),
-                  child: Text(l10n.translate(LocaleKeys.posSales)),
+                  child: SvgPicture.asset('assets/logo/logo.svg'),
                 ),
                 centerTitle: true,
                 leading: null,

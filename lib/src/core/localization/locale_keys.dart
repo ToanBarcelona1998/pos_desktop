@@ -412,6 +412,8 @@ abstract final class LocaleKeys {
   static const String history = 'history';
   static const String filters = 'filters';
   static const String subtotal = 'subtotal';
+
+  static const String previousPayments = 'previous_payments';
 }
 
 
