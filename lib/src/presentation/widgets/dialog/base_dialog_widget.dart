@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pos_final/src/presentation/widgets/button.dart';
+import '../app_button.dart';
 
 class BaseDialogAction {
   final String text;
@@ -111,26 +111,16 @@ class BaseDialogWidget extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: actions!.map((action) {
                   final button = action.isPrimary
-                      ? PrimaryAppButton(
+                      ? AppButton(
                           text: action.text,
-                          onPress: action.onPressed,
-                          backGroundColor: action.color,
-                          // CUSTOM COLOR
-                          textStyle: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 12),
+                          onPressed: action.onPressed,
+                          backgroundColor: action.color,
+                          foregroundColor: Colors.white,
                         )
-                      : TextAppButton(
+                      : AppTextButton(
                           text: action.text,
-                          onPress: action.onPressed,
-                          style: TextStyle(
-                              fontSize: 16,
-                              color: action.color ?? Colors.blueAccent),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 12),
+                          onPressed: action.onPressed,
+                          color: action.color ?? Colors.blueAccent,
                         );
 
                   return Padding(

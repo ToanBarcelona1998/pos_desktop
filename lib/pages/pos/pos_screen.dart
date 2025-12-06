@@ -26,7 +26,7 @@ import 'package:pos_final/pages/pos/widgets/product_grid.dart';
 import 'package:pos_final/pages/pos/widgets/cart_summary.dart';
 import 'package:pos_final/pages/pos/widgets/shipping_details.dart';
 import 'package:pos_final/pages/pos/widgets/suspended_sales_list.dart';
-import 'package:pos_final/src/presentation/widgets/button.dart';
+import 'package:pos_final/src/presentation/widgets/app_button.dart';
 import 'package:pos_final/src/presentation/widgets/icon_wrapper_widget.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -618,7 +618,7 @@ class PosScreenState extends State<PosScreen> {
             SizedBox(
               width: MySize.size16,
             ),
-            GradientAppButton(
+            AppGradientButton(
               text: DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
               textStyle:
                   TextStyle(fontSize: MySize.size14, color: Colors.white),
@@ -764,24 +764,24 @@ class PosScreenState extends State<PosScreen> {
                       Row(
                         children: [
                           Expanded(
-                            child: GradientAppButton(
+                            child: AppGradientButton(
                               leading: Icon(Icons.menu, size: 20,),
                               text: 'Danh mục',
                               padding: EdgeInsets.symmetric(
                                 vertical: 8,
                               ),
-                              onPress: () {},
+                              onPressed: () {},
                             ),
                           ),
                           const SizedBox(width: 24),
                           Expanded(
-                            child: GradientAppButton(
+                            child: AppGradientButton(
                               leading: Icon(Icons.branding_watermark, size: 20,),
                               text: 'Thương hiệu',
                               padding: EdgeInsets.symmetric(
                                 vertical: 8,
                               ),
-                              onPress: () {},
+                              onPressed: () {},
                             ),
                           ),
                         ],
@@ -837,7 +837,7 @@ class PosScreenState extends State<PosScreen> {
           spacing: 10,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            ColumnAppButton(
+            AppColumnButton(
               text: 'Bản nháp',
               leading: Icon(
                 Icons.drafts_outlined,
@@ -845,7 +845,7 @@ class PosScreenState extends State<PosScreen> {
                 size: 20,
               ),
             ),
-            ColumnAppButton(
+            AppColumnButton(
               text: 'Báo giá',
               leading: Icon(
                 Icons.drafts_outlined,
@@ -853,7 +853,7 @@ class PosScreenState extends State<PosScreen> {
                 size: 20,
               ),
             ),
-            ColumnAppButton(
+            AppColumnButton(
               text: 'Tạm ngưng',
               leading: Icon(
                 Icons.pause,
@@ -861,7 +861,7 @@ class PosScreenState extends State<PosScreen> {
                 size: 20,
               ),
             ),
-            ColumnAppButton(
+            AppColumnButton(
               text: 'Trả góp',
               leading: Icon(
                 Icons.check,
@@ -869,7 +869,7 @@ class PosScreenState extends State<PosScreen> {
                 size: 20,
               ),
             ),
-            ColumnAppButton(
+            AppColumnButton(
               text: 'Dùng thẻ',
               leading: Icon(
                 Icons.payment,
@@ -883,37 +883,34 @@ class PosScreenState extends State<PosScreen> {
                   spacing: 14,
                   children: [
                     Expanded(
-                      child: PrimaryAppButton(
+                      child: AppButton(
                         text: AppLocalizations.of(context)
                             .translate('Phương thức'),
-                        onPress: () async {
+                        onPressed: () async {
                           await submitSale();
                         },
-                        backGroundColor: Colors.deepOrange,
-                        leading: Icon(Icons.payment_rounded, size: 20),
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.deepOrange,
+                        icon: Icons.payment_rounded,
                       ),
                     ),
                     Expanded(
-                      child: PrimaryAppButton(
+                      child: AppButton(
                         text: AppLocalizations.of(context).translate('cash'),
-                        onPress: () async {
+                        onPressed: () async {
                           await submitSale();
                         },
-                        backGroundColor: Colors.green,
-                        leading: Icon(Icons.payment_rounded, size: 20),
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.green,
+                        icon: Icons.payment_rounded,
                       ),
                     ),
                     Expanded(
-                      child: PrimaryAppButton(
+                      child: AppButton(
                         text: AppLocalizations.of(context).translate('cancel'),
-                        onPress: () async {
+                        onPressed: () async {
                           await submitSale();
                         },
-                        backGroundColor: Colors.red,
-                        leading: Icon(Icons.payment_rounded, size: 20),
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.red,
+                        icon: Icons.payment_rounded,
                       ),
                     ),
                   ],
@@ -933,7 +930,7 @@ class PosScreenState extends State<PosScreen> {
                     ),
                   ),
                   IntrinsicHeight(
-                    child: GradientAppButton(
+                    child: AppGradientButton(
                       leading: Icon(Icons.timer),
                       text: AppLocalizations.of(context)
                           .translate('Lịch sử giao dịch'),

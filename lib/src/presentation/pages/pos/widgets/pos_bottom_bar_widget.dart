@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pos_final/src/presentation/widgets/button.dart';
+import '../../../widgets/app_button.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -136,15 +136,14 @@ class PosBottomBarWidget extends StatelessWidget {
                     ),
                   ),
                   IntrinsicHeight(
-                    child: GradientAppButton(
+                    child: AppGradientButton(
                       leading: Icon(Icons.history),
                       text: l10n.translate(LocaleKeys.history),
-                      // color: theme.colorScheme.primary,
                       padding: EdgeInsets.symmetric(
                         horizontal: AppSpacing.sm,
                         vertical: AppSpacing.xs,
                       ),
-                      onPress: () {
+                      onPressed: () {
                         // Show history
                       },
                     ),
