@@ -20,8 +20,8 @@ class Config {
   static int quantityPrecision = 2, currencyPrecision = 2, callLogSyncDuration = 30;
 
   // List of locale language codes
-  List locale = ['en', 'ar', 'de', 'fr', 'es', 'tr', 'id', 'my', 'be', 'ch', 'it'];
-  String defaultLanguage = 'en';
+  List locale = ['en', 'ar', 'de', 'fr', 'es', 'tr', 'id', 'my', 'be', 'ch', 'it', 'vi'];
+  String defaultLanguage = 'vi';
 
   // List of supported locales
   List<Locale> supportedLocales = [
@@ -36,6 +36,7 @@ class Config {
     const Locale('be', ''),
     const Locale('ch', ''),
     const Locale('it', ''),
+    const Locale('vi', 'VN'),
   ];
 
   // Dropdown items for changing language
@@ -51,6 +52,7 @@ class Config {
     {'languageCode': 'ch', 'countryCode': '', 'name': 'Chinese'},
     {'languageCode': 'it', 'countryCode': '', 'name': 'Italian'},
     {'languageCode': 'my', 'countryCode': '', 'name': 'မြန်မာ'},
+    {'languageCode': 'vi', 'countryCode': 'VN', 'name': 'Vietnamese'},
   ];
 
   // Google Maps API key

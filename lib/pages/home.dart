@@ -64,7 +64,7 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
           ),
           IconButton(
             icon: const Icon(FontAwesomeIcons.signOutAlt, color: Colors.redAccent, size: 28),
-            tooltip: localizations?.translate('logout') ?? 'Logout',
+            tooltip: localizations?.translate(' logout') ?? 'Logout',
             onPressed: () => _logic.handleLogout(context),
           ),
           const SizedBox(width: 24), // Increased spacing for desktop

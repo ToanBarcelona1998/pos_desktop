@@ -6,6 +6,7 @@ import 'package:pos_final/helpers/size_config.dart';
 import 'package:pos_final/helpers/other_helpers.dart';
 import 'package:pos_final/locale/my_localizations.dart';
 import 'package:pos_final/models/system.dart';
+import 'package:pos_final/src/presentation/widgets/product_table_row_widget.dart';
 
 class CartSummary extends StatefulWidget {
   final List<dynamic> cartItems;
@@ -248,359 +249,360 @@ class CartSummaryState extends State<CartSummary> {
         color: Colors.white,
         borderRadius: BorderRadius.circular((MySize.size12 ?? 12.0).toDouble()),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                AppLocalizations.of(context).translate('cart'),
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: (MySize.size18 ?? 18.0).toDouble(),
-                  fontWeight: FontWeight.w600,
-                  color: themeData.colorScheme.onSurface,
-                ),
-              ),
-              Row(
-                children: [
-                  Text(
-                    '${AppLocalizations.of(context).translate('products')}: ${widget.cartItems.length}',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                      color: themeData.colorScheme.onSurface.withAlpha(150),
-                    ),
-                  ),
-                  Visibility(
-                    visible: widget.cartItems.isNotEmpty,
-                    child: IconButton(
-                      onPressed: () {
-                        deleteConfirmationDialog(
-                          onConfirm: () {
-                            setState(() {
-                              for (var item in widget.cartItems) {
-                                item['quantity'] = null;
-                                item['discount_amount'] = null;
-                                item['discount_type'] = null;
-                              }
-                              itemDiscountControllers.forEach((_, controller) => controller.dispose());
-                              itemDiscountControllers.clear();
-                              widget.cartItems.clear();
-                              calculateSubTotal();
-                            });
-                          },
-                        );
-                      },
-                      icon: Icon(Icons.delete_forever_outlined),
-                      color: Colors.red,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: (MySize.size8 ?? 8.0).toDouble()),
-          Expanded(
-            child: widget.cartItems.isEmpty
-                ? Center(
-              child: Text(
-                AppLocalizations.of(context).translate('add_item_to_cart'),
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: (MySize.size16 ?? 16.0).toDouble(),
-                  color: themeData.colorScheme.onSurface.withAlpha(150),
-                ),
-              ),
-            )
-                : ListView.builder(
-              itemCount: widget.cartItems.length,
-              itemBuilder: (context, index) {
-                final item = widget.cartItems[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(vertical: (MySize.size4 ?? 4.0).toDouble()),
-                  child: ListTile(
-                    leading: Icon(
-                      MdiIcons.cartOutline,
-                      color: themeData.colorScheme.primary,
-                      size: (MySize.size24 ?? 24.0).toDouble(),
-                    ),
-                    title: Text(
-                      item['display_name']?.toString() ?? '',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '$symbol${Helper().formatCurrency(item['unit_price'] ?? 0.0)}',
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: (MySize.size12 ?? 12.0).toDouble(),
-                            color: themeData.colorScheme.onSurface.withAlpha(150),
-                          ),
-                        ),
-                        SizedBox(height: (MySize.size4 ?? 4.0).toDouble()),
-                        Row(
-                          children: [
-                            Text(
-                              AppLocalizations.of(context).translate('discount'),
-                              style: TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: (MySize.size12 ?? 12.0).toDouble(),
-                                color: themeData.colorScheme.onSurface,
-                              ),
-                            ),
-                            SizedBox(width: (MySize.size8 ?? 8.0).toDouble()),
-                            DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: item['discount_type']?.toString() ?? 'fixed',
-                                dropdownColor: Colors.white,
-                                items: ['fixed', 'percentage'].map<DropdownMenuItem<String>>((type) {
-                                  return DropdownMenuItem<String>(
-                                    value: type,
-                                    child: Text(
-                                      AppLocalizations.of(context).translate(type),
-                                      style: TextStyle(
-                                        fontFamily: 'Cairo',
-                                        fontSize: (MySize.size12 ?? 12.0).toDouble(),
-                                        color: themeData.colorScheme.onSurface,
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (newValue) {
-                                  updateItemDiscountType(index, newValue!);
-                                },
-                              ),
-                            ),
-                            SizedBox(width: (MySize.size8 ?? 8.0).toDouble()),
-                            SizedBox(
-                              width: (MySize.size80 ?? 80.0).toDouble(),
-                              child: TextField(
-                                controller: itemDiscountControllers[index],
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,2}')),
-                                ],
-                                decoration: InputDecoration(
-                                  prefixText: item['discount_type'] == 'fixed' ? symbol : '% ',
-                                  hintText: '0.00',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular((MySize.size8 ?? 8.0).toDouble()),
-                                  ),
-                                ),
-                                style: TextStyle(
-                                  fontFamily: 'Cairo',
-                                  fontSize: (MySize.size12 ?? 12.0).toDouble(),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            MdiIcons.minus,
-                            size: (MySize.size20 ?? 20.0).toDouble(),
-                            color: Colors.red,
-                          ),
-                          onPressed: () {
-                            if (((item['quantity'] as num?)?.toDouble() ?? 1.0) > 1) {
-                              updateQuantity(index, ((item['quantity'] as num?)?.toDouble() ?? 1.0) - 1);
-                            } else {
-                              deleteConfirmationDialog(onConfirm: () => removeItem(index));
-                            }
-                          },
-                        ),
-                        SizedBox(
-                          width: (MySize.size40 ?? 40.0).toDouble(),
-                          child: Text(
-                            '${(item['quantity'] as num?)?.toDouble() ?? 1.0}',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            MdiIcons.plus,
-                            size: (MySize.size20 ?? 20.0).toDouble(),
-                            color: Colors.green,
-                          ),
-                          onPressed: () {
-                            updateQuantity(index, ((item['quantity'] as num?)?.toDouble() ?? 1.0) + 1);
-                          },
-                        ),
-                        Text(
-                          '$symbol${Helper().formatCurrency(
-                              ((item['unit_price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toDouble() ?? 1.0)
-                          )}',
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                            color: themeData.colorScheme.onSurface,
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            MdiIcons.delete,
-                            size: (MySize.size20 ?? 20.0).toDouble(),
-                            color: Colors.red,
-                          ),
-                          onPressed: () => deleteConfirmationDialog(onConfirm: () => removeItem(index)),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          Divider(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                AppLocalizations.of(context).translate('tax'),
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              DropdownButtonHideUnderline(
-                child: DropdownButton<int>(
-                  value: selectedTaxId,
-                  dropdownColor: Colors.white,
-                  items: taxList.map<DropdownMenuItem<int>>((tax) {
-                    return DropdownMenuItem<int>(
-                      value: tax['id'],
-                      child: Text(
-                        tax['name'] != null && tax['name'] == 'no_tax'
-                            ? AppLocalizations.of(context).translate(tax['name'])
-                            : tax['name']?.toString() ?? '',
-                        style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                          color: themeData.colorScheme.onSurface,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      selectedTaxId = newValue;
-                      calculateSubTotal();
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: (MySize.size8 ?? 8.0).toDouble()),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                AppLocalizations.of(context).translate('discount'),
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Row(
-                children: [
-                  DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: selectedDiscountType,
-                      dropdownColor: Colors.white,
-                      items: ['fixed', 'percentage'].map<DropdownMenuItem<String>>((type) {
-                        return DropdownMenuItem<String>(
-                          value: type,
-                          child: Text(
-                            AppLocalizations.of(context).translate(type),
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                              color: themeData.colorScheme.onSurface,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (newValue) {
-                        setState(() {
-                          selectedDiscountType = newValue!;
-                          calculateSubTotal();
-                        });
-                      },
-                    ),
-                  ),
-                  SizedBox(width: (MySize.size8 ?? 8.0).toDouble()),
-                  SizedBox(
-                    width: (MySize.size100 ?? 100.0).toDouble(),
-                    child: TextField(
-                      controller: widget.discountController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,2}')),
-                      ],
-                      decoration: InputDecoration(
-                        prefixText: selectedDiscountType == 'fixed' ? symbol : '% ',
-                        hintText: '0.00',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular((MySize.size8 ?? 8.0).toDouble()),
-                        ),
-                      ),
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: (MySize.size14 ?? 14.0).toDouble(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: (MySize.size8 ?? 8.0).toDouble()),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                AppLocalizations.of(context).translate('total'),
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: (MySize.size16 ?? 16.0).toDouble(),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                '${Helper().formatCurrency(subTotal)} $symbol',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: (MySize.size16 ?? 16.0).toDouble(),
-                  fontWeight: FontWeight.w700,
-                  color: themeData.colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      child: ProductTableRow(),
+      // child: Column(
+      //   crossAxisAlignment: CrossAxisAlignment.start,
+      //   children: [
+      //     Row(
+      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //       children: [
+      //         Text(
+      //           AppLocalizations.of(context).translate('cart'),
+      //           style: TextStyle(
+      //             fontFamily: 'Cairo',
+      //             fontSize: (MySize.size18 ?? 18.0).toDouble(),
+      //             fontWeight: FontWeight.w600,
+      //             color: themeData.colorScheme.onSurface,
+      //           ),
+      //         ),
+      //         Row(
+      //           children: [
+      //             Text(
+      //               '${AppLocalizations.of(context).translate('products')}: ${widget.cartItems.length}',
+      //               style: TextStyle(
+      //                 fontFamily: 'Cairo',
+      //                 fontSize: (MySize.size14 ?? 14.0).toDouble(),
+      //                 color: themeData.colorScheme.onSurface.withAlpha(150),
+      //               ),
+      //             ),
+      //             Visibility(
+      //               visible: widget.cartItems.isNotEmpty,
+      //               child: IconButton(
+      //                 onPressed: () {
+      //                   deleteConfirmationDialog(
+      //                     onConfirm: () {
+      //                       setState(() {
+      //                         for (var item in widget.cartItems) {
+      //                           item['quantity'] = null;
+      //                           item['discount_amount'] = null;
+      //                           item['discount_type'] = null;
+      //                         }
+      //                         itemDiscountControllers.forEach((_, controller) => controller.dispose());
+      //                         itemDiscountControllers.clear();
+      //                         widget.cartItems.clear();
+      //                         calculateSubTotal();
+      //                       });
+      //                     },
+      //                   );
+      //                 },
+      //                 icon: Icon(Icons.delete_forever_outlined),
+      //                 color: Colors.red,
+      //               ),
+      //             ),
+      //           ],
+      //         ),
+      //       ],
+      //     ),
+      //     SizedBox(height: (MySize.size8 ?? 8.0).toDouble()),
+      //     Expanded(
+      //       child: widget.cartItems.isEmpty
+      //           ? Center(
+      //         child: Text(
+      //           AppLocalizations.of(context).translate('add_item_to_cart'),
+      //           style: TextStyle(
+      //             fontFamily: 'Cairo',
+      //             fontSize: (MySize.size16 ?? 16.0).toDouble(),
+      //             color: themeData.colorScheme.onSurface.withAlpha(150),
+      //           ),
+      //         ),
+      //       )
+      //           : ListView.builder(
+      //         itemCount: widget.cartItems.length,
+      //         itemBuilder: (context, index) {
+      //           final item = widget.cartItems[index];
+      //           return Card(
+      //             margin: EdgeInsets.symmetric(vertical: (MySize.size4 ?? 4.0).toDouble()),
+      //             child: ListTile(
+      //               leading: Icon(
+      //                 MdiIcons.cartOutline,
+      //                 color: themeData.colorScheme.primary,
+      //                 size: (MySize.size24 ?? 24.0).toDouble(),
+      //               ),
+      //               title: Text(
+      //                 item['display_name']?.toString() ?? '',
+      //                 style: TextStyle(
+      //                   fontFamily: 'Cairo',
+      //                   fontSize: (MySize.size14 ?? 14.0).toDouble(),
+      //                   fontWeight: FontWeight.w600,
+      //                 ),
+      //                 maxLines: 1,
+      //                 overflow: TextOverflow.ellipsis,
+      //               ),
+      //               subtitle: Column(
+      //                 crossAxisAlignment: CrossAxisAlignment.start,
+      //                 children: [
+      //                   Text(
+      //                     '$symbol${Helper().formatCurrency(item['unit_price'] ?? 0.0)}',
+      //                     style: TextStyle(
+      //                       fontFamily: 'Cairo',
+      //                       fontSize: (MySize.size12 ?? 12.0).toDouble(),
+      //                       color: themeData.colorScheme.onSurface.withAlpha(150),
+      //                     ),
+      //                   ),
+      //                   SizedBox(height: (MySize.size4 ?? 4.0).toDouble()),
+      //                   Row(
+      //                     children: [
+      //                       Text(
+      //                         AppLocalizations.of(context).translate('discount'),
+      //                         style: TextStyle(
+      //                           fontFamily: 'Cairo',
+      //                           fontSize: (MySize.size12 ?? 12.0).toDouble(),
+      //                           color: themeData.colorScheme.onSurface,
+      //                         ),
+      //                       ),
+      //                       SizedBox(width: (MySize.size8 ?? 8.0).toDouble()),
+      //                       DropdownButtonHideUnderline(
+      //                         child: DropdownButton<String>(
+      //                           value: item['discount_type']?.toString() ?? 'fixed',
+      //                           dropdownColor: Colors.white,
+      //                           items: ['fixed', 'percentage'].map<DropdownMenuItem<String>>((type) {
+      //                             return DropdownMenuItem<String>(
+      //                               value: type,
+      //                               child: Text(
+      //                                 AppLocalizations.of(context).translate(type),
+      //                                 style: TextStyle(
+      //                                   fontFamily: 'Cairo',
+      //                                   fontSize: (MySize.size12 ?? 12.0).toDouble(),
+      //                                   color: themeData.colorScheme.onSurface,
+      //                                 ),
+      //                               ),
+      //                             );
+      //                           }).toList(),
+      //                           onChanged: (newValue) {
+      //                             updateItemDiscountType(index, newValue!);
+      //                           },
+      //                         ),
+      //                       ),
+      //                       SizedBox(width: (MySize.size8 ?? 8.0).toDouble()),
+      //                       SizedBox(
+      //                         width: (MySize.size80 ?? 80.0).toDouble(),
+      //                         child: TextField(
+      //                           controller: itemDiscountControllers[index],
+      //                           keyboardType: TextInputType.number,
+      //                           inputFormatters: [
+      //                             FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,2}')),
+      //                           ],
+      //                           decoration: InputDecoration(
+      //                             prefixText: item['discount_type'] == 'fixed' ? symbol : '% ',
+      //                             hintText: '0.00',
+      //                             border: OutlineInputBorder(
+      //                               borderRadius: BorderRadius.circular((MySize.size8 ?? 8.0).toDouble()),
+      //                             ),
+      //                           ),
+      //                           style: TextStyle(
+      //                             fontFamily: 'Cairo',
+      //                             fontSize: (MySize.size12 ?? 12.0).toDouble(),
+      //                           ),
+      //                         ),
+      //                       ),
+      //                     ],
+      //                   ),
+      //                 ],
+      //               ),
+      //               trailing: Row(
+      //                 mainAxisSize: MainAxisSize.min,
+      //                 children: [
+      //                   IconButton(
+      //                     icon: Icon(
+      //                       MdiIcons.minus,
+      //                       size: (MySize.size20 ?? 20.0).toDouble(),
+      //                       color: Colors.red,
+      //                     ),
+      //                     onPressed: () {
+      //                       if (((item['quantity'] as num?)?.toDouble() ?? 1.0) > 1) {
+      //                         updateQuantity(index, ((item['quantity'] as num?)?.toDouble() ?? 1.0) - 1);
+      //                       } else {
+      //                         deleteConfirmationDialog(onConfirm: () => removeItem(index));
+      //                       }
+      //                     },
+      //                   ),
+      //                   SizedBox(
+      //                     width: (MySize.size40 ?? 40.0).toDouble(),
+      //                     child: Text(
+      //                       '${(item['quantity'] as num?)?.toDouble() ?? 1.0}',
+      //                       textAlign: TextAlign.center,
+      //                       style: TextStyle(
+      //                         fontFamily: 'Cairo',
+      //                         fontSize: (MySize.size14 ?? 14.0).toDouble(),
+      //                       ),
+      //                     ),
+      //                   ),
+      //                   IconButton(
+      //                     icon: Icon(
+      //                       MdiIcons.plus,
+      //                       size: (MySize.size20 ?? 20.0).toDouble(),
+      //                       color: Colors.green,
+      //                     ),
+      //                     onPressed: () {
+      //                       updateQuantity(index, ((item['quantity'] as num?)?.toDouble() ?? 1.0) + 1);
+      //                     },
+      //                   ),
+      //                   Text(
+      //                     '$symbol${Helper().formatCurrency(
+      //                         ((item['unit_price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toDouble() ?? 1.0)
+      //                     )}',
+      //                     style: TextStyle(
+      //                       fontFamily: 'Cairo',
+      //                       fontSize: (MySize.size14 ?? 14.0).toDouble(),
+      //                       color: themeData.colorScheme.onSurface,
+      //                     ),
+      //                   ),
+      //                   IconButton(
+      //                     icon: Icon(
+      //                       MdiIcons.delete,
+      //                       size: (MySize.size20 ?? 20.0).toDouble(),
+      //                       color: Colors.red,
+      //                     ),
+      //                     onPressed: () => deleteConfirmationDialog(onConfirm: () => removeItem(index)),
+      //                   ),
+      //                 ],
+      //               ),
+      //             ),
+      //           );
+      //         },
+      //       ),
+      //     ),
+      //     Divider(),
+      //     Row(
+      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //       children: [
+      //         Text(
+      //           AppLocalizations.of(context).translate('tax'),
+      //           style: TextStyle(
+      //             fontFamily: 'Cairo',
+      //             fontSize: (MySize.size14 ?? 14.0).toDouble(),
+      //             fontWeight: FontWeight.w600,
+      //           ),
+      //         ),
+      //         DropdownButtonHideUnderline(
+      //           child: DropdownButton<int>(
+      //             value: selectedTaxId,
+      //             dropdownColor: Colors.white,
+      //             items: taxList.map<DropdownMenuItem<int>>((tax) {
+      //               return DropdownMenuItem<int>(
+      //                 value: tax['id'],
+      //                 child: Text(
+      //                   tax['name'] != null && tax['name'] == 'no_tax'
+      //                       ? AppLocalizations.of(context).translate(tax['name'])
+      //                       : tax['name']?.toString() ?? '',
+      //                   style: TextStyle(
+      //                     fontFamily: 'Cairo',
+      //                     fontSize: (MySize.size14 ?? 14.0).toDouble(),
+      //                     color: themeData.colorScheme.onSurface,
+      //                   ),
+      //                 ),
+      //               );
+      //             }).toList(),
+      //             onChanged: (newValue) {
+      //               setState(() {
+      //                 selectedTaxId = newValue;
+      //                 calculateSubTotal();
+      //               });
+      //             },
+      //           ),
+      //         ),
+      //       ],
+      //     ),
+      //     SizedBox(height: (MySize.size8 ?? 8.0).toDouble()),
+      //     Row(
+      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //       children: [
+      //         Text(
+      //           AppLocalizations.of(context).translate('discount'),
+      //           style: TextStyle(
+      //             fontFamily: 'Cairo',
+      //             fontSize: (MySize.size14 ?? 14.0).toDouble(),
+      //             fontWeight: FontWeight.w600,
+      //           ),
+      //         ),
+      //         Row(
+      //           children: [
+      //             DropdownButtonHideUnderline(
+      //               child: DropdownButton<String>(
+      //                 value: selectedDiscountType,
+      //                 dropdownColor: Colors.white,
+      //                 items: ['fixed', 'percentage'].map<DropdownMenuItem<String>>((type) {
+      //                   return DropdownMenuItem<String>(
+      //                     value: type,
+      //                     child: Text(
+      //                       AppLocalizations.of(context).translate(type),
+      //                       style: TextStyle(
+      //                         fontFamily: 'Cairo',
+      //                         fontSize: (MySize.size14 ?? 14.0).toDouble(),
+      //                         color: themeData.colorScheme.onSurface,
+      //                       ),
+      //                     ),
+      //                   );
+      //                 }).toList(),
+      //                 onChanged: (newValue) {
+      //                   setState(() {
+      //                     selectedDiscountType = newValue!;
+      //                     calculateSubTotal();
+      //                   });
+      //                 },
+      //               ),
+      //             ),
+      //             SizedBox(width: (MySize.size8 ?? 8.0).toDouble()),
+      //             SizedBox(
+      //               width: (MySize.size100 ?? 100.0).toDouble(),
+      //               child: TextField(
+      //                 controller: widget.discountController,
+      //                 keyboardType: TextInputType.number,
+      //                 inputFormatters: [
+      //                   FilteringTextInputFormatter.allow(RegExp(r'^(\d+)?\.?\d{0,2}')),
+      //                 ],
+      //                 decoration: InputDecoration(
+      //                   prefixText: selectedDiscountType == 'fixed' ? symbol : '% ',
+      //                   hintText: '0.00',
+      //                   border: OutlineInputBorder(
+      //                     borderRadius: BorderRadius.circular((MySize.size8 ?? 8.0).toDouble()),
+      //                   ),
+      //                 ),
+      //                 style: TextStyle(
+      //                   fontFamily: 'Cairo',
+      //                   fontSize: (MySize.size14 ?? 14.0).toDouble(),
+      //                 ),
+      //               ),
+      //             ),
+      //           ],
+      //         ),
+      //       ],
+      //     ),
+      //     SizedBox(height: (MySize.size8 ?? 8.0).toDouble()),
+      //     Row(
+      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //       children: [
+      //         Text(
+      //           AppLocalizations.of(context).translate('total'),
+      //           style: TextStyle(
+      //             fontFamily: 'Cairo',
+      //             fontSize: (MySize.size16 ?? 16.0).toDouble(),
+      //             fontWeight: FontWeight.w700,
+      //           ),
+      //         ),
+      //         Text(
+      //           '${Helper().formatCurrency(subTotal)} $symbol',
+      //           style: TextStyle(
+      //             fontFamily: 'Cairo',
+      //             fontSize: (MySize.size16 ?? 16.0).toDouble(),
+      //             fontWeight: FontWeight.w700,
+      //             color: themeData.colorScheme.primary,
+      //           ),
+      //         ),
+      //       ],
+      //     ),
+      //   ],
+      // ),
     );
   }
 

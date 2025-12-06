@@ -1,0 +1,323 @@
+import 'package:domain/domain.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:pos_final/src/core/services/print_service.dart';
+import 'package:pos_final/src/core/utils/window_manager_utils.dart';
+
+import '../../../../app_config/di.dart';
+import '../../../core/localization/app_localization.dart';
+import '../../../core/localization/locale_keys.dart';
+import '../../widgets/app_loading.dart';
+import '../../widgets/toast/toast_manager.dart';
+import '../../widgets/dialog/dialog_provider.dart';
+import '../../services/invoice_service.dart';
+import 'pos_bloc.dart';
+import 'pos_event.dart';
+import 'pos_state.dart';
+import 'widgets/pos_app_bar_widget.dart';
+import 'widgets/pos_bottom_bar_widget.dart';
+import 'widgets/pos_cart_widget.dart';
+import 'widgets/pos_product_grid_widget.dart';
+import 'widgets/pos_customer_selector_widget.dart';
+import 'widgets/pos_suspended_sales_widget.dart';
+
+/// POS page
+class PosPage extends StatelessWidget {
+  const PosPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => PosBloc(
+        locationRepository: sl.get<LocationRepository>(),
+        productRepository: sl.get<ProductRepository>(),
+        categoryRepository: sl.get<CategoryRepository>(),
+        brandRepository: sl.get<BrandRepository>(),
+        contactRepository: sl.get<ContactRepository>(),
+        createSellUseCase: sl.get<CreateSellUseCase>(),
+        getSuspendedSellsUseCase: sl.get<GetSuspendedSellsUseCase>(),
+        deleteSellUseCase: sl.get<DeleteSellUseCase>(),
+        businessRepository: sl.get<BusinessRepository>(),
+      )..add(const PosInitialize()),
+      child: const _PosView(),
+    );
+  }
+}
+
+class _PosView extends StatelessWidget {
+  const _PosView();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return BlocConsumer<PosBloc, PosState>(
+      listenWhen: (previous, current) =>
+          previous.failure != current.failure ||
+          previous.successMessage != current.successMessage ||
+          previous.shouldPrintInvoice != current.shouldPrintInvoice ||
+          previous.createdSellId != current.createdSellId,
+      listener: (context, state) {
+        if (state.failure != null) {
+          ToastManager.showError(context, state.failure!.message);
+        }
+        if (state.successMessage != null) {
+          // Translate success message key
+          final translatedMessage = l10n.translate(state.successMessage!);
+          ToastManager.showSuccess(context, translatedMessage);
+        }
+        
+        // Handle invoice printing
+        if (state.shouldPrintInvoice && state.createdSellId != null) {
+          // Reset the flag immediately to prevent multiple prints
+          context.read<PosBloc>().add(const PosClearPrintFlag());
+          
+          // Show print dialog
+          // [TODO] Can't show print now with html
+          // _showPrintInvoiceDialog(
+          //   context,
+          //   state.createdSellId!,
+          //   state.taxId,
+          // );
+        }
+      },
+      builder: (context, state) {
+        if (state.isLoading) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(l10n.translate(LocaleKeys.pos)),
+            ),
+            body: const AppLoadingCenter(),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: const Color(0xffdcdee3),
+          appBar: PosAppBarWidget(
+            locations: state.locations,
+            selectedLocationId: state.selectedLocationId,
+            onOpenFullScreen: (){
+              WindowManagerUtils.openFullScreen();
+            },
+            onLocationChanged: (locationId) {
+              context.read<PosBloc>().add(PosSelectLocation(locationId));
+            },
+            onRefresh: () {
+              context.read<PosBloc>().add(const PosRefreshProducts());
+            },
+            onSuspendedSales: () => _showSuspendedSalesBottomSheet(context),
+          ),
+          body: Row(
+            children: [
+              // Cart section (left)
+              Expanded(
+                flex: 3,
+                child: PosCartWidget(
+                  customer: state.selectedCustomer,
+                  cartItems: state.cartItems,
+                  currencySymbol: state.currencySymbol,
+                  subtotal: state.subtotal,
+                  discount: state.invoiceDiscount,
+                  tax: state.taxAmount,
+                  total: state.total,
+                  onCustomerSelect: () => _showCustomerSelector(context),
+                  onQuantityChanged: (productId, variationId, quantity) {
+                    context.read<PosBloc>().add(PosUpdateCartItemQuantity(
+                          productId: productId,
+                          variationId: variationId,
+                          quantity: quantity,
+                        ));
+                  },
+                  onRemoveItem: (productId, variationId) {
+                    context.read<PosBloc>().add(PosRemoveFromCart(
+                          productId: productId,
+                          variationId: variationId,
+                        ));
+                  },
+                ),
+              ),
+              // Product grid section (right)
+              Expanded(
+                flex: 2,
+                child: PosProductGridWidget(
+                  products: state.filteredProducts,
+                  categories: state.categories,
+                  brands: state.brands,
+                  selectedCategoryId: state.selectedCategoryId,
+                  selectedBrandId: state.selectedBrandId,
+                  searchQuery: state.searchQuery,
+                  isLoading: state.isLoadingProducts,
+                  isLoadingMore: state.isLoadingMore,
+                  hasMore: state.hasMore,
+                  cartItems: state.cartItems,
+                  onProductTap: (product) {
+                    context.read<PosBloc>().add(PosAddToCart(product: product));
+                  },
+                  onSearch: (query) {
+                    context.read<PosBloc>().add(PosSearchProducts(query));
+                  },
+                  onCategoryFilter: (categoryId) {
+                    context.read<PosBloc>().add(PosFilterByCategory(categoryId));
+                  },
+                  onBrandFilter: (brandId) {
+                    context.read<PosBloc>().add(PosFilterByBrand(brandId));
+                  },
+                  onLoadMore: () {
+                    context.read<PosBloc>().add(const PosLoadMoreProducts());
+                  },
+                  onRefresh: () {
+                    context.read<PosBloc>().add(const PosRefreshProducts());
+                  },
+                ),
+              ),
+            ],
+          ),
+          bottomNavigationBar: PosBottomBarWidget(
+            total: state.total,
+            currencySymbol: state.currencySymbol,
+            isSubmitting: state.isSubmitting,
+            canSubmit: state.canSubmit,
+            onCashPayment: () {
+              context.read<PosBloc>().add(const PosSubmitSale());
+            },
+            onCreditPayment: () {
+              context.read<PosBloc>().add(const PosSubmitCreditSale());
+            },
+            onDraft: () {
+              context.read<PosBloc>().add(const PosCreateDraft());
+            },
+            onQuotation: () {
+              context.read<PosBloc>().add(const PosCreateQuotation());
+            },
+            onSuspend: () {
+              context.read<PosBloc>().add(const PosSuspendSale());
+            },
+            onCancel: () {
+              context.read<PosBloc>().add(const PosCancelSale());
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _showCustomerSelector(BuildContext context) {
+    final bloc = context.read<PosBloc>();
+    final state = bloc.state;
+
+    // Load customers if not loaded
+    if (state.customers.isEmpty && !state.isLoadingCustomers) {
+      bloc.add(const PosLoadCustomers());
+    }
+
+    DialogProvider.showAppDialog(
+      context,
+      messageWidget: BlocProvider.value(
+        value: bloc,
+        child: BlocBuilder<PosBloc, PosState>(
+          builder: (context, state) {
+            // Filter customers by search query
+            final filteredCustomers = state.customerSearchQuery.isEmpty
+                ? state.customers
+                : state.customers.where((customer) {
+                    final query = state.customerSearchQuery.toLowerCase();
+                    return customer.name.toLowerCase().contains(query) ||
+                        (customer.mobile?.toLowerCase().contains(query) ?? false);
+                  }).toList();
+
+            return PosCustomerSelectorWidget(
+              customers: filteredCustomers,
+              selectedCustomer: state.selectedCustomer,
+              isLoading: state.isLoadingCustomers,
+              searchQuery: state.customerSearchQuery,
+              onSearch: (query) {
+                context.read<PosBloc>().add(PosSearchCustomers(query));
+              },
+              onCustomerSelected: (customer) {
+                context.read<PosBloc>().add(PosSelectCustomer(customer));
+                Navigator.of(context).pop();
+              },
+            );
+          },
+        ),
+      ),
+      actions: [],
+      width: 500,
+    );
+  }
+
+  /// Show print invoice dialog
+  void _showPrintInvoiceDialog(
+    BuildContext context,
+    int sellId,
+    int? taxId,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    DialogProvider.showConfirmDialog(
+      context,
+      title: l10n.translate(LocaleKeys.printInvoice),
+      message: l10n.translate(LocaleKeys.printInvoiceConfirmation),
+      confirmText: l10n.translate(LocaleKeys.yes),
+      cancelText: l10n.translate(LocaleKeys.no),
+      confirmColor: Colors.blue,
+      onConfirm: () async {
+        try {
+          // Fetch invoice HTML using service
+          final invoiceService = InvoiceService();
+          final invoiceHtml = await invoiceService.fetchInvoiceHtml(sellId);
+
+          if (context.mounted && invoiceHtml != null) {
+            await PrintService.printInvoice(
+              sellId: sellId,
+              taxId: taxId,
+              context: context,
+              invoiceHtml: invoiceHtml,
+              name: l10n.translate(LocaleKeys.invoice),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ToastManager.showError(
+              context,
+              '${l10n.translate(LocaleKeys.error)}: $e',
+            );
+          }
+        }
+      },
+    );
+  }
+
+  void _showSuspendedSalesBottomSheet(BuildContext context) {
+    final bloc = context.read<PosBloc>();
+    final state = bloc.state;
+
+    // Load suspended sells if not loaded
+    if (state.suspendedSells.isEmpty && !state.isLoadingSuspendedSells) {
+      bloc.add(const PosLoadSuspendedSells());
+    }
+
+    DialogProvider.showAppDialog(
+      context,
+      messageWidget: BlocProvider.value(
+        value: bloc,
+        child: BlocBuilder<PosBloc, PosState>(
+          builder: (context, state) {
+            return PosSuspendedSalesWidget(
+              suspendedSells: state.suspendedSells,
+              isLoading: state.isLoadingSuspendedSells,
+              onContinue: (sell) {
+                context.read<PosBloc>().add(PosLoadSuspendedSell(sell));
+              },
+              onDelete: (sellId) {
+                context.read<PosBloc>().add(PosDeleteSuspendedSell(sellId));
+              },
+            );
+          },
+        ),
+      ),
+      actions: [],
+      width: 500,
+    );
+  }
+}
