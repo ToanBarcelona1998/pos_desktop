@@ -75,11 +75,17 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     final lastPage = meta?['last_page'] as int? ?? 1;
     final currentPage = meta?['current_page'] as int? ?? page;
 
+    // Preserve raw JSON for saving variation_location_details
+    final rawProductsJson = data
+        .map((json) => json as Map<String, dynamic>)
+        .toList();
+
     return ProductListResponse(
       products: products,
       total: total,
       currentPage: currentPage,
       lastPage: lastPage,
+      rawProductsJson: rawProductsJson,
     );
   }
 
@@ -107,12 +113,14 @@ class ProductListResponse {
   final int total;
   final int currentPage;
   final int lastPage;
+  final List<Map<String, dynamic>>? rawProductsJson;
 
   const ProductListResponse({
     required this.products,
     required this.total,
     required this.currentPage,
     required this.lastPage,
+    this.rawProductsJson,
   });
 
   bool get hasMore => currentPage < lastPage;

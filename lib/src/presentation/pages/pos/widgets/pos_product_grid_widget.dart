@@ -397,10 +397,13 @@ class _ProductGrid extends StatelessWidget {
                 item.productId == productId && item.variationId == variationId,
           );
 
+          final isOutOfStock = (product.qtyAvailable ?? 0) <= 0;
+
           return _ProductItem(
             product: product,
             quantity: inCart ? cartItem.quantity : 0,
-            onTap: () => onProductTap?.call(product),
+            onTap: isOutOfStock ? null : () => onProductTap?.call(product),
+            isOutOfStock: isOutOfStock,
           );
         },
       ),
@@ -412,11 +415,13 @@ class _ProductItem extends StatelessWidget {
   final ProductEntity product;
   final int quantity;
   final VoidCallback? onTap;
+  final bool isOutOfStock;
 
   const _ProductItem({
     required this.product,
     this.quantity = 0,
     this.onTap,
+    this.isOutOfStock = false,
   });
 
   @override
@@ -435,98 +440,130 @@ class _ProductItem extends StatelessWidget {
             ? BorderSide(color: theme.colorScheme.primary, width: 2)
             : BorderSide.none,
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppRadius.borderRadiusSm,
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Product image
-                Container(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withAlpha((255 * 0.1).round()),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(4),
+      child: Stack(
+        children: [
+          Opacity(
+            opacity: isOutOfStock ? 0.5 : 1.0,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: AppRadius.borderRadiusSm,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Product image
+                  Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withAlpha((255 * 0.1).round()),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(4),
+                      ),
                     ),
-                  ),
-                  child: product.productImageUrl != null &&
-                          product.productImageUrl!.isNotEmpty
-                      ? ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(4),
-                          ),
-                          child: CachedNetworkImage(
-                            imageUrl: product.productImageUrl ?? '',
-                            height: AppSizes.avatarLg,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) =>
-                                _buildPlaceholder(theme),
-                            errorWidget: (context, url, error) => Image.asset(
-                              'assets/images/default_product.png',
-                              height: AppSizes.avatarLg,
-                              fit: BoxFit.cover,
+                    child: product.productImageUrl != null &&
+                            product.productImageUrl!.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(4),
                             ),
+                            child: CachedNetworkImage(
+                              imageUrl: product.productImageUrl ?? '',
+                              height: AppSizes.avatarLg,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) =>
+                                  _buildPlaceholder(theme),
+                              errorWidget: (context, url, error) => Image.asset(
+                                'assets/images/default_product.png',
+                                height: AppSizes.avatarLg,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          )
+                        : _buildPlaceholder(theme),
+                  ),
+                  // Product info
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.xs),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            name,
+                            style: AppTypography.labelSmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        )
-                      : _buildPlaceholder(theme),
-                ),
-                // Product info
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(AppSpacing.xs),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          name,
-                          style: AppTypography.labelSmall,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: AppSpacing.xxs),
-                        Expanded(
-                          child: Align(
-                            alignment: AlignmentGeometry.bottomCenter,
-                            child: Text(
-                              '${Helper().formatCurrency(price)}đ',
-                              style: AppTypography.labelLarge.copyWith(
-                                color: Color(0xff244ca3),
-                                fontWeight: FontWeight.bold,
+                          SizedBox(height: AppSpacing.xxs),
+                          Expanded(
+                            child: Align(
+                              alignment: AlignmentGeometry.bottomCenter,
+                              child: Text(
+                                '${Helper().formatCurrency(price)}đ',
+                                style: AppTypography.labelLarge.copyWith(
+                                  color: Color(0xff244ca3),
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            // Quantity badge
-            if (quantity > 0)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    shape: BoxShape.circle,
+          ),
+          // Quantity badge
+          if (quantity > 0)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '$quantity',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: Text(
-                    '$quantity',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          // Out of stock overlay
+          if (isOutOfStock)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3),
+                  borderRadius: AppRadius.borderRadiusSm,
+                ),
+                child: Center(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xs,
+                      vertical: AppSpacing.xxs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: AppRadius.borderRadiusSm,
+                    ),
+                    child: Text(
+                      l10n.translate(LocaleKeys.outOfStock),
+                      style: AppTypography.labelSmall.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

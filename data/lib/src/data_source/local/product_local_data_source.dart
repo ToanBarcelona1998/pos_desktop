@@ -14,7 +14,12 @@ abstract class ProductLocalDataSource {
   });
 
   /// Saves products to cache
-  Future<void> saveProducts(List<ProductModel> products, int locationId);
+  /// [productsJson] is optional raw JSON data to extract variation_location_details array
+  Future<void> saveProducts(
+    List<ProductModel> products,
+    int locationId, {
+    List<Map<String, dynamic>>? productsJson,
+  });
 
   /// Clears product cache
   Future<void> clearCache();
@@ -42,7 +47,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   }) async {
     final db = await _dbHelper.database;
 
-    // Match old query structure: JOIN with product_locations and variations_location_details
+    // Query variations with qty_available from variations_location_details for the specific location
     String query = '''
       SELECT DISTINCT v.*, vld.qty_available
       FROM variations v
@@ -84,14 +89,20 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   }
 
   @override
-  Future<void> saveProducts(List<ProductModel> products, int locationId) async {
+  Future<void> saveProducts(
+    List<ProductModel> products,
+    int locationId, {
+    List<Map<String, dynamic>>? productsJson,
+  }) async {
     final db = await _dbHelper.database;
 
     await db.transaction((txn) async {
       final batch = txn.batch();
       final processedProductIds = <int>{};
 
-      for (final product in products) {
+      for (int i = 0; i < products.length; i++) {
+        final product = products[i];
+        
         // Construct display_name if not present (like old code)
         final productJson = product.toJson();
         if (productJson['display_name'] == null || productJson['display_name'].toString().isEmpty) {
@@ -101,10 +112,14 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
           productJson['display_name'] = '$productName $productVariationName $variationName'.trim();
         }
 
+        // Remove qty_available from variations insert (it belongs in variations_location_details)
+        final variationsJson = Map<String, dynamic>.from(productJson);
+        variationsJson.remove('qty_available');
+
         // Insert variation
         batch.insert(
           'variations',
-          productJson,
+          variationsJson,
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
 
@@ -121,8 +136,54 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
           processedProductIds.add(product.productId!);
         }
 
-        // Insert location details if available
-        if (product.qtyAvailable != null && product.productId != null && product.variationId != null) {
+        // Save variation_location_details from raw JSON if available, otherwise use product.qtyAvailable
+        if (productsJson != null && i < productsJson.length) {
+          final rawJson = productsJson[i];
+          final variationLocationDetails = rawJson['variation_location_details'];
+          
+          if (variationLocationDetails is List && variationLocationDetails.isNotEmpty) {
+            // Save all location details from the array
+            for (final detail in variationLocationDetails) {
+              if (detail is Map<String, dynamic>) {
+                final detailMap = Map<String, dynamic>.from(detail);
+                final detailLocationId = detailMap['location_id'];
+                final detailQtyAvailable = detailMap['qty_available'];
+                
+                if (detailLocationId != null && 
+                    product.productId != null && 
+                    product.variationId != null) {
+                  batch.insert(
+                    'variations_location_details',
+                    {
+                      'product_id': product.productId,
+                      'variation_id': product.variationId,
+                      'location_id': detailLocationId,
+                      'qty_available': _parseDouble(detailQtyAvailable),
+                    },
+                    conflictAlgorithm: ConflictAlgorithm.replace,
+                  );
+                }
+              }
+            }
+          } else if (product.qtyAvailable != null && 
+                     product.productId != null && 
+                     product.variationId != null) {
+            // Fallback: save single qty_available for the requested location
+            batch.insert(
+              'variations_location_details',
+              {
+                'product_id': product.productId,
+                'variation_id': product.variationId,
+                'location_id': locationId,
+                'qty_available': product.qtyAvailable,
+              },
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
+          }
+        } else if (product.qtyAvailable != null && 
+                   product.productId != null && 
+                   product.variationId != null) {
+          // Fallback: save single qty_available for the requested location
           batch.insert(
             'variations_location_details',
             {
@@ -138,6 +199,14 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
       await batch.commit(noResult: true);
     });
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
   }
 
   @override

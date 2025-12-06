@@ -60,10 +60,19 @@ class ProductModel extends BaseModel {
 
     // Use variation_id as id if id is not present (database uses variation_id as primary key)
     int? id = json['id'] as int?;
-    if (id == null) {
-      id = json['variation_id'] as int?;
-    }
+    id ??= json['variation_id'] as int?;
 
+    // Extract qty_available from variation_location_details or directly from json
+    dynamic qtyAvailable = json['qty_available'];
+    
+    // If not found directly, try to get from variation_location_details array
+    if (qtyAvailable == null) {
+      final variationLocationDetails = json['variation_location_details'];
+      if (variationLocationDetails is List && variationLocationDetails.isNotEmpty) {
+        final map = Map<String, dynamic>.from(variationLocationDetails.first);
+        qtyAvailable = map['qty_available'];
+      }
+    }
     return ProductModel(
       id: id,
       productId: json['product_id'] as int?,
@@ -85,7 +94,7 @@ class ProductModel extends BaseModel {
       sellPriceIncTax: _parseDouble(json['sell_price_inc_tax']),
       productImageUrl: json['product_image_url'] as String?,
       productDescription: json['product_description'] as String?,
-      qtyAvailable: _parseDouble(json['qty_available']),
+      qtyAvailable: _parseDouble(qtyAvailable),
     );
   }
 

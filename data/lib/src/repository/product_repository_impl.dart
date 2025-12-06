@@ -56,7 +56,11 @@ class ProductRepositoryImpl implements ProductRepository {
       final entities = response.products.map(_mapToEntity).toList();
       
       // Save to local for offline use
-      await _localDataSource.saveProducts(response.products, locationId);
+      await _localDataSource.saveProducts(
+        response.products,
+        locationId,
+        productsJson: response.rawProductsJson,
+      );
       
       return Success(entities);
     } catch (e) {
@@ -146,6 +150,8 @@ class ProductRepositoryImpl implements ProductRepository {
       bool hasMore = true;
       final List<ProductModel> allProducts = [];
 
+      final List<Map<String, dynamic>> allRawProductsJson = [];
+      
       while (hasMore) {
         final response = await _remoteDataSource.getProducts(
           locationId: locationId,
@@ -154,11 +160,18 @@ class ProductRepositoryImpl implements ProductRepository {
         );
 
         allProducts.addAll(response.products);
+        if (response.rawProductsJson != null) {
+          allRawProductsJson.addAll(response.rawProductsJson!);
+        }
         hasMore = response.hasMore;
         page++;
       }
 
-      await _localDataSource.saveProducts(allProducts, locationId);
+      await _localDataSource.saveProducts(
+        allProducts,
+        locationId,
+        productsJson: allRawProductsJson.isNotEmpty ? allRawProductsJson : null,
+      );
       await _localDataSource.updateLastSync();
 
       return const Success(null);
