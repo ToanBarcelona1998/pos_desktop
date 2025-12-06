@@ -74,7 +74,7 @@ class AuthRepositoryImpl implements AuthRepository {
         return Success(_userMapper.toEntity(userModel));
       } catch (e) {
         // If server call fails, try cached user
-        Logger.logW('Failed to get user from server, trying cached user', e);
+        Logger.logE('Failed to get user from server, trying cached user', e);
         final cachedUser = await _localDataSource.getCachedUser();
         if (cachedUser != null) {
           return Success(_userMapper.toEntity(cachedUser));

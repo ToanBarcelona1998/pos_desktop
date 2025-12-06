@@ -43,7 +43,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
           
           return Success(entities);
         } catch (e) {
-          Logger.logW('Failed to fetch categories from server', e);
+          Logger.logE('Failed to fetch categories from server', e);
           // Offline and no local data
           return const Success([]);
         }
@@ -59,7 +59,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
           
           return Success(entities);
         } catch (e) {
-          Logger.logW('Failed to fetch categories from server after local error', e);
+          Logger.logE('Failed to fetch categories from server after local error', e);
           return Error(failure);
         }
       },
@@ -84,7 +84,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
   /// Sync categories in background without blocking
   void _syncCategoriesInBackground() {
     syncCategories().catchError((e) {
-      Logger.logW('Background category sync error', e);
+      Logger.logE('Background category sync error', e);
     });
   }
 

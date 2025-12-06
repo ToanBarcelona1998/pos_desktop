@@ -73,11 +73,12 @@ class _PosView extends StatelessWidget {
           context.read<PosBloc>().add(const PosClearPrintFlag());
           
           // Show print dialog
-          _showPrintInvoiceDialog(
-            context,
-            state.createdSellId!,
-            state.taxId,
-          );
+          // [TODO] Can't show print now with html
+          // _showPrintInvoiceDialog(
+          //   context,
+          //   state.createdSellId!,
+          //   state.taxId,
+          // );
         }
       },
       builder: (context, state) {
@@ -283,9 +284,6 @@ class _PosView extends StatelessWidget {
             );
           }
         }
-      },
-      onCancel: () {
-        // User cancelled printing
       },
     );
   }

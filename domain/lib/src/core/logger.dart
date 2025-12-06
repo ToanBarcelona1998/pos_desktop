@@ -1,48 +1,29 @@
 import 'package:flutter/foundation.dart';
+import 'dart:developer' as dev;
 
-/// Logger class for application-wide logging
-/// Only logs in debug mode
-class Logger {
-  /// Log warning message
-  static void logW(String message, [Object? error, StackTrace? stackTrace]) {
+sealed class Logger{
+  static const String reset = '\x1B[0m';
+  static const String red = '\x1B[31m';
+  static const String yellow = '\x1B[33m';
+  static const String blue = '\x1B[34m';
+
+  static void log(String message) {
     if (kDebugMode) {
-      if (error != null) {
-        debugPrint('⚠️ [WARNING] $message');
-        debugPrint('Error: $error');
-        if (stackTrace != null) {
-          debugPrint('StackTrace: $stackTrace');
-        }
-      } else {
-        debugPrint('⚠️ [WARNING] $message');
-      }
+      dev.log('$red[LOG]: $message$reset');
     }
   }
 
-  /// Log info message
-  static void logI(String message) {
+  static void logE(String message, [Object ? e ,String ? tag]) {
     if (kDebugMode) {
-      debugPrint('ℹ️ [INFO] $message');
+      dev.log('$red[ERROR]-${tag ?? 'NO TAG'}: $message$reset', error: e);
+
     }
   }
 
-  /// Log debug message
-  static void logD(String message) {
+  static void logI(String message, {String ? tag}) {
     if (kDebugMode) {
-      debugPrint('🔍 [DEBUG] $message');
+      dev.log('$yellow[INFO]-${tag ?? 'NO TAG'}: $message$reset');
     }
   }
 
-  /// Log error message
-  static void logE(String message, [Object? error, StackTrace? stackTrace]) {
-    if (kDebugMode) {
-      debugPrint('❌ [ERROR] $message');
-      if (error != null) {
-        debugPrint('Error: $error');
-        if (stackTrace != null) {
-          debugPrint('StackTrace: $stackTrace');
-        }
-      }
-    }
-  }
 }
-

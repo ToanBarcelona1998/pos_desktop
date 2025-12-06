@@ -43,7 +43,7 @@ class TaxRepositoryImpl implements TaxRepository {
           
           return Success(entities);
         } catch (e) {
-          Logger.logW('Failed to fetch taxes from server', e);
+          Logger.logE('Failed to fetch taxes from server', e);
           // Offline and no local data
           return const Success([]);
         }
@@ -59,7 +59,7 @@ class TaxRepositoryImpl implements TaxRepository {
           
           return Success(entities);
         } catch (e) {
-          Logger.logW('Failed to fetch taxes from server after local error', e);
+          Logger.logE('Failed to fetch taxes from server after local error', e);
           return Error(failure);
         }
       },
@@ -84,7 +84,7 @@ class TaxRepositoryImpl implements TaxRepository {
   /// Sync taxes in background without blocking
   void _syncTaxesInBackground() {
     syncTaxes().catchError((e) {
-      Logger.logW('Background tax sync error', e);
+      Logger.logE('Background tax sync error', e);
     });
   }
 

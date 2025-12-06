@@ -35,7 +35,7 @@ class AppVersionManager {
         await prefs.setString(_versionKey, _appVersion);
       }
     } catch (e) {
-      Logger.logE('Error checking app version: $e');
+      Logger.logE('Error checking app version', e);
       // Continue app initialization even if version check fails
     }
   }
@@ -80,7 +80,7 @@ class AppVersionManager {
       }
       Logger.logI('Shared preferences cleared successfully.');
     } catch (e) {
-      Logger.logE('Error clearing shared preferences: $e');
+      Logger.logE('Error clearing shared preferences', e);
     }
   }
 
@@ -106,7 +106,7 @@ class AppVersionManager {
       }
       Logger.logI('Database files cleared successfully.');
     } catch (e) {
-      Logger.logE('Error clearing database: $e');
+      Logger.logE('Error clearing database', e);
     }
   }
 }

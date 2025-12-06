@@ -50,7 +50,7 @@ class ContactRepositoryImpl implements ContactRepository {
           
           return Success(entities);
         } catch (e) {
-          Logger.logW('Failed to fetch contacts from server', e);
+          Logger.logE('Failed to fetch contacts from server', e);
           // Offline and no local data
           return const Success([]);
         }
@@ -66,7 +66,7 @@ class ContactRepositoryImpl implements ContactRepository {
           
           return Success(entities);
         } catch (e) {
-          Logger.logW('Failed to fetch contacts from server after local error', e);
+          Logger.logE('Failed to fetch contacts from server after local error', e);
           return Error(failure);
         }
       },
@@ -82,7 +82,7 @@ class ContactRepositoryImpl implements ContactRepository {
         return Success(_mapper.toEntity(contact));
       }
     } catch (e) {
-      Logger.logW('Error getting local contact', e);
+      Logger.logE('Error getting local contact', e);
     }
 
     // Try remote
@@ -90,7 +90,7 @@ class ContactRepositoryImpl implements ContactRepository {
       final contact = await _remoteDataSource.getContactById(id);
       return Success(_mapper.toEntity(contact));
     } catch (e) {
-      Logger.logW('Failed to get contact from server', e);
+      Logger.logE('Failed to get contact from server', e);
       return const Error(NotFoundFailure(message: 'Contact not found'));
     }
   }
@@ -166,7 +166,7 @@ class ContactRepositoryImpl implements ContactRepository {
         try {
           return await getContacts();
         } catch (e) {
-          Logger.logW('Failed to search contacts from server', e);
+          Logger.logE('Failed to search contacts from server', e);
           return Error(failure);
         }
       },
@@ -176,7 +176,7 @@ class ContactRepositoryImpl implements ContactRepository {
   /// Sync contacts in background without blocking
   void _syncContactsInBackground({String? type}) {
     syncContacts().catchError((e) {
-      Logger.logW('Background contact sync error', e);
+      Logger.logE('Background contact sync error', e);
     });
   }
 

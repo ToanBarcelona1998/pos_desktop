@@ -23,7 +23,7 @@ class PermissionRepositoryImpl implements PermissionRepository {
       final permissions = await _remoteDataSource.getUserPermissions();
       return Success(PermissionEntity(permissions: permissions));
     } catch (e) {
-      Logger.logW('Failed to get user permissions from server, trying local', e);
+      Logger.logE('Failed to get user permissions from server, trying local', e);
       final localResult = await getLocalUserPermissions();
       return localResult.fold(
         onSuccess: (permission) {

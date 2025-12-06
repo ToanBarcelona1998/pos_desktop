@@ -27,7 +27,7 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
       }
       return Success(_mapToEntity(subscription));
     } catch (e) {
-      Logger.logW('Failed to get active subscription from server, trying local', e);
+      Logger.logE('Failed to get active subscription from server, trying local', e);
       return getLocalActiveSubscription();
     }
   }

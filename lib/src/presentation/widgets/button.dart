@@ -303,8 +303,8 @@ final class GradientAppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     const defaultGradient = LinearGradient(
       colors: [
-        Color(0xFF2053ba),
-        Color(0xff6982b8),
+        Color(0xff4f46e5),
+        Color(0xff3b82f6),
       ],
       begin: Alignment.centerLeft,
       end: Alignment.centerRight,

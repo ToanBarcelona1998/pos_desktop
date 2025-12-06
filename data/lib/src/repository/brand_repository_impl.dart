@@ -47,7 +47,7 @@ class BrandRepositoryImpl implements BrandRepository {
           
           return Success(brandEntities);
         } catch (e) {
-          Logger.logW('Failed to fetch brands from server', e);
+          Logger.logE('Failed to fetch brands from server', e);
           // Offline and no local data
           return const Success([]);
         }
@@ -63,7 +63,7 @@ class BrandRepositoryImpl implements BrandRepository {
           
           return Success(brandEntities);
         } catch (e) {
-          Logger.logW('Failed to fetch brands from server after local error', e);
+          Logger.logE('Failed to fetch brands from server after local error', e);
           return Error(failure);
         }
       },
@@ -188,7 +188,7 @@ class BrandRepositoryImpl implements BrandRepository {
   /// Sync brands in background without blocking
   void _syncBrandsInBackground() {
     syncBrands().catchError((e) {
-      Logger.logW('Background brand sync error', e);
+      Logger.logE('Background brand sync error', e);
     });
   }
 

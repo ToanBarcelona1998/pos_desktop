@@ -43,7 +43,7 @@ class ProductRepositoryImpl implements ProductRepository {
         return Success(entities);
       }
     } catch (e) {
-      Logger.logW('Error getting cached products', e);
+      Logger.logE('Error getting cached products', e);
     }
 
     // If no local data, fetch from remote
@@ -60,7 +60,7 @@ class ProductRepositoryImpl implements ProductRepository {
       
       return Success(entities);
     } catch (e) {
-      Logger.logW('Failed to fetch products from server', e);
+      Logger.logE('Failed to fetch products from server', e);
       // Offline and no local data
       return const Success([]);
     }
@@ -85,7 +85,7 @@ class ProductRepositoryImpl implements ProductRepository {
         final product = await _remoteDataSource.getProductById(id);
         return Success(_mapToEntity(product));
       } catch (e) {
-        Logger.logW('Failed to get product from server', e);
+        Logger.logE('Failed to get product from server', e);
         return const Error(NotFoundFailure(message: 'Product not found'));
       }
     }
@@ -120,14 +120,14 @@ class ProductRepositoryImpl implements ProductRepository {
         return Success(result);
       }
     } catch (e) {
-      Logger.logW('Error searching local products', e);
+      Logger.logE('Error searching local products', e);
     }
 
     // If no local results, try remote
     try {
       return await getProducts(locationId: locationId, perPage: 100, searchQuery: query);
     } catch (e) {
-      Logger.logW('Failed to search products from server', e);
+      Logger.logE('Failed to search products from server', e);
       return const Success([]);
     }
   }
@@ -135,7 +135,7 @@ class ProductRepositoryImpl implements ProductRepository {
   /// Sync products in background without blocking
   void _syncProductsInBackground(int locationId) {
     syncProducts(locationId).catchError((e) {
-      Logger.logW('Background product sync error', e);
+      Logger.logE('Background product sync error', e);
     });
   }
 

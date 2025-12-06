@@ -43,7 +43,7 @@ class LocationRepositoryImpl implements LocationRepository {
           
           return Success(entities);
         } catch (e) {
-          Logger.logW('Failed to fetch locations from server', e);
+          Logger.logE('Failed to fetch locations from server', e);
           // Offline and no local data
           return const Success([]);
         }
@@ -59,7 +59,7 @@ class LocationRepositoryImpl implements LocationRepository {
           
           return Success(entities);
         } catch (e) {
-          Logger.logW('Failed to fetch locations from server after local error', e);
+          Logger.logE('Failed to fetch locations from server after local error', e);
           return Error(failure);
         }
       },
@@ -84,7 +84,7 @@ class LocationRepositoryImpl implements LocationRepository {
   /// Sync locations in background without blocking
   void _syncLocationsInBackground() {
     syncLocations().catchError((e) {
-      Logger.logW('Background location sync error', e);
+      Logger.logE('Background location sync error', e);
     });
   }
 

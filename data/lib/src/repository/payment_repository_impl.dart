@@ -24,7 +24,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
       final entities = methods.map(_mapMethodToEntity).toList();
       return Success(entities);
     } catch (e) {
-      Logger.logW('Failed to fetch payment methods from server, trying local', e);
+      Logger.logE('Failed to fetch payment methods from server, trying local', e);
       return getLocalPaymentMethods();
     }
   }
@@ -36,7 +36,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
       final entities = accounts.map(_mapAccountToEntity).toList();
       return Success(entities);
     } catch (e) {
-      Logger.logW('Failed to fetch payment accounts from server, trying local', e);
+      Logger.logE('Failed to fetch payment accounts from server, trying local', e);
       return getLocalPaymentAccounts();
     }
   }
