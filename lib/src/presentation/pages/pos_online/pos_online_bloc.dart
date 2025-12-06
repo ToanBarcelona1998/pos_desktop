@@ -101,6 +101,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
       showSyncDialog: true,
       showLogoutDialog: false,
       clearFailure: true,
+      successMessage: null,
     ));
 
     try {
@@ -110,9 +111,6 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
         onSuccess: (_) {},
         onError: (_) {},
       );
-
-      // Sync system data
-      await _syncService.syncAll();
 
       // Proceed to logout
       await _authCubit.logout();
@@ -124,6 +122,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
         showLogoutDialog: false,
       ));
     } catch (e) {
+      Logger.logE('Sync sell error ${e.toString()}');
       emit(state.copyWith(
         isSyncing: false,
         showSyncDialog: false,

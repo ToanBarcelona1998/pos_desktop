@@ -389,7 +389,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
       result.fold(
         onSuccess: (createdSell) {
-          print('create sell id ${createdSell.id} , url ${createdSell.invoiceUrl}');
           // Only print if not suspended and printInvoice is true
           final shouldPrint = event.printInvoice && !state.isSuspended;
           

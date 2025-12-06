@@ -218,53 +218,85 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
   ) async {
     final db = await _dbHelper.database;
 
-    // Remove shipping fields
-    final cleanedUpdates = Map<String, dynamic>.from(updates)
-      ..remove('shipping_charges')
-      ..remove('shipping_details')
-      ..remove('shipping_address')
-      ..remove('shipping_status')
-      ..remove('delivered_to');
+    // Wrap everything in a transaction for atomicity
+    await db.transaction((txn) async {
+      // Extract payment_lines before cleaning updates (it's not a sell table column)
+      final paymentLinesValue = updates['payment_lines'];
+      
+      // Remove shipping fields and payment_lines (not sell table columns)
+      final cleanedUpdates = Map<String, dynamic>.from(updates)
+        ..remove('shipping_charges')
+        ..remove('shipping_details')
+        ..remove('shipping_address')
+        ..remove('shipping_status')
+        ..remove('delivered_to')
+        ..remove('payment_lines');
 
-    await db.update(
-      'sell',
-      cleanedUpdates,
-      where: 'id = ?',
-      whereArgs: [sellId],
-    );
-
-    // Update payment lines if provided
-    if (updates.containsKey('payment_lines') &&
-        updates['payment_lines'] is List) {
-      // Delete existing payments
-      await db.delete(
-        'sell_payments',
-        where: 'sell_id = ?',
-        whereArgs: [sellId],
-      );
-
-      // Insert new payments
-      final paymentLines = updates['payment_lines'] as List;
-      for (var paymentLine in paymentLines) {
-        await db.insert(
-          'sell_payments',
-          {
-            'sell_id': sellId,
-            'method': paymentLine['method'],
-            'amount': paymentLine['amount'],
-            'note': paymentLine['note'] ?? '',
-            'account_id': paymentLine['account_id'],
-            'is_return': paymentLine['is_return'] ?? 0,
-            'card_number': paymentLine['card_number'],
-            'card_type': paymentLine['card_type'],
-            'card_holder_name': paymentLine['card_holder_name'],
-            'payment_id': paymentLine['id'],
-            'transaction_date': paymentLine['transaction_date'],
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
+      // Only update sell table if there are fields to update
+      if (cleanedUpdates.isNotEmpty) {
+        await txn.update(
+          'sell',
+          cleanedUpdates,
+          where: 'id = ?',
+          whereArgs: [sellId],
         );
       }
-    }
+
+      // Update payment lines if provided
+      if (paymentLinesValue != null) {
+        // Handle both List and single Map cases
+        List<Map<String, dynamic>> paymentLines;
+        if (paymentLinesValue is List) {
+          paymentLines = paymentLinesValue
+              .map((item) => item is Map<String, dynamic>
+                  ? item
+                  : item is Map
+                      ? Map<String, dynamic>.from(item)
+                      : <String, dynamic>{})
+              .where((item) => item.isNotEmpty)
+              .toList();
+        } else if (paymentLinesValue is Map<String, dynamic>) {
+          paymentLines = [paymentLinesValue];
+        } else if (paymentLinesValue is Map) {
+          paymentLines = [Map<String, dynamic>.from(paymentLinesValue)];
+        } else {
+          // Invalid type, skip payment lines update
+          return;
+        }
+
+        // Delete existing payments
+        await txn.delete(
+          'sell_payments',
+          where: 'sell_id = ?',
+          whereArgs: [sellId],
+        );
+
+        // Insert new payments
+        for (var paymentLine in paymentLines) {
+          if (paymentLine.isEmpty) {
+            continue; // Skip invalid payment lines
+          }
+          
+          await txn.insert(
+            'sell_payments',
+            {
+              'sell_id': sellId,
+              'method': paymentLine['method'],
+              'amount': paymentLine['amount'],
+              'note': paymentLine['note'] ?? '',
+              'account_id': paymentLine['account_id'],
+              'is_return': paymentLine['is_return'] ?? 0,
+              'card_number': paymentLine['card_number'],
+              'card_type': paymentLine['card_type'],
+              'card_holder_name': paymentLine['card_holder_name'],
+              'payment_id': paymentLine['id'],
+              'transaction_date': paymentLine['transaction_date'] ?? paymentLine['paid_on'],
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      }
+    });
   }
 
   @override

@@ -54,7 +54,7 @@ class AppLocalizations {
   String translateWithArgs(String key, Map<String, dynamic> args) {
     String translation = translate(key);
     args.forEach((argKey, value) {
-      translation = translation.replaceAll('{$argKey}', value.toString());
+      translation = translation.replaceAll('{\$$argKey}', value.toString());
     });
     return translation;
   }

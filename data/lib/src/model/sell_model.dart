@@ -63,7 +63,7 @@ class SellModel extends BaseModel {
       invoiceUrl: json['invoice_url'] as String?,
       changeReturn: _parseDouble(json['change_return']),
       paymentLines: json['payment_lines'] != null
-          ? List<Map<String, dynamic>>.from(json['payment_lines'])
+          ? _parsePaymentLines(json['payment_lines'])
           : null,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
@@ -102,4 +102,34 @@ class SellModel extends BaseModel {
     if (value is String) return double.tryParse(value) ?? 0.0;
     return 0.0;
   }
+
+  /// Parse payment lines - handles both List and single Map
+  static List<Map<String, dynamic>>? _parsePaymentLines(dynamic value) {
+    if (value == null) return null;
+    
+    // If it's already a List
+    if (value is List) {
+      return value
+          .map((item) => item is Map<String, dynamic>
+              ? item
+              : item is Map
+                  ? Map<String, dynamic>.from(item)
+                  : <String, dynamic>{})
+          .where((item) => item.isNotEmpty)
+          .toList();
+    }
+    
+    // If it's a single Map, wrap it in a List
+    if (value is Map<String, dynamic>) {
+      return [value];
+    }
+    
+    if (value is Map) {
+      return [Map<String, dynamic>.from(value)];
+    }
+    
+    // If it's neither, return null
+    return null;
+  }
 }
+

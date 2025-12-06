@@ -41,7 +41,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   late PosOnlineBloc _posOnlineBloc;
 
   late NetworkStatusSubject _networkStatusSubject;
-  
+
   bool _isFirstLoad = true;
   bool _syncDialogShowing = false;
 
@@ -91,7 +91,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
     return BlocProvider(
       create: (context) => _posOnlineBloc,
-        child: BlocListener<AuthCubit, AuthState>(
+      child: BlocListener<AuthCubit, AuthState>(
         listener: (context, authState) {
           if (authState is Unauthenticated) {
             // Hide offline POS when logged out
@@ -116,12 +116,13 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
             if (state.successMessage != null && mounted) {
               final translatedMessage = l10n.translate(state.successMessage!);
-              
+
               // If logout was successful, send script to webview
-              if (state.successMessage == LocaleKeys.loggedOutSuccessfully && webViewController != null) {
+              if (state.successMessage == LocaleKeys.loggedOutSuccessfully &&
+                  webViewController != null) {
                 webViewController!.evaluateJavascript(source: _logoutScript);
               }
-              
+
               ToastManager.showSuccess(context, translatedMessage);
             }
 
@@ -203,12 +204,14 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                         final urlString = url.toString();
                         if (urlString.contains('/login')) {
                           // URL changed to login page - logout
-                          _posOnlineBloc.add(const PosOnlineUrlChangedToLogin());
-                        }else{
+                          _posOnlineBloc
+                              .add(const PosOnlineUrlChangedToLogin());
+                        } else {
                           // Check authentication on first load only
                           if (_isFirstLoad) {
                             _isFirstLoad = false;
-                            _posOnlineBloc.add(const PosOnlineCheckAuthentication());
+                            _posOnlineBloc
+                                .add(const PosOnlineCheckAuthentication());
                           }
                         }
 
@@ -226,7 +229,8 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                               String accessToken = args[0][0];
                               String userInfoJson = args[0][1];
 
-                              Map<String, dynamic> userMap = jsonDecode(userInfoJson);
+                              Map<String, dynamic> userMap =
+                                  jsonDecode(userInfoJson);
 
                               // Dispatch event to bloc
                               context.read<PosOnlineBloc>().add(
@@ -294,7 +298,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
             'count': state.unsyncedSellsCount,
           })
         : l10n.translate(LocaleKeys.syncingSystemData);
-    
+
     DialogProvider.showLoadingDialog(
       context,
       message: message,
