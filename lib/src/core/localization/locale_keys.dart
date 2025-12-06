@@ -110,6 +110,8 @@ abstract final class LocaleKeys {
   static const String tax = 'tax';
   static const String totalPayable = 'total_payable';
   static const String totalPaying = 'total_paying';
+  static const String priceAfterTax = 'price_after_tax';
+  static const String pricePay = 'price_pay';
   static const String changeReturn = 'change_return';
   static const String balance = 'balance';
   static const String remaining = 'remaining';

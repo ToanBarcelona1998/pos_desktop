@@ -65,9 +65,9 @@ class LightColorScheme implements AppColorScheme {
   const LightColorScheme();
 
   @override
-  Color get primary => const Color(0xff4f46e5);
+  Color get primary => const Color(0xff4e48e5);
   @override
-  Color get primaryLight => const Color(0xff3b82f6);
+  Color get primaryLight => const Color(0xff3c81f6);
   @override
   Color get primaryDark => const Color(0xFF1E2F42);
   @override
@@ -151,9 +151,9 @@ class DarkColorScheme implements AppColorScheme {
   const DarkColorScheme();
 
   @override
-  Color get primary => const Color(0xff4f46e5);
+  Color get primary => const Color(0xff4e48e5);
   @override
-  Color get primaryLight => const Color(0xff3b82f6);
+  Color get primaryLight => const Color(0xff3c81f6);
   @override
   Color get primaryDark => const Color(0xFF1E2F42);
   @override

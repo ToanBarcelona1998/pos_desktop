@@ -621,5 +621,6 @@
   "history": "History",
   "filters": "Filters",
   "subtotal": "Subtotal",
-  "product": "Product"
+  "product": "Product",
+  "price_after_tax": "Price after tax"
 }

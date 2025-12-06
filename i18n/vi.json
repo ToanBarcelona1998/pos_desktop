@@ -120,7 +120,7 @@
   "expense_amount": "Số tiền chi phí",
   "expense_note": "Ghi chú chi phí",
   "location": "Địa điểm",
-  "payment_amount": "Số tiền thanh toán",
+  "payment_amount": "Thành tiền",
   "please_enter_expense_amount": "Vui lòng nhập số tiền chi phí",
   "enter_valid_payment_amount": "Nhập số tiền thanh toán hợp lệ",
   "error_invalid_location": "Lỗi: Địa điểm không hợp lệ",
@@ -621,5 +621,6 @@
   "methods": "Phương thức",
   "history": "Lịch sử",
   "filters": "Bộ lọc",
-  "subtotal": "Tổng phụ"
+  "subtotal": "Tổng phụ",
+  "price_after_tax": "Giá sau thuế"
 }
