@@ -69,6 +69,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
     PosOnlineLogout event,
     Emitter<PosOnlineState> emit,
   ) async {
+    emit(state.copyWith(clearFailure: true));
     // Check for unsynced sells
     final unsyncedSellsResult = await _sellRepository.getLocalSells();
 

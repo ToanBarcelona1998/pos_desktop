@@ -10,6 +10,7 @@ import 'package:pos_final/app_config/di.dart';
 import 'package:pos_final/src/application/application.dart';
 import 'package:pos_final/src/core/core.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_observer.dart';
+import 'package:pos_final/src/presentation/widgets/icon_wrapper_widget.dart';
 import 'package:pos_final/src/presentation/widgets/toast/toast_manager.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_subject.dart';
 import 'package:pos_final/src/presentation/pages/pos/pos_page.dart';
@@ -151,7 +152,11 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                     horizontal: AppSpacing.sm,
                     vertical: AppSpacing.xxs,
                   ),
-                  child: SvgPicture.asset('assets/logo/logo.svg'),
+                  child: Image.asset(
+                    'assets/logo/logo.png',
+                    height: AppSizes.logoMd,
+                    width: AppSizes.logoMd,
+                  ),
                 ),
                 centerTitle: true,
                 leading: null,
@@ -165,24 +170,34 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             // Sync button
-                            IconButton(
-                              icon: const Icon(Icons.sync),
+                            IconWrapper(
+                              iconSize: AppSizes.iconXs,
+                              iconColor: Colors.blueAccent,
+                              icon: Icons.sync,
                               tooltip: l10n.translate(LocaleKeys.syncData),
-                              onPressed: () {
+                              onTap: () {
                                 context.read<PosOnlineBloc>().add(
                                       const PosOnlineSync(),
                                     );
                               },
                             ),
+                            const SizedBox(
+                              width: AppSpacing.sm,
+                            ),
                             // Logout button
-                            IconButton(
-                              icon: const Icon(Icons.logout),
+                            IconWrapper(
+                              iconColor: Colors.red,
+                              iconSize: AppSizes.iconXs,
+                              icon: Icons.logout,
                               tooltip: l10n.translate(LocaleKeys.logout),
-                              onPressed: () {
+                              onTap: () {
                                 context.read<PosOnlineBloc>().add(
                                       const PosOnlineLogout(),
                                     );
                               },
+                            ),
+                            const SizedBox(
+                              width: AppSpacing.sm,
                             ),
                           ],
                         );
