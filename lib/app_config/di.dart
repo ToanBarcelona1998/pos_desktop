@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:data/data.dart';
 import 'package:domain/domain.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'app_config.dart';
 import 'env_config.dart';
@@ -31,6 +35,17 @@ class ServiceLocator {
     return service as T;
   }
 
+  T ? getOrNull<T>() {
+    final service = _services[T];
+    if (service == null) {
+      return null;
+    }
+    if (service is _LazyService<T>) {
+      return service.get();
+    }
+    return service as T;
+  }
+
   bool isRegistered<T>() => _services.containsKey(T);
 
   void clear() => _services.clear();
@@ -53,6 +68,22 @@ final sl = ServiceLocator();
 /// Initialize all dependencies
 Future<void> initDependencies({Environment env = Environment.development}) async {
   final config = await EnvConfig.load(env);
+
+  String ? userData;
+
+  if(Platform.isWindows){
+    final dir = await getApplicationSupportDirectory();
+
+    userData = "${dir.path}\\WebView2Data";
+
+    final webviewEnvironment = await WebViewEnvironment.create(
+      settings: WebViewEnvironmentSettings(
+        userDataFolder: userData,
+      ),
+    );
+
+    sl.registerLazy<WebViewEnvironment>(() => webviewEnvironment);
+  }
 
   // ============== Core ==============
   sl.register<AppConfig>(config);

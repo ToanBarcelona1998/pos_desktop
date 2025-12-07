@@ -25,7 +25,6 @@ Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
-
   // Check app version and clear cache/database if needed
   await AppVersionManager.checkAndHandleVersionUpdate();
 

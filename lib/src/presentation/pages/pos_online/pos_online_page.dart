@@ -48,6 +48,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   bool _syncDialogShowing = false;
 
   final AppConfig _appConfig = sl.get<AppConfig>();
+  final WebViewEnvironment ? _webViewEnvironment = sl.getOrNull<WebViewEnvironment>();
 
   Map<String, String> get _requiredHeaders => {
         'X-Oman-Application': _appConfig.webHeader,
@@ -211,6 +212,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                 child: Stack(
                   children: [
                     InAppWebView(
+                      webViewEnvironment: _webViewEnvironment,
                       initialUrlRequest: URLRequest(
                         url: WebUri(_appConfig.webUrl),
                         headers: _requiredHeaders,
