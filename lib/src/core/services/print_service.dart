@@ -1,4 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:htmltopdfwidgets/htmltopdfwidgets.dart' as pd;
 import 'package:printing/printing.dart';
 
@@ -11,7 +17,7 @@ import '../../../helpers/other_helpers.dart';
 /// Handles invoice generation and printing
 class PrintService {
   /// Print invoice for a sell
-  /// 
+  ///
   /// [sellId] - The ID of the sell to print
   /// [taxId] - Optional tax ID
   /// [context] - BuildContext for localization
@@ -24,28 +30,42 @@ class PrintService {
     required String name,
   }) async {
     try {
-      final pdf = pd.Document();
+      final Completer<Uint8List?> completer = Completer();
 
-      pdf.addPage(pd.Page(build: (ct) {
-        return pd.Column(
-          children: [
-            pd.Text('Test'),
-            pd.Text('Test'),
-            pd.Text('Test'),
-            pd.Text('Test'),
-            pd.Text('Test'),
-            pd.Text('Test'),
-            pd.Text('Test'),
-          ],
+      Uint8List ? pdfBytes;
+      if (Platform.isWindows || Platform.isMacOS) { // [TODO] should be have a webview on page and hidden it.
+        // final InAppWebView webView = InAppWebView(
+        //   initialUrlRequest: URLRequest(
+        //     url: WebUri.uri(
+        //       Uri.dataFromString(
+        //         invoiceHtml,
+        //         mimeType: 'text/html',
+        //         encoding: Utf8Codec(),
+        //       ),
+        //     ),
+        //   ),
+        //   onWebViewCreated: (controller) async{
+        //     pdfBytes = await controller.createPdf();
+        //     completer.complete(pdfBytes);
+        //   },
+        // );
+      } else {
+        pdfBytes = await Printing.convertHtml(html: invoiceHtml);
+
+        completer.complete(pdfBytes);
+      }
+
+      final bytes = await completer.future;
+
+      if(bytes != null){
+        // Print the invoice
+        await Printing.layoutPdf(
+          onLayout: (pd.PdfPageFormat format) {
+            return bytes;
+          },
+          name: name,
         );
-      }));
-      // Print the invoice
-      await Printing.layoutPdf(
-        onLayout: (pd.PdfPageFormat format) {
-          return pdf.save();
-        },
-        name: name,
-      );
+      }
     } catch (e) {
       throw Exception('Failed to print invoice: $e');
     }
@@ -108,4 +128,3 @@ class PrintService {
     return buffer.toString();
   }
 }
-
