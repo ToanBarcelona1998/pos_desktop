@@ -106,7 +106,7 @@ class _PosView extends StatelessWidget {
             onRefresh: () {
               context.read<PosBloc>().add(const PosRefreshProducts());
             },
-            onSuspendedSales: () => _showSuspendedSalesBottomSheet(context),
+            onSuspendedSales: () => showSuspendedSalesDialog(context),
           ),
           body: Row(
             children: [
@@ -288,7 +288,7 @@ class _PosView extends StatelessWidget {
     );
   }
 
-  void _showSuspendedSalesBottomSheet(BuildContext context) {
+  void showSuspendedSalesDialog(BuildContext context) {
     final bloc = context.read<PosBloc>();
     final state = bloc.state;
 
