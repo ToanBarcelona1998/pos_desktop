@@ -105,18 +105,19 @@ class _PosOnlinePageState extends State<PosOnlinePage>
         },
         child: BlocConsumer<PosOnlineBloc, PosOnlineState>(
           listenWhen: (previous, current) =>
-              previous.failure != current.failure ||
+              previous.status != current.status ||
+              previous.errorMessage != current.errorMessage ||
               previous.successMessage != current.successMessage ||
               previous.showLogoutDialog != current.showLogoutDialog ||
               previous.showSyncDialog != current.showSyncDialog,
           listener: (context, state) {
             final l10n = AppLocalizations.of(context);
 
-            if (state.failure != null && mounted) {
-              ToastManager.showError(context, state.failure!.message);
+            if (state.status == PosOnlineStatus.error && state.errorMessage != null && mounted) {
+              ToastManager.showError(context, state.errorMessage!);
             }
 
-            if (state.successMessage != null && mounted) {
+            if (state.status == PosOnlineStatus.success && state.successMessage != null && mounted) {
               final translatedMessage = l10n.translate(state.successMessage!);
 
               // If logout was successful, send script to webview
