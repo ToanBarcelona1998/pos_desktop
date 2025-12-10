@@ -246,8 +246,8 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                       },
                     ),
                     // POS Offline Screen (stacked on top when network disconnects)
-                    // if (state.showOfflinePos)
-                    if (true)
+                    if (state.showOfflinePos)
+                    // if (true)
                       Positioned.fill(
                         child: const PosPage(),
                       ),
