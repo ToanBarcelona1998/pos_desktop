@@ -36,7 +36,6 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
 
     return AppBar(
       leading: const SizedBox(),

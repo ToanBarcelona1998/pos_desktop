@@ -234,8 +234,8 @@ class AppGradientButton extends StatelessWidget {
 
     final buttonHeight = height ?? AppSizes.buttonHeight;
     final buttonPadding = padding ?? EdgeInsets.symmetric(
-      horizontal: AppSpacing.md,
-      vertical: AppSpacing.sm,
+      horizontal: AppSpacing.sm,
+      vertical: AppSpacing.xs,
     );
     final buttonBorderRadius = borderRadius ?? AppRadius.borderRadiusXs;
 
