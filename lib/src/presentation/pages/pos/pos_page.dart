@@ -1,11 +1,8 @@
-import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:pos_final/src/core/services/print_service.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
-
-import '../../../../app_config/di.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../widgets/app_loading.dart';
@@ -23,30 +20,20 @@ import 'widgets/pos_customer_selector_widget.dart';
 import 'widgets/pos_suspended_sales_widget.dart';
 
 /// POS page
-class PosPage extends StatelessWidget {
+class PosPage extends StatefulWidget {
   const PosPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => PosBloc(
-        locationRepository: sl.get<LocationRepository>(),
-        productRepository: sl.get<ProductRepository>(),
-        categoryRepository: sl.get<CategoryRepository>(),
-        brandRepository: sl.get<BrandRepository>(),
-        contactRepository: sl.get<ContactRepository>(),
-        createSellUseCase: sl.get<CreateSellUseCase>(),
-        getSuspendedSellsUseCase: sl.get<GetSuspendedSellsUseCase>(),
-        deleteSellUseCase: sl.get<DeleteSellUseCase>(),
-        businessRepository: sl.get<BusinessRepository>(),
-      )..add(const PosInitialize()),
-      child: const _PosView(),
-    );
-  }
+  State<PosPage> createState() => _PosPageState();
 }
 
-class _PosView extends StatelessWidget {
-  const _PosView();
+class _PosPageState extends State<PosPage> {
+
+  @override
+  void initState() {
+    context.read<PosBloc>().add(const PosInitialize());
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,12 +55,12 @@ class _PosView extends StatelessWidget {
           final translatedMessage = l10n.translate(state.successMessage!);
           ToastManager.showSuccess(context, translatedMessage);
         }
-        
+
         // Handle invoice printing
         if (state.shouldPrintInvoice && state.createdSellId != null) {
           // Reset the flag immediately to prevent multiple prints
           context.read<PosBloc>().add(const PosClearPrintFlag());
-          
+
           // Show print dialog
           // [TODO] Can't show print now with html
           // _showPrintInvoiceDialog(

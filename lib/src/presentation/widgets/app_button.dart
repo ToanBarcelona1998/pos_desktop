@@ -49,7 +49,7 @@ class AppButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: bgColor),
             shape: RoundedRectangleBorder(
-              borderRadius: AppRadius.borderRadiusSm,
+              borderRadius: AppRadius.borderRadiusXs,
             ),
           ),
           child: _buildChild(bgColor, fgColor, isOutlined: true),
@@ -66,7 +66,7 @@ class AppButton extends StatelessWidget {
           backgroundColor: bgColor,
           foregroundColor: fgColor,
           shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.borderRadiusSm,
+            borderRadius: AppRadius.borderRadiusXs,
           ),
           elevation: 2,
         ),
@@ -237,7 +237,7 @@ class AppGradientButton extends StatelessWidget {
       horizontal: AppSpacing.md,
       vertical: AppSpacing.sm,
     );
-    final buttonBorderRadius = borderRadius ?? AppRadius.borderRadiusSm;
+    final buttonBorderRadius = borderRadius ?? AppRadius.borderRadiusXs;
 
     return SizedBox(
       width: width,
@@ -336,7 +336,6 @@ class AppColumnButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final bgColor = backgroundColor ?? Colors.transparent;
     final defaultTextStyle = textStyle ??
         TextStyle(
@@ -350,12 +349,12 @@ class AppColumnButton extends StatelessWidget {
       width: width,
       child: Material(
         color: Colors.transparent,
-        borderRadius: AppRadius.borderRadiusSm,
+        borderRadius: AppRadius.borderRadiusXs,
         clipBehavior: Clip.antiAlias,
         child: Ink(
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius: AppRadius.borderRadiusSm,
+            borderRadius: AppRadius.borderRadiusXs,
           ),
           child: InkWell(
             onTap: onPressed,
