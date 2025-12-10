@@ -26,6 +26,8 @@ class PosCartWidget extends StatelessWidget {
   final void Function(int productId, int variationId, int quantity)?
       onQuantityChanged;
   final void Function(int productId, int variationId)? onRemoveItem;
+  final ValueChanged<String>? onProductSearch;
+  final ValueChanged<String>? onSuspendSellSearch;
 
   const PosCartWidget({
     super.key,
@@ -39,6 +41,8 @@ class PosCartWidget extends StatelessWidget {
     this.onCustomerSelect,
     this.onQuantityChanged,
     this.onRemoveItem,
+    this.onProductSearch,
+    this.onSuspendSellSearch,
   });
 
   @override
@@ -50,21 +54,46 @@ class PosCartWidget extends StatelessWidget {
       margin: EdgeInsets.all(AppSpacing.sm),
       child: Column(
         children: [
-          // Customer selector
-          Row(
-            children: [
-              Expanded(
-                child: _CustomerSelectorSection(
-                  customer: customer,
-                  onSelect: onCustomerSelect,
-                  l10n: l10n,
-                  theme: theme,
+          // Customer selector and search fields
+          Padding(
+            padding: AppSpacing.paddingSm,
+            child: Column(
+              children: [
+                // Customer selector
+                Row(
+                  children: [
+                    Expanded(
+                      child: _CustomerSelectorSection(
+                        customer: customer,
+                        onSelect: onCustomerSelect,
+                        l10n: l10n,
+                        theme: theme,
+                      ),
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    // Product search (SKU/Product name)
+                    Expanded(
+                      child: _SearchField(
+                        hint: '${l10n.translate(LocaleKeys.sku)} / ${l10n.translate(LocaleKeys.product)}',
+                        icon: Icons.search,
+                        onChanged: onProductSearch,
+                        theme: theme,
+                      ),
+                    ),
+                    SizedBox(width: AppSpacing.sm),
+                    // Suspend sell search
+                    Expanded(
+                      child: _SearchField(
+                        hint: '${l10n.translate(LocaleKeys.suspendedSales)} (ID / ${l10n.translate(LocaleKeys.invoiceNo)})',
+                        icon: Icons.pause_circle_outline,
+                        onChanged: onSuspendSellSearch,
+                        theme: theme,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Expanded(
-                child: AppSearchField(),
-              ),
-            ],
+              ],
+            ),
           ),
           const Divider(height: 1),
           // Cart items
@@ -175,33 +204,118 @@ class _CustomerSelectorSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onSelect,
+      borderRadius: AppRadius.borderRadiusSm,
       child: Container(
-        padding: AppSpacing.paddingMd,
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: theme.dividerColor,
+            width: 1,
+          ),
+          borderRadius: AppRadius.borderRadiusSm,
+        ),
         child: Row(
           children: [
-            Icon(Icons.person, color: theme.colorScheme.primary),
+            Icon(
+              Icons.person,
+              color: theme.colorScheme.primary,
+              size: 18,
+            ),
             SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     customer?.name ?? l10n.translate(LocaleKeys.selectCustomer),
-                    style: AppTypography.titleMedium,
+                    style: AppTypography.bodySmall.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (customer?.mobile != null)
                     Text(
                       customer!.mobile!,
-                      style: AppTypography.bodySmall.copyWith(
+                      style: AppTypography.labelSmall.copyWith(
                         color: theme.textTheme.bodySmall?.color,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: theme.primaryColor),
+            Icon(
+              Icons.chevron_right,
+              color: theme.primaryColor,
+              size: 18,
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  final String hint;
+  final IconData icon;
+  final ValueChanged<String>? onChanged;
+  final ThemeData theme;
+
+  const _SearchField({
+    required this.hint,
+    required this.icon,
+    this.onChanged,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      onChanged: onChanged,
+      style: AppTypography.bodySmall,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: AppTypography.bodySmall.copyWith(
+          color: theme.hintColor,
+        ),
+        prefixIcon: Icon(
+          icon,
+          size: 18,
+          color: theme.colorScheme.primary,
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: AppRadius.borderRadiusSm,
+          borderSide: BorderSide(
+            color: theme.dividerColor,
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.borderRadiusSm,
+          borderSide: BorderSide(
+            color: theme.dividerColor,
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadius.borderRadiusSm,
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+            width: 1,
+          ),
+        ),
+        isDense: true,
       ),
     );
   }

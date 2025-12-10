@@ -1,3 +1,4 @@
+import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -127,6 +128,12 @@ class _PosPageState extends State<PosPage> {
                             productId: productId,
                             variationId: variationId,
                           ));
+                    },
+                    onProductSearch: (query) {
+                      context.read<PosBloc>().add(PosSearchProducts(query));
+                    },
+                    onSuspendSellSearch: (query) {
+                      _searchSuspendedSell(context, query);
                     },
                   ),
                 ),
@@ -280,6 +287,59 @@ class _PosPageState extends State<PosPage> {
         }
       },
     );
+  }
+
+  void _searchSuspendedSell(BuildContext context, String query) {
+    if (query.trim().isEmpty) return;
+
+    final bloc = context.read<PosBloc>();
+    final state = bloc.state;
+
+    // Load suspended sells if not loaded
+    if (state.suspendedSells.isEmpty && state.status != PosStatus.loadingSuspendedSells) {
+      bloc.add(const PosLoadSuspendedSells());
+      // Wait a bit for the data to load, then search
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _performSuspendSellSearch(context, query);
+      });
+    } else {
+      _performSuspendSellSearch(context, query);
+    }
+  }
+
+  void _performSuspendSellSearch(BuildContext context, String query) {
+    final bloc = context.read<PosBloc>();
+    final state = bloc.state;
+    final searchQuery = query.trim().toLowerCase();
+
+    // Search by ID or invoice number
+    SellEntity? foundSell;
+    try {
+      foundSell = state.suspendedSells.firstWhere(
+        (sell) {
+          final idMatch = sell.id.toString().toLowerCase().contains(searchQuery);
+          final invoiceMatch = (sell.invoiceNo ?? '')
+              .toLowerCase()
+              .contains(searchQuery);
+          return idMatch || invoiceMatch;
+        },
+      );
+    } catch (e) {
+      foundSell = null;
+    }
+
+    if (foundSell != null) {
+      bloc.add(PosLoadSuspendedSell(foundSell));
+      ToastManager.showSuccess(
+        context,
+        AppLocalizations.of(context).translate(LocaleKeys.suspendedSaleLoaded),
+      );
+    } else {
+      ToastManager.showError(
+        context,
+        AppLocalizations.of(context).translate(LocaleKeys.noData),
+      );
+    }
   }
 
   void showSuspendedSalesDialog(BuildContext context) {
