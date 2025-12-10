@@ -93,7 +93,7 @@ class PosCartWidget extends StatelessWidget {
                 ),
                 // Quantity column
                 Expanded(
-                  flex: 1,
+                  flex: 2,
                   child: Text(
                     l10n.translate(LocaleKeys.quantity),
                     style: AppTypography.bodyMedium.copyWith(
@@ -402,8 +402,9 @@ class _CartItemRowState extends State<_CartItemRow> {
           ),
           // Quantity column
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 IconButton(
                   onPressed: _onMinusQuantity,
@@ -460,7 +461,7 @@ class _CartItemRowState extends State<_CartItemRow> {
                   onPressed: _onPlusQuantity,
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
                   icon: Icon(
-                    Icons.minimize,
+                    Icons.add,
                     size: AppSizes.iconSm,
                     color: Colors.green,
                   ),

@@ -17,15 +17,9 @@ class RawBarCodeListenerWidget extends StatefulWidget {
 }
 
 class _RawBarCodeListenerWidgetState extends State<RawBarCodeListenerWidget> {
-  final FocusNode _focusNode = FocusNode();
-
   String _barcode = '';
 
-  @override
-  void initState() {
-    super.initState();
-    _focusNode.requestFocus();
-  }
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void dispose() {
@@ -44,7 +38,6 @@ class _RawBarCodeListenerWidgetState extends State<RawBarCodeListenerWidget> {
           event.logicalKey != LogicalKeyboardKey.space) {
         _barcode += event.logicalKey.keyLabel;
       }
-      _focusNode.requestFocus();
     }
   }
 
@@ -53,6 +46,7 @@ class _RawBarCodeListenerWidgetState extends State<RawBarCodeListenerWidget> {
     return KeyboardListener(
       focusNode: _focusNode,
       onKeyEvent: _handleKey,
+      autofocus: true,
       child: widget.child,
     );
   }
