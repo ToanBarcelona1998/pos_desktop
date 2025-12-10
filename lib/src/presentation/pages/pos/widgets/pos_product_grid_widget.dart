@@ -122,15 +122,6 @@ class _PosProductGridWidgetState extends State<PosProductGridWidget>
                 onFilterTap: _toggleFilterDrawer,
                 l10n: l10n,
               ),
-              // SizedBox(height: AppSpacing.sm),
-              // // Search
-              // Padding(
-              //   padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              //   child: AppSearchField(
-              //     hintText: l10n.translate(LocaleKeys.searchProducts),
-              //     onChanged: widget.onSearch,
-              //   ),
-              // ),
               Expanded(
                 child: widget.isLoading
                     ? const AppLoadingCenter()

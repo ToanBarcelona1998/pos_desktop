@@ -44,35 +44,14 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
       title: Row(
         children: [
           // Location selector
-          Container(
+          Padding(
             padding: EdgeInsets.symmetric(
               horizontal: AppSpacing.sm,
               vertical: AppSpacing.xxs,
             ),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: AppRadius.borderRadiusSm,
-              // border: Border.all(color: theme.dividerColor),
-            ),
-            // child: Text(
-            //   l10n.translate(LocaleKeys.selectLocation),
-            // ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<int>(
-                value: selectedLocationId,
-                hint: Text(l10n.translate(LocaleKeys.selectLocation)),
-                items: locations.map((location) {
-                  return DropdownMenuItem<int>(
-                    value: location.id,
-                    child: Text(location.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    onLocationChanged?.call(value);
-                  }
-                },
-              ),
+            child: Text(
+              locations.where((element) => element.id == selectedLocationId,).firstOrNull?.name ?? '',
+              style: AppTypography.titleMedium,
             ),
           ),
           SizedBox(width: AppSpacing.md),
@@ -134,7 +113,6 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                 children: [
                   // Sync button
                   IconWrapper(
-                    iconSize: AppSizes.iconXs,
                     iconColor: Colors.blueAccent,
                     icon: Icons.sync,
                     tooltip: l10n.translate(LocaleKeys.syncData),
@@ -150,7 +128,6 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                   // Logout button
                   IconWrapper(
                     iconColor: Colors.red,
-                    iconSize: AppSizes.iconXs,
                     icon: Icons.logout,
                     tooltip: l10n.translate(LocaleKeys.logout),
                     onTap: () {
