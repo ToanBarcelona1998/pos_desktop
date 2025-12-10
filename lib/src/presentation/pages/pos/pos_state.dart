@@ -208,16 +208,7 @@ class PosState {
       selectedLocationId != null &&
       cartItems.isNotEmpty;
 
-  // Convenience getters for backward compatibility
-  bool get isLoading => status == PosStatus.loading || status == PosStatus.initial;
-  bool get isSubmitting => status == PosStatus.submitting;
-  bool get isLoadingProducts => status == PosStatus.loadingProducts;
-  bool get isLoadingCustomers => status == PosStatus.loadingCustomers;
   bool get isLoadingMore => status == PosStatus.loadingMore;
-  bool get isLoadingSuspendedSells => status == PosStatus.loadingSuspendedSells;
-  Failure? get failure => errorMessage != null 
-      ? UnknownFailure(message: errorMessage!) 
-      : null;
 
   PosState copyWith({
     PosStatus? status,
