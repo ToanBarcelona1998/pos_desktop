@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:domain/domain.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -169,6 +171,14 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                         url: WebUri(_appConfig.webUrl),
                         headers: _requiredHeaders,
                       ),
+                      gestureRecognizers: {}..addAll([
+                          Factory<VerticalDragGestureRecognizer>(
+                            () => VerticalDragGestureRecognizer(),
+                          ),
+                          Factory<HorizontalDragGestureRecognizer>(
+                            () => HorizontalDragGestureRecognizer(),
+                          )
+                        ]),
                       onLoadStop: (controller, url) async {
                         // Listen to URL changes
                         final urlString = url.toString();
@@ -247,7 +257,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                     ),
                     // POS Offline Screen (stacked on top when network disconnects)
                     if (state.showOfflinePos)
-                    // if (true)
+                      // if (true)
                       Positioned.fill(
                         child: const PosPage(),
                       ),
