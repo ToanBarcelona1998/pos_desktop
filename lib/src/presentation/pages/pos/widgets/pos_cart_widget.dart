@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_final/helpers/other_helpers.dart';
 import 'package:pos_final/src/core/constants/app_sizes.dart';
+import 'package:pos_final/src/presentation/presentation.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -50,11 +51,20 @@ class PosCartWidget extends StatelessWidget {
       child: Column(
         children: [
           // Customer selector
-          _CustomerSelectorSection(
-            customer: customer,
-            onSelect: onCustomerSelect,
-            l10n: l10n,
-            theme: theme,
+          Row(
+            children: [
+              Expanded(
+                child: _CustomerSelectorSection(
+                  customer: customer,
+                  onSelect: onCustomerSelect,
+                  l10n: l10n,
+                  theme: theme,
+                ),
+              ),
+              Expanded(
+                child: AppSearchField(),
+              ),
+            ],
           ),
           const Divider(height: 1),
           // Cart items
@@ -349,26 +359,26 @@ class _CartItemRowState extends State<_CartItemRow> {
     }
   }
 
-  void _onMinusQuantity(){
+  void _onMinusQuantity() {
     final text = _quantityController.text.trim();
 
     int parsed = int.tryParse(text) ?? 1;
 
-    if(parsed > 1){
+    if (parsed > 1) {
       parsed--;
-    }else{
+    } else {
       parsed = 1;
     }
     _quantityController.text = parsed.toString();
     widget.onQuantityChanged(parsed);
   }
 
-  void _onPlusQuantity(){
+  void _onPlusQuantity() {
     final text = _quantityController.text.trim();
 
     int parsed = int.tryParse(text) ?? 1;
 
-    parsed ++;
+    parsed++;
 
     _quantityController.text = parsed.toString();
     widget.onQuantityChanged(parsed);
@@ -397,9 +407,7 @@ class _CartItemRowState extends State<_CartItemRow> {
               children: [
                 IconButton(
                   onPressed: _onMinusQuantity,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xxs
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
                   icon: Icon(
                     Icons.minimize,
                     size: AppSizes.iconSm,
@@ -450,9 +458,7 @@ class _CartItemRowState extends State<_CartItemRow> {
                 ),
                 IconButton(
                   onPressed: _onPlusQuantity,
-                  padding: EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xxs
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
                   icon: Icon(
                     Icons.minimize,
                     size: AppSizes.iconSm,
