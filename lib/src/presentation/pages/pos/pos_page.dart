@@ -32,11 +32,6 @@ class _PosPageState extends State<PosPage> {
   @override
   void initState() {
     super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
     context.read<PosBloc>().add(const PosInitialize());
   }
 
