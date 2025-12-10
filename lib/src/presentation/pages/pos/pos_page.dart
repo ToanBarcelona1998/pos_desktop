@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:pos_final/src/core/services/print_service.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
+import 'package:pos_final/src/presentation/pages/pos/widgets/bar_code_listener_widget.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../widgets/app_loading.dart';
@@ -80,110 +81,115 @@ class _PosPageState extends State<PosPage> {
           );
         }
 
-        return Scaffold(
-          backgroundColor: const Color(0xffdcdee3),
-          appBar: PosAppBarWidget(
-            locations: state.locations,
-            selectedLocationId: state.selectedLocationId,
-            onOpenFullScreen: (){
-              WindowManagerUtils.openFullScreen();
-            },
-            onLocationChanged: (locationId) {
-              context.read<PosBloc>().add(PosSelectLocation(locationId));
-            },
-            onRefresh: () {
-              context.read<PosBloc>().add(const PosRefreshProducts());
-            },
-            onSuspendedSales: () => showSuspendedSalesDialog(context),
-          ),
-          body: Row(
-            children: [
-              // Cart section (left)
-              Expanded(
-                flex: 3,
-                child: PosCartWidget(
-                  customer: state.selectedCustomer,
-                  cartItems: state.cartItems,
-                  currencySymbol: state.currencySymbol,
-                  subtotal: state.subtotal,
-                  discount: state.invoiceDiscount,
-                  tax: state.taxAmount,
-                  total: state.total,
-                  onCustomerSelect: () => _showCustomerSelector(context),
-                  onQuantityChanged: (productId, variationId, quantity) {
-                    context.read<PosBloc>().add(PosUpdateCartItemQuantity(
-                          productId: productId,
-                          variationId: variationId,
-                          quantity: quantity,
-                        ));
-                  },
-                  onRemoveItem: (productId, variationId) {
-                    context.read<PosBloc>().add(PosRemoveFromCart(
-                          productId: productId,
-                          variationId: variationId,
-                        ));
-                  },
+        return RawBarCodeListenerWidget(
+          onBarcodeScanned: (barcode){
+            //
+          },
+          child: Scaffold(
+            backgroundColor: const Color(0xffdcdee3),
+            appBar: PosAppBarWidget(
+              locations: state.locations,
+              selectedLocationId: state.selectedLocationId,
+              onOpenFullScreen: (){
+                WindowManagerUtils.openFullScreen();
+              },
+              onLocationChanged: (locationId) {
+                context.read<PosBloc>().add(PosSelectLocation(locationId));
+              },
+              onRefresh: () {
+                context.read<PosBloc>().add(const PosRefreshProducts());
+              },
+              onSuspendedSales: () => showSuspendedSalesDialog(context),
+            ),
+            body: Row(
+              children: [
+                // Cart section (left)
+                Expanded(
+                  flex: 3,
+                  child: PosCartWidget(
+                    customer: state.selectedCustomer,
+                    cartItems: state.cartItems,
+                    currencySymbol: state.currencySymbol,
+                    subtotal: state.subtotal,
+                    discount: state.invoiceDiscount,
+                    tax: state.taxAmount,
+                    total: state.total,
+                    onCustomerSelect: () => _showCustomerSelector(context),
+                    onQuantityChanged: (productId, variationId, quantity) {
+                      context.read<PosBloc>().add(PosUpdateCartItemQuantity(
+                            productId: productId,
+                            variationId: variationId,
+                            quantity: quantity,
+                          ));
+                    },
+                    onRemoveItem: (productId, variationId) {
+                      context.read<PosBloc>().add(PosRemoveFromCart(
+                            productId: productId,
+                            variationId: variationId,
+                          ));
+                    },
+                  ),
                 ),
-              ),
-              // Product grid section (right)
-              Expanded(
-                flex: 2,
-                child: PosProductGridWidget(
-                  products: state.filteredProducts,
-                  categories: state.categories,
-                  brands: state.brands,
-                  selectedCategoryId: state.selectedCategoryId,
-                  selectedBrandId: state.selectedBrandId,
-                  searchQuery: state.searchQuery,
-                  isLoading: state.status == PosStatus.loadingProducts,
-                  isLoadingMore: state.status == PosStatus.loadingMore,
-                  hasMore: state.hasMore,
-                  cartItems: state.cartItems,
-                  onProductTap: (product) {
-                    context.read<PosBloc>().add(PosAddToCart(product: product));
-                  },
-                  onSearch: (query) {
-                    context.read<PosBloc>().add(PosSearchProducts(query));
-                  },
-                  onCategoryFilter: (categoryId) {
-                    context.read<PosBloc>().add(PosFilterByCategory(categoryId));
-                  },
-                  onBrandFilter: (brandId) {
-                    context.read<PosBloc>().add(PosFilterByBrand(brandId));
-                  },
-                  onLoadMore: () {
-                    context.read<PosBloc>().add(const PosLoadMoreProducts());
-                  },
-                  onRefresh: () {
-                    context.read<PosBloc>().add(const PosRefreshProducts());
-                  },
+                // Product grid section (right)
+                Expanded(
+                  flex: 2,
+                  child: PosProductGridWidget(
+                    products: state.filteredProducts,
+                    categories: state.categories,
+                    brands: state.brands,
+                    selectedCategoryId: state.selectedCategoryId,
+                    selectedBrandId: state.selectedBrandId,
+                    searchQuery: state.searchQuery,
+                    isLoading: state.status == PosStatus.loadingProducts,
+                    isLoadingMore: state.status == PosStatus.loadingMore,
+                    hasMore: state.hasMore,
+                    cartItems: state.cartItems,
+                    onProductTap: (product) {
+                      context.read<PosBloc>().add(PosAddToCart(product: product));
+                    },
+                    onSearch: (query) {
+                      context.read<PosBloc>().add(PosSearchProducts(query));
+                    },
+                    onCategoryFilter: (categoryId) {
+                      context.read<PosBloc>().add(PosFilterByCategory(categoryId));
+                    },
+                    onBrandFilter: (brandId) {
+                      context.read<PosBloc>().add(PosFilterByBrand(brandId));
+                    },
+                    onLoadMore: () {
+                      context.read<PosBloc>().add(const PosLoadMoreProducts());
+                    },
+                    onRefresh: () {
+                      context.read<PosBloc>().add(const PosRefreshProducts());
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-          bottomNavigationBar: PosBottomBarWidget(
-            total: state.total,
-            currencySymbol: state.currencySymbol,
-            isSubmitting: state.status == PosStatus.submitting,
-            canSubmit: state.canSubmit,
-            onCashPayment: () {
-              context.read<PosBloc>().add(const PosSubmitSale());
-            },
-            onCreditPayment: () {
-              context.read<PosBloc>().add(const PosSubmitCreditSale());
-            },
-            onDraft: () {
-              context.read<PosBloc>().add(const PosCreateDraft());
-            },
-            onQuotation: () {
-              context.read<PosBloc>().add(const PosCreateQuotation());
-            },
-            onSuspend: () {
-              context.read<PosBloc>().add(const PosSuspendSale());
-            },
-            onCancel: () {
-              context.read<PosBloc>().add(const PosCancelSale());
-            },
+              ],
+            ),
+            bottomNavigationBar: PosBottomBarWidget(
+              total: state.total,
+              currencySymbol: state.currencySymbol,
+              isSubmitting: state.status == PosStatus.submitting,
+              canSubmit: state.canSubmit,
+              onCashPayment: () {
+                context.read<PosBloc>().add(const PosSubmitSale());
+              },
+              onCreditPayment: () {
+                context.read<PosBloc>().add(const PosSubmitCreditSale());
+              },
+              onDraft: () {
+                context.read<PosBloc>().add(const PosCreateDraft());
+              },
+              onQuotation: () {
+                context.read<PosBloc>().add(const PosCreateQuotation());
+              },
+              onSuspend: () {
+                context.read<PosBloc>().add(const PosSuspendSale());
+              },
+              onCancel: () {
+                context.read<PosBloc>().add(const PosCancelSale());
+              },
+            ),
           ),
         );
       },
