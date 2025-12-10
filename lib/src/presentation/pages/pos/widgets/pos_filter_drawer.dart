@@ -158,7 +158,7 @@ class _FilterSection extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
+            crossAxisCount: 4,
             mainAxisSpacing: AppSpacing.sm,
             crossAxisSpacing: AppSpacing.sm,
             childAspectRatio: 2.5,

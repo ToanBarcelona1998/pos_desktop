@@ -530,7 +530,7 @@ class _ProductItem extends StatelessWidget {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withAlpha((255 * 0.3).round()),
                   borderRadius: AppRadius.borderRadiusSm,
                 ),
                 child: Center(
