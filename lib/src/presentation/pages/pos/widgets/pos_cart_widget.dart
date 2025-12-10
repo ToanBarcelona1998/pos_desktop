@@ -2,6 +2,7 @@ import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_final/helpers/other_helpers.dart';
+import 'package:pos_final/src/core/constants/app_sizes.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -348,6 +349,31 @@ class _CartItemRowState extends State<_CartItemRow> {
     }
   }
 
+  void _onMinusQuantity(){
+    final text = _quantityController.text.trim();
+
+    int parsed = int.tryParse(text) ?? 1;
+
+    if(parsed > 1){
+      parsed--;
+    }else{
+      parsed = 1;
+    }
+    _quantityController.text = parsed.toString();
+    widget.onQuantityChanged(parsed);
+  }
+
+  void _onPlusQuantity(){
+    final text = _quantityController.text.trim();
+
+    int parsed = int.tryParse(text) ?? 1;
+
+    parsed ++;
+
+    _quantityController.text = parsed.toString();
+    widget.onQuantityChanged(parsed);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -359,9 +385,7 @@ class _CartItemRowState extends State<_CartItemRow> {
             flex: 4,
             child: Text(
               widget.productName,
-              style: AppTypography.bodyMedium.copyWith(
-                color: Colors.lightBlue
-              ),
+              style: AppTypography.bodyMedium.copyWith(color: Colors.lightBlue),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -369,45 +393,73 @@ class _CartItemRowState extends State<_CartItemRow> {
           // Quantity column
           Expanded(
             flex: 1,
-            child: TextField(
-              controller: _quantityController,
-              focusNode: _quantityFocusNode,
-              textAlign: TextAlign.center,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: _onMinusQuantity,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xxs
+                  ),
+                  icon: Icon(
+                    Icons.minimize,
+                    size: AppSizes.iconSm,
+                    color: Colors.red,
+                  ),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _quantityController,
+                    focusNode: _quantityFocusNode,
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                        vertical: AppSpacing.xxs,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: AppRadius.borderRadiusXs,
+                        borderSide: BorderSide(
+                          color: widget.theme.dividerColor,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: AppRadius.borderRadiusXs,
+                        borderSide: BorderSide(
+                          color: widget.theme.dividerColor,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: AppRadius.borderRadiusXs,
+                        borderSide: BorderSide(
+                          color: widget.theme.colorScheme.primary,
+                          width: 1,
+                        ),
+                      ),
+                      isDense: true,
+                    ),
+                    style: AppTypography.bodyMedium,
+                    onSubmitted: (_) {
+                      _validateAndUpdateQuantity();
+                      _quantityFocusNode.unfocus();
+                    },
+                  ),
+                ),
+                IconButton(
+                  onPressed: _onPlusQuantity,
+                  padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xxs
+                  ),
+                  icon: Icon(
+                    Icons.minimize,
+                    size: AppSizes.iconSm,
+                    color: Colors.green,
+                  ),
+                ),
               ],
-              decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xs,
-                  vertical: AppSpacing.xxs,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: AppRadius.borderRadiusSm,
-                  borderSide: BorderSide(
-                    color: widget.theme.dividerColor,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.borderRadiusSm,
-                  borderSide: BorderSide(
-                    color: widget.theme.dividerColor,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.borderRadiusSm,
-                  borderSide: BorderSide(
-                    color: widget.theme.colorScheme.primary,
-                    width: 2,
-                  ),
-                ),
-                isDense: true,
-              ),
-              style: AppTypography.bodyMedium,
-              onSubmitted: (_) {
-                _validateAndUpdateQuantity();
-                _quantityFocusNode.unfocus();
-              },
             ),
           ),
           // Price after tax column
@@ -472,15 +524,14 @@ class _CartSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appColor = AppThemes.light;
-    final gradient =
-        LinearGradient(
-          colors: [
-            appColor.primaryColor,
-            appColor.primaryColor.withAlpha((0.8 * 255).round()),
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        );
+    final gradient = LinearGradient(
+      colors: [
+        appColor.primaryColor,
+        appColor.primaryColor.withAlpha((0.8 * 255).round()),
+      ],
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+    );
     return Container(
       padding: AppSpacing.paddingMd,
       decoration: BoxDecoration(
