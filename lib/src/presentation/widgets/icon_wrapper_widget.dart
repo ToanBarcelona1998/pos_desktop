@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/constants.dart';
+
 class IconWrapper extends StatelessWidget {
   final IconData icon;
   final double iconSize;
@@ -22,10 +24,8 @@ class IconWrapper extends StatelessWidget {
     this.boxShadow,
     this.onTap,
     this.tooltip,
-  })  : iconSize = iconSize ?? 20.0,
-  // Đảm bảo wrapperSize đủ lớn để chứa icon và padding.
-  // Mặc định: iconSize + 16 (8 padding mỗi bên)
-        wrapperSize = wrapperSize ?? (iconSize ?? 20.0) + 16.0;
+  })  : iconSize = iconSize ?? AppSizes.iconXs,
+        wrapperSize = wrapperSize ?? (iconSize ?? AppSizes.iconXs) + AppSizes.iconXs;
 
   @override
   Widget build(BuildContext context) {

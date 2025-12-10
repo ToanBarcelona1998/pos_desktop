@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -6,6 +9,18 @@ import '../helpers/app_theme.dart';
 import 'application/application.dart';
 import 'core/localization/app_localization.dart';
 import 'core/navigation/navigation.dart';
+
+final class DesktopScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.invertedStylus,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.unknown,
+      };
+}
 
 /// Main application widget with global state providers
 class Application extends StatelessWidget {
@@ -55,6 +70,10 @@ class ApplicationMaterialApp extends StatelessWidget {
               theme: themeState.themeData,
               locale: languageState.locale,
               supportedLocales: AppLanguages.supportedLocales,
+              scrollBehavior:
+                  Platform.isMacOS || Platform.isWindows || Platform.isLinux
+                      ? DesktopScrollBehavior()
+                      : null,
               localizationsDelegates: const [
                 AppLocalizations.delegate,
                 GlobalMaterialLocalizations.delegate,
@@ -76,7 +95,9 @@ class ApplicationMaterialApp extends StatelessWidget {
 
 /// Convenience widget for building with theme
 class ThemeBuilder extends StatelessWidget {
-  final Widget Function(BuildContext context, ThemeData theme, CustomAppTheme customTheme) builder;
+  final Widget Function(
+          BuildContext context, ThemeData theme, CustomAppTheme customTheme)
+      builder;
 
   const ThemeBuilder({
     super.key,
@@ -97,11 +118,16 @@ class ThemeBuilder extends StatelessWidget {
 /// Extension for easy access to global cubits
 extension ApplicationContext on BuildContext {
   AppThemeCubit get themeCubit => read<AppThemeCubit>();
+
   LanguageCubit get languageCubit => read<LanguageCubit>();
+
   AuthCubit get authCubit => read<AuthCubit>();
 
   ThemeData get theme => themeCubit.state.themeData;
+
   CustomAppTheme get customTheme => themeCubit.customTheme;
+
   Locale get locale => languageCubit.state.locale;
+
   bool get isAuthenticated => authCubit.isAuthenticated;
 }

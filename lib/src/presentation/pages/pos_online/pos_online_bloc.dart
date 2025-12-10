@@ -39,28 +39,32 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
     PosOnlineInitialize event,
     Emitter<PosOnlineState> emit,
   ) async {
-    emit(state.copyWith(isLoading: false));
+    emit(state.copyWith(status: PosOnlineStatus.idle));
   }
 
   Future<void> _onSync(
     PosOnlineSync event,
     Emitter<PosOnlineState> emit,
   ) async {
-    emit(state.copyWith(isSyncing: true, showSyncDialog: true, clearFailure: true));
+    emit(state.copyWith(
+      status: PosOnlineStatus.syncing,
+      showSyncDialog: true,
+      clearFailure: true,
+    ));
 
     try{
       await _syncService.syncAll();
 
       emit(state.copyWith(
-        isSyncing: false,
+        status: PosOnlineStatus.success,
         showSyncDialog: false,
         successMessage: LocaleKeys.syncCompletedSuccessfully,
       ));
     }catch(e){
       emit(state.copyWith(
-        isSyncing: false,
+        status: PosOnlineStatus.error,
         showSyncDialog: false,
-        failure: UnknownFailure(message: e.toString()),
+        errorMessage: e.toString(),
       ));
     }
   }
@@ -98,7 +102,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
     Emitter<PosOnlineState> emit,
   ) async {
     emit(state.copyWith(
-      isSyncing: true,
+      status: PosOnlineStatus.syncing,
       showSyncDialog: true,
       showLogoutDialog: false,
       clearFailure: true,
@@ -117,7 +121,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
       await _authCubit.logout();
 
       emit(state.copyWith(
-        isSyncing: false,
+        status: PosOnlineStatus.success,
         showSyncDialog: false,
         successMessage: LocaleKeys.loggedOutSuccessfully,
         showLogoutDialog: false,
@@ -125,9 +129,9 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
     } catch (e) {
       Logger.logE('Sync sell error ${e.toString()}');
       emit(state.copyWith(
-        isSyncing: false,
+        status: PosOnlineStatus.error,
         showSyncDialog: false,
-        failure: UnknownFailure(message: e.toString()),
+        errorMessage: e.toString(),
       ));
     }
   }
@@ -141,11 +145,13 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
       await _authCubit.logout();
 
       emit(state.copyWith(
+        status: PosOnlineStatus.success,
         successMessage: LocaleKeys.loggedOutSuccessfully,
       ));
     } catch (e) {
       emit(state.copyWith(
-        failure: UnknownFailure(message: e.toString()),
+        status: PosOnlineStatus.error,
+        errorMessage: e.toString(),
       ));
     }
   }
@@ -183,7 +189,8 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
       );
     } catch (e) {
       emit(state.copyWith(
-        failure: UnknownFailure(message: e.toString()),
+        status: PosOnlineStatus.error,
+        errorMessage: e.toString(),
       ));
     }
   }
@@ -197,11 +204,13 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
       await _authCubit.logout();
 
       emit(state.copyWith(
+        status: PosOnlineStatus.success,
         successMessage: LocaleKeys.loggedOutSuccessfully,
       ));
     } catch (e) {
       emit(state.copyWith(
-        failure: UnknownFailure(message: e.toString()),
+        status: PosOnlineStatus.error,
+        errorMessage: e.toString(),
       ));
     }
   }
@@ -223,7 +232,8 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
       await _authCubit.logout();
     } catch (e) {
       emit(state.copyWith(
-        failure: UnknownFailure(message: e.toString()),
+        status: PosOnlineStatus.error,
+        errorMessage: e.toString(),
       ));
     }
   }

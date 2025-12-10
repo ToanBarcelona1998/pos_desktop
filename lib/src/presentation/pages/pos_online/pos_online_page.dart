@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:pos_final/app_config/app_config.dart';
@@ -10,17 +9,12 @@ import 'package:pos_final/app_config/di.dart';
 import 'package:pos_final/src/application/application.dart';
 import 'package:pos_final/src/core/core.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_observer.dart';
-import 'package:pos_final/src/presentation/widgets/icon_wrapper_widget.dart';
-import 'package:pos_final/src/presentation/widgets/toast/toast_manager.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_subject.dart';
-import 'package:pos_final/src/presentation/pages/pos/pos_page.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/dialog_provider.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/base_dialog_widget.dart';
 import 'package:data/data.dart';
 
-import 'pos_online_bloc.dart';
-import 'pos_online_event.dart';
-import 'pos_online_state.dart';
+import '../../presentation.dart';
 
 class PosOnlinePage extends StatefulWidget {
   const PosOnlinePage({super.key});
@@ -48,7 +42,8 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   bool _syncDialogShowing = false;
 
   final AppConfig _appConfig = sl.get<AppConfig>();
-  final WebViewEnvironment ? _webViewEnvironment = sl.getOrNull<WebViewEnvironment>();
+  final WebViewEnvironment? _webViewEnvironment =
+      sl.getOrNull<WebViewEnvironment>();
 
   Map<String, String> get _requiredHeaders => {
         'X-Oman-Application': _appConfig.webHeader,
@@ -90,10 +85,23 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
-    return BlocProvider(
-      create: (context) => _posOnlineBloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => _posOnlineBloc),
+        BlocProvider(
+          create: (context) => PosBloc(
+            locationRepository: sl.get<LocationRepository>(),
+            productRepository: sl.get<ProductRepository>(),
+            categoryRepository: sl.get<CategoryRepository>(),
+            brandRepository: sl.get<BrandRepository>(),
+            contactRepository: sl.get<ContactRepository>(),
+            createSellUseCase: sl.get<CreateSellUseCase>(),
+            getSuspendedSellsUseCase: sl.get<GetSuspendedSellsUseCase>(),
+            deleteSellUseCase: sl.get<DeleteSellUseCase>(),
+            businessRepository: sl.get<BusinessRepository>(),
+          ),
+        ),
+      ],
       child: BlocListener<AuthCubit, AuthState>(
         listener: (context, authState) {
           if (authState is Unauthenticated) {
@@ -106,18 +114,23 @@ class _PosOnlinePageState extends State<PosOnlinePage>
         },
         child: BlocConsumer<PosOnlineBloc, PosOnlineState>(
           listenWhen: (previous, current) =>
-              previous.failure != current.failure ||
+              previous.status != current.status ||
+              previous.errorMessage != current.errorMessage ||
               previous.successMessage != current.successMessage ||
               previous.showLogoutDialog != current.showLogoutDialog ||
               previous.showSyncDialog != current.showSyncDialog,
           listener: (context, state) {
             final l10n = AppLocalizations.of(context);
 
-            if (state.failure != null && mounted) {
-              ToastManager.showError(context, state.failure!.message);
+            if (state.status == PosOnlineStatus.error &&
+                state.errorMessage != null &&
+                mounted) {
+              ToastManager.showError(context, state.errorMessage!);
             }
 
-            if (state.successMessage != null && mounted) {
+            if (state.status == PosOnlineStatus.success &&
+                state.successMessage != null &&
+                mounted) {
               final translatedMessage = l10n.translate(state.successMessage!);
 
               // If logout was successful, send script to webview
@@ -147,67 +160,6 @@ class _PosOnlinePageState extends State<PosOnlinePage>
           },
           builder: (context, state) {
             return Scaffold(
-              appBar: AppBar(
-                title: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xxs,
-                  ),
-                  child: Image.asset(
-                    'assets/logo/logo.png',
-                    height: AppSizes.logoMd,
-                    width: AppSizes.logoMd,
-                  ),
-                ),
-                centerTitle: true,
-                leading: null,
-                automaticallyImplyLeading: false,
-                actions: [
-                  // Only show sync and logout buttons when authenticated
-                  BlocBuilder<AuthCubit, AuthState>(
-                    builder: (context, authState) {
-                      if (authState is Authenticated) {
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Sync button
-                            IconWrapper(
-                              iconSize: AppSizes.iconXs,
-                              iconColor: Colors.blueAccent,
-                              icon: Icons.sync,
-                              tooltip: l10n.translate(LocaleKeys.syncData),
-                              onTap: () {
-                                context.read<PosOnlineBloc>().add(
-                                      const PosOnlineSync(),
-                                    );
-                              },
-                            ),
-                            const SizedBox(
-                              width: AppSpacing.sm,
-                            ),
-                            // Logout button
-                            IconWrapper(
-                              iconColor: Colors.red,
-                              iconSize: AppSizes.iconXs,
-                              icon: Icons.logout,
-                              tooltip: l10n.translate(LocaleKeys.logout),
-                              onTap: () {
-                                context.read<PosOnlineBloc>().add(
-                                      const PosOnlineLogout(),
-                                    );
-                              },
-                            ),
-                            const SizedBox(
-                              width: AppSpacing.sm,
-                            ),
-                          ],
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ],
-              ),
               body: SafeArea(
                 child: Stack(
                   children: [
@@ -295,6 +247,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                     ),
                     // POS Offline Screen (stacked on top when network disconnects)
                     if (state.showOfflinePos)
+                    // if (true)
                       Positioned.fill(
                         child: const PosPage(),
                       ),

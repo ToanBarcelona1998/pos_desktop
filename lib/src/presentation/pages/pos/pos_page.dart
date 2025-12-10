@@ -1,11 +1,8 @@
-import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:pos_final/src/core/services/print_service.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
-
-import '../../../../app_config/di.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../widgets/app_loading.dart';
@@ -23,30 +20,20 @@ import 'widgets/pos_customer_selector_widget.dart';
 import 'widgets/pos_suspended_sales_widget.dart';
 
 /// POS page
-class PosPage extends StatelessWidget {
+class PosPage extends StatefulWidget {
   const PosPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => PosBloc(
-        locationRepository: sl.get<LocationRepository>(),
-        productRepository: sl.get<ProductRepository>(),
-        categoryRepository: sl.get<CategoryRepository>(),
-        brandRepository: sl.get<BrandRepository>(),
-        contactRepository: sl.get<ContactRepository>(),
-        createSellUseCase: sl.get<CreateSellUseCase>(),
-        getSuspendedSellsUseCase: sl.get<GetSuspendedSellsUseCase>(),
-        deleteSellUseCase: sl.get<DeleteSellUseCase>(),
-        businessRepository: sl.get<BusinessRepository>(),
-      )..add(const PosInitialize()),
-      child: const _PosView(),
-    );
-  }
+  State<PosPage> createState() => _PosPageState();
 }
 
-class _PosView extends StatelessWidget {
-  const _PosView();
+class _PosPageState extends State<PosPage> {
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<PosBloc>().add(const PosInitialize());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,25 +41,26 @@ class _PosView extends StatelessWidget {
 
     return BlocConsumer<PosBloc, PosState>(
       listenWhen: (previous, current) =>
-          previous.failure != current.failure ||
+          previous.status != current.status ||
+          previous.errorMessage != current.errorMessage ||
           previous.successMessage != current.successMessage ||
           previous.shouldPrintInvoice != current.shouldPrintInvoice ||
           previous.createdSellId != current.createdSellId,
       listener: (context, state) {
-        if (state.failure != null) {
-          ToastManager.showError(context, state.failure!.message);
+        if (state.status == PosStatus.error && state.errorMessage != null) {
+          ToastManager.showError(context, state.errorMessage!);
         }
-        if (state.successMessage != null) {
+        if (state.status == PosStatus.success && state.successMessage != null) {
           // Translate success message key
           final translatedMessage = l10n.translate(state.successMessage!);
           ToastManager.showSuccess(context, translatedMessage);
         }
-        
+
         // Handle invoice printing
         if (state.shouldPrintInvoice && state.createdSellId != null) {
           // Reset the flag immediately to prevent multiple prints
           context.read<PosBloc>().add(const PosClearPrintFlag());
-          
+
           // Show print dialog
           // [TODO] Can't show print now with html
           // _showPrintInvoiceDialog(
@@ -83,7 +71,7 @@ class _PosView extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        if (state.isLoading) {
+        if (state.status == PosStatus.loading || state.status == PosStatus.initial) {
           return Scaffold(
             appBar: AppBar(
               title: Text(l10n.translate(LocaleKeys.pos)),
@@ -106,7 +94,7 @@ class _PosView extends StatelessWidget {
             onRefresh: () {
               context.read<PosBloc>().add(const PosRefreshProducts());
             },
-            onSuspendedSales: () => _showSuspendedSalesBottomSheet(context),
+            onSuspendedSales: () => showSuspendedSalesDialog(context),
           ),
           body: Row(
             children: [
@@ -147,8 +135,8 @@ class _PosView extends StatelessWidget {
                   selectedCategoryId: state.selectedCategoryId,
                   selectedBrandId: state.selectedBrandId,
                   searchQuery: state.searchQuery,
-                  isLoading: state.isLoadingProducts,
-                  isLoadingMore: state.isLoadingMore,
+                  isLoading: state.status == PosStatus.loadingProducts,
+                  isLoadingMore: state.status == PosStatus.loadingMore,
                   hasMore: state.hasMore,
                   cartItems: state.cartItems,
                   onProductTap: (product) {
@@ -176,7 +164,7 @@ class _PosView extends StatelessWidget {
           bottomNavigationBar: PosBottomBarWidget(
             total: state.total,
             currencySymbol: state.currencySymbol,
-            isSubmitting: state.isSubmitting,
+            isSubmitting: state.status == PosStatus.submitting,
             canSubmit: state.canSubmit,
             onCashPayment: () {
               context.read<PosBloc>().add(const PosSubmitSale());
@@ -207,7 +195,7 @@ class _PosView extends StatelessWidget {
     final state = bloc.state;
 
     // Load customers if not loaded
-    if (state.customers.isEmpty && !state.isLoadingCustomers) {
+    if (state.customers.isEmpty && state.status != PosStatus.loadingCustomers) {
       bloc.add(const PosLoadCustomers());
     }
 
@@ -229,7 +217,7 @@ class _PosView extends StatelessWidget {
             return PosCustomerSelectorWidget(
               customers: filteredCustomers,
               selectedCustomer: state.selectedCustomer,
-              isLoading: state.isLoadingCustomers,
+              isLoading: state.status == PosStatus.loadingCustomers,
               searchQuery: state.customerSearchQuery,
               onSearch: (query) {
                 context.read<PosBloc>().add(PosSearchCustomers(query));
@@ -288,12 +276,12 @@ class _PosView extends StatelessWidget {
     );
   }
 
-  void _showSuspendedSalesBottomSheet(BuildContext context) {
+  void showSuspendedSalesDialog(BuildContext context) {
     final bloc = context.read<PosBloc>();
     final state = bloc.state;
 
     // Load suspended sells if not loaded
-    if (state.suspendedSells.isEmpty && !state.isLoadingSuspendedSells) {
+    if (state.suspendedSells.isEmpty && state.status != PosStatus.loadingSuspendedSells) {
       bloc.add(const PosLoadSuspendedSells());
     }
 
@@ -305,7 +293,7 @@ class _PosView extends StatelessWidget {
           builder: (context, state) {
             return PosSuspendedSalesWidget(
               suspendedSells: state.suspendedSells,
-              isLoading: state.isLoadingSuspendedSells,
+              isLoading: state.status == PosStatus.loadingSuspendedSells,
               onContinue: (sell) {
                 context.read<PosBloc>().add(PosLoadSuspendedSell(sell));
               },
