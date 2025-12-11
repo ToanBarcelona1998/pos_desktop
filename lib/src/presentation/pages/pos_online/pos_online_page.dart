@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:pos_final/app_config/app_config.dart';
 import 'package:pos_final/app_config/di.dart';
+import 'package:pos_final/src/application.dart';
 import 'package:pos_final/src/application/application.dart';
 import 'package:pos_final/src/core/core.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_observer.dart';
@@ -328,7 +329,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   void update(bool newState) {
-    if (!newState && mounted && !_posOnlineBloc.state.showOfflinePos) {
+    if (!newState && mounted && !_posOnlineBloc.state.showOfflinePos && context.authCubit.isAuthenticated) {
       final l10n = AppLocalizations.of(context);
       DialogProvider.showConfirmDialog(
         context,

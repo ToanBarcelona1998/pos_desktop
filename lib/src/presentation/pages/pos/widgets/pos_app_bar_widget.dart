@@ -51,9 +51,19 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
               horizontal: rSpacing.sm,
               vertical: rSpacing.xxs,
             ),
-            child: Text(
-              locations.where((element) => element.id == selectedLocationId,).firstOrNull?.name ?? '',
-              style: rTypography.titleMedium,
+            child: Row(
+              children: [
+                Text(
+                  '${l10n.translate(LocaleKeys.location)}:  ',
+                  style: rTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.bold
+                  ),
+                ),
+                Text(
+                  locations.where((element) => element.id == selectedLocationId,).firstOrNull?.name ?? '',
+                  style: rTypography.titleMedium,
+                ),
+              ],
             ),
           ),
           rSpacing.gapHorizontalMd,
