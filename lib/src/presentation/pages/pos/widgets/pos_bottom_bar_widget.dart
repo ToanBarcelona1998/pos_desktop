@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos_final/helpers/other_helpers.dart';
 import '../../../widgets/app_button.dart';
 
 import '../../../../core/constants/app_responsive.dart';
@@ -131,7 +132,7 @@ class PosBottomBarWidget extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      '${l10n.translate(LocaleKeys.totalPayable)}: $currencySymbol${total.toStringAsFixed(2)}',
+                      '${l10n.translate(LocaleKeys.totalPayable)}: ${Helper().formatCurrency(total)}$currencySymbol',
                       style: rTypography.headlineSmall.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
