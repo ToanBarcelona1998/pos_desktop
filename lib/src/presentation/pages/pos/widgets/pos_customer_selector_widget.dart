@@ -1,8 +1,7 @@
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
+import '../../../../core/constants/app_responsive.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/localization/app_localization.dart';
 import '../../../../core/localization/locale_keys.dart';
@@ -56,11 +55,14 @@ class _PosCustomerSelectorWidgetState extends State<PosCustomerSelectorWidget> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
 
     return Container(
-      width: 500,
-      height: 600,
-      padding: AppSpacing.paddingMd,
+      width: 500 * context.rScale,
+      height: 600 * context.rScale,
+      padding: rSpacing.paddingMd,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -70,7 +72,7 @@ class _PosCustomerSelectorWidgetState extends State<PosCustomerSelectorWidget> {
               Expanded(
                 child: Text(
                   l10n.translate(LocaleKeys.selectCustomer),
-                  style: AppTypography.titleLarge,
+                  style: rTypography.titleLarge,
                 ),
               ),
               if (widget.onAddCustomer != null)
@@ -78,32 +80,33 @@ class _PosCustomerSelectorWidgetState extends State<PosCustomerSelectorWidget> {
                   icon: Icon(
                     Icons.person_add,
                     color: Colors.black,
+                    size: rSizes.iconMd,
                   ),
                   onPressed: widget.onAddCustomer,
                   tooltip: l10n.translate(LocaleKeys.addCustomer),
                 ),
               IconButton(
-                icon: const Icon(Icons.close, color: Colors.black,),
+                icon: Icon(Icons.close, color: Colors.black, size: rSizes.iconMd),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
           ),
-          SizedBox(height: AppSpacing.md),
+          rSpacing.gapVerticalMd,
           // Search field
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
               hintText: l10n.translate(LocaleKeys.search),
-              prefixIcon: Icon(Icons.search, color: theme.colorScheme.primary),
+              prefixIcon: Icon(Icons.search, color: theme.colorScheme.primary, size: rSizes.iconMd),
               border: OutlineInputBorder(
                 borderRadius: AppRadius.borderRadiusSm,
               ),
               filled: true,
               fillColor: theme.cardColor,
             ),
-            style: AppTypography.bodyMedium,
+            style: rTypography.bodyMedium,
           ),
-          SizedBox(height: AppSpacing.md),
+          rSpacing.gapVerticalMd,
           // Customer list
           Expanded(
             child: widget.isLoading
@@ -132,19 +135,23 @@ class _EmptyCustomers extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.person_outline,
-            size: 64,
+            size: rSizes.illustrationXs,
             color: Colors.grey[400],
           ),
-          SizedBox(height: AppSpacing.md),
+          rSpacing.gapVerticalMd,
           Text(
             l10n.translate(LocaleKeys.noCustomersFound),
-            style: AppTypography.bodyLarge.copyWith(color: Colors.grey),
+            style: rTypography.bodyLarge.copyWith(color: Colors.grey),
           ),
         ],
       ),
@@ -182,20 +189,35 @@ class _CustomerList extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
           ),
-          title: Text(
-            customer.name,
-            style: AppTypography.bodyLarge.copyWith(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
+          title: Builder(
+            builder: (context) {
+              final rTypography = context.rTypography;
+              return Text(
+                customer.name,
+                style: rTypography.bodyLarge.copyWith(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              );
+            },
           ),
           subtitle: customer.mobile != null
-              ? Text(
-                  customer.mobile!,
-                  style: AppTypography.bodySmall,
+              ? Builder(
+                  builder: (context) {
+                    final rTypography = context.rTypography;
+                    return Text(
+                      customer.mobile!,
+                      style: rTypography.bodySmall,
+                    );
+                  },
                 )
               : null,
           trailing: isSelected
-              ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
+              ? Builder(
+                  builder: (context) {
+                    final rSizes = context.rSizes;
+                    return Icon(Icons.check_circle, color: theme.colorScheme.primary, size: rSizes.iconMd);
+                  },
+                )
               : null,
           selected: isSelected,
           selectedTileColor:

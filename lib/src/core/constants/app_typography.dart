@@ -6,15 +6,15 @@ abstract final class AppTypography {
   static const String fontFamily = 'Cairo';
 
   // Font sizes
-  static const double fontSizeXxs = 10.0;
-  static const double fontSizeXs = 12.0;
-  static const double fontSizeSm = 14.0;
-  static const double fontSizeMd = 16.0;
-  static const double fontSizeLg = 18.0;
-  static const double fontSizeXl = 20.0;
-  static const double fontSizeXxl = 24.0;
-  static const double fontSizeDisplay = 32.0;
-  static const double fontSizeDisplayLg = 48.0;
+  static const double fontSizeXxs = 12.0;
+  static const double fontSizeXs = 14.0;
+  static const double fontSizeSm = 16.0;
+  static const double fontSizeMd = 18.0;
+  static const double fontSizeLg = 20.0;
+  static const double fontSizeXl = 24.0;
+  static const double fontSizeXxl = 28.0;
+  static const double fontSizeDisplay = 36.0;
+  static const double fontSizeDisplayLg = 60.0;
 
   // Line heights
   static const double lineHeightTight = 1.2;

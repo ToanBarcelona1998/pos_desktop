@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
-import 'package:pos_final/src/core/constants/app_typography.dart';
+import 'package:pos_final/src/core/constants/app_responsive.dart';
 
 class LiveClockWidget extends StatefulWidget {
   const LiveClockWidget({super.key});
@@ -31,9 +31,11 @@ class _LiveClockWidgetState extends State<LiveClockWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final rTypography = context.rTypography;
+    
     return Text(
       _timeString,
-      style: AppTypography.labelMedium.copyWith(
+      style: rTypography.labelMedium.copyWith(
         color: Colors.white
       ),
     );

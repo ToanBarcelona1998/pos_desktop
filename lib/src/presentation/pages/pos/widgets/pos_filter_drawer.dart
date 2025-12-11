@@ -2,8 +2,7 @@ import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:pos_final/src/presentation/widgets/icon_wrapper_widget.dart';
 
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
+import '../../../../core/constants/app_responsive.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/core.dart';
 import '../../../../core/localization/app_localization.dart';
@@ -37,6 +36,8 @@ class PosFilterDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
 
     final isCategory = filterType == FilterType.category;
     final title = isCategory
@@ -57,8 +58,8 @@ class PosFilterDrawer extends StatelessWidget {
 
     return Container(
       width: MediaQuery.of(context).size.width * 0.7,
-      padding: const EdgeInsets.symmetric(
-          vertical: AppSpacing.md, horizontal: AppSpacing.sm),
+      padding: EdgeInsets.symmetric(
+          vertical: rSpacing.md, horizontal: rSpacing.sm),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         boxShadow: [
@@ -77,7 +78,7 @@ class PosFilterDrawer extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: AppTypography.titleLarge.copyWith(
+                  style: rTypography.titleLarge.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
@@ -90,7 +91,7 @@ class PosFilterDrawer extends StatelessWidget {
               ),
             ],
           ),
-          AppSpacing.gapVerticalSm,
+          rSpacing.gapVerticalSm,
           // Content
           Expanded(
             child: _FilterSection(
@@ -125,6 +126,9 @@ class _FilterSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
 
     final appColor = AppThemes.light;
 
@@ -132,10 +136,10 @@ class _FilterSection extends StatelessWidget {
 
     return GridView.builder(
       shrinkWrap: true,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        mainAxisSpacing: AppSpacing.sm,
-        crossAxisSpacing: AppSpacing.sm,
+        mainAxisSpacing: rSpacing.sm,
+        crossAxisSpacing: rSpacing.sm,
         childAspectRatio: 2,
       ),
       itemCount: items.length,
@@ -149,8 +153,8 @@ class _FilterSection extends StatelessWidget {
             children: [
               Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: AppSpacing.xs,
+                  horizontal: rSpacing.sm,
+                  vertical: rSpacing.xs,
                 ),
                 decoration: BoxDecoration(
                   color: isSelected ? selectedColor.withAlpha((255 * 0.3).round()) : theme.cardColor,
@@ -164,7 +168,7 @@ class _FilterSection extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   item['name'],
-                  style: AppTypography.bodySmall.copyWith(
+                  style: rTypography.bodySmall.copyWith(
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
                     color: isSelected
@@ -178,12 +182,12 @@ class _FilterSection extends StatelessWidget {
               ),
               if (isSelected)
                 Positioned(
-                  top: AppSpacing.xxxs,
-                  right: AppSpacing.xxxs,
+                  top: rSpacing.xxxs,
+                  right: rSpacing.xxxs,
                   child: Icon(
                     Icons.check,
                     color: selectedColor,
-                    size: 16,
+                    size: rSizes.iconXs,
                   ),
                 ),
             ],

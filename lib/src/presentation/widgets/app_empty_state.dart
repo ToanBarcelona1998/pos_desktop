@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_sizes.dart';
-import '../../core/constants/app_spacing.dart';
-import '../../core/constants/app_typography.dart';
+import '../../core/constants/app_responsive.dart';
 import 'app_button.dart';
 
 /// Empty state widget
@@ -83,10 +81,13 @@ class AppEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
 
     return Center(
       child: Padding(
-        padding: AppSpacing.paddingLg,
+        padding: rSpacing.paddingLg,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -95,28 +96,28 @@ class AppEmptyState extends StatelessWidget {
             else if (icon != null)
               Icon(
                 icon,
-                size: AppSizes.iconXxl,
+                size: rSizes.iconXxl,
                 color: theme.disabledColor,
               ),
-            SizedBox(height: AppSpacing.lg),
+            rSpacing.gapVerticalLg,
             if (title != null)
               Text(
                 title!,
-                style: AppTypography.headlineSmall,
+                style: rTypography.headlineSmall,
                 textAlign: TextAlign.center,
               ),
             if (message != null) ...[
-              SizedBox(height: AppSpacing.sm),
+              rSpacing.gapVerticalSm,
               Text(
                 message!,
-                style: AppTypography.bodyMedium.copyWith(
+                style: rTypography.bodyMedium.copyWith(
                   color: theme.textTheme.bodySmall?.color,
                 ),
                 textAlign: TextAlign.center,
               ),
             ],
             if (onAction != null && actionText != null) ...[
-              SizedBox(height: AppSpacing.xl),
+              rSpacing.gapVerticalLg,
               AppButton(
                 text: actionText!,
                 onPressed: onAction,

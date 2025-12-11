@@ -177,7 +177,10 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                           ),
                           Factory<HorizontalDragGestureRecognizer>(
                             () => HorizontalDragGestureRecognizer(),
-                          )
+                          ),
+                          Factory<OneSequenceGestureRecognizer>(
+                            () => EagerGestureRecognizer(),
+                          ),
                         ]),
                       onLoadStop: (controller, url) async {
                         // Listen to URL changes

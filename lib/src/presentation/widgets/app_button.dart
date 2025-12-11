@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pos_final/src/core/core.dart';
 
-import '../../core/constants/app_sizes.dart';
-import '../../core/constants/app_spacing.dart';
-import '../../core/constants/app_typography.dart';
+import '../../core/constants/app_responsive.dart';
 import '../../core/constants/app_radius.dart';
 
 /// Primary button with app styling
@@ -37,8 +35,9 @@ class AppButton extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final bgColor = backgroundColor ?? colorScheme.primary;
     final fgColor = foregroundColor ?? colorScheme.onPrimary;
+    final rSizes = context.rSizes;
 
-    final buttonHeight = height ?? AppSizes.buttonHeight;
+    final buttonHeight = height ?? rSizes.buttonHeight;
 
     if (isOutlined) {
       return SizedBox(
@@ -52,7 +51,7 @@ class AppButton extends StatelessWidget {
               borderRadius: AppRadius.borderRadiusXs,
             ),
           ),
-          child: _buildChild(bgColor, fgColor, isOutlined: true),
+          child: _buildChild(bgColor, fgColor, context, isOutlined: true),
         ),
       );
     }
@@ -70,18 +69,21 @@ class AppButton extends StatelessWidget {
           ),
           elevation: 2,
         ),
-        child: _buildChild(bgColor, fgColor),
+        child: _buildChild(bgColor, fgColor, context),
       ),
     );
   }
 
-  Widget _buildChild(Color bgColor, Color fgColor, {bool isOutlined = false}) {
+  Widget _buildChild(Color bgColor, Color fgColor, BuildContext context, {bool isOutlined = false}) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
     final textColor = isOutlined ? bgColor : fgColor;
 
     if (isLoading) {
       return SizedBox(
-        width: AppSizes.iconSm,
-        height: AppSizes.iconSm,
+        width: rSizes.iconSm,
+        height: rSizes.iconSm,
         child: CircularProgressIndicator(
           strokeWidth: 2,
           valueColor: AlwaysStoppedAnimation(textColor),
@@ -93,11 +95,11 @@ class AppButton extends StatelessWidget {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: AppSizes.iconSm, color: textColor),
-          SizedBox(width: AppSpacing.xs),
+          Icon(icon, size: rSizes.iconSm, color: textColor),
+          rSpacing.gapHorizontalXs,
           Text(
             text,
-            style: AppTypography.button.copyWith(color: textColor),
+            style: rTypography.button.copyWith(color: textColor),
           ),
         ],
       );
@@ -105,7 +107,7 @@ class AppButton extends StatelessWidget {
 
     return Text(
       text,
-      style: AppTypography.button.copyWith(color: textColor),
+      style: rTypography.button.copyWith(color: textColor),
     );
   }
 }
@@ -129,6 +131,9 @@ class AppTextButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final buttonColor = color ?? theme.colorScheme.primary;
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
 
     return TextButton(
       onPressed: onPressed,
@@ -136,12 +141,12 @@ class AppTextButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: AppSizes.iconSm, color: buttonColor),
-            SizedBox(width: AppSpacing.xs),
+            Icon(icon, size: rSizes.iconSm, color: buttonColor),
+            rSpacing.gapHorizontalXs,
           ],
           Text(
             text,
-            style: AppTypography.button.copyWith(color: buttonColor),
+            style: rTypography.button.copyWith(color: buttonColor),
           ),
         ],
       ),
@@ -172,7 +177,8 @@ class AppIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final iconColor = color ?? theme.colorScheme.onSurface;
-    final iconSize = size ?? AppSizes.iconMd;
+    final rSizes = context.rSizes;
+    final iconSize = size ?? rSizes.iconMd;
 
     Widget button = IconButton(
       onPressed: onPressed,
@@ -232,10 +238,12 @@ class AppGradientButton extends StatelessWidget {
           end: Alignment.centerRight,
         );
 
-    final buttonHeight = height ?? AppSizes.buttonHeight;
+    final rSpacing = context.rSpacing;
+    final rSizes = context.rSizes;
+    final buttonHeight = height ?? rSizes.buttonHeight;
     final buttonPadding = padding ?? EdgeInsets.symmetric(
-      horizontal: AppSpacing.sm,
-      vertical: AppSpacing.xs,
+      horizontal: rSpacing.sm,
+      vertical: rSpacing.xs,
     );
     final buttonBorderRadius = borderRadius ?? AppRadius.borderRadiusXs;
 
@@ -257,7 +265,7 @@ class AppGradientButton extends StatelessWidget {
             child: Container(
               padding: buttonPadding,
               alignment: Alignment.center,
-              child: _buildChild(),
+              child: _buildChild(context),
             ),
           ),
         ),
@@ -265,11 +273,15 @@ class AppGradientButton extends StatelessWidget {
     );
   }
 
-  Widget _buildChild() {
+  Widget _buildChild(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
+    
     if (isLoading) {
       return SizedBox(
-        width: AppSizes.iconSm,
-        height: AppSizes.iconSm,
+        width: rSizes.iconSm,
+        height: rSizes.iconSm,
         child: const CircularProgressIndicator(
           strokeWidth: 2,
           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -278,7 +290,7 @@ class AppGradientButton extends StatelessWidget {
     }
 
     final defaultTextStyle = textStyle ??
-        AppTypography.button.copyWith(
+        rTypography.button.copyWith(
           color: Colors.white,
           fontWeight: FontWeight.w500,
         );
@@ -290,14 +302,14 @@ class AppGradientButton extends StatelessWidget {
         children: [
           if (leading != null) ...[
             leading!,
-            if(text.isNotEmpty) SizedBox(width: AppSpacing.xs),
+            if(text.isNotEmpty) rSpacing.gapHorizontalXs,
           ],
           Text(
             text,
             style: defaultTextStyle,
           ),
           if (suffix != null) ...[
-            if(text.isNotEmpty) SizedBox(width: AppSpacing.xs),
+            if(text.isNotEmpty) rSpacing.gapHorizontalXs,
             suffix!,
           ],
         ],

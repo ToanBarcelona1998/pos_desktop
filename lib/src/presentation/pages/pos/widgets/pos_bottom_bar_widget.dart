@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../widgets/app_button.dart';
 
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
+import '../../../../core/constants/app_responsive.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/localization/app_localization.dart';
 import '../../../../core/localization/locale_keys.dart';
@@ -38,11 +37,14 @@ class PosBottomBarWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+        horizontal: rSpacing.md,
+        vertical: rSpacing.sm,
       ),
       decoration: BoxDecoration(
         color: theme.cardColor,
@@ -84,7 +86,7 @@ class PosBottomBarWidget extends StatelessWidget {
               color: Colors.purple,
               onTap: onCreditPayment,
             ),
-            const SizedBox(width: AppSpacing.md),
+            rSpacing.gapHorizontalMd,
             // Main action buttons
             Expanded(
               child: Row(
@@ -98,7 +100,7 @@ class PosBottomBarWidget extends StatelessWidget {
                       onTap: canSubmit ? onCashPayment : null,
                     ),
                   ),
-                  SizedBox(width: AppSpacing.sm),
+                  rSpacing.gapHorizontalSm,
                   Expanded(
                     child: _MainActionButton(
                       label: l10n.translate(LocaleKeys.cash),
@@ -108,7 +110,7 @@ class PosBottomBarWidget extends StatelessWidget {
                       onTap: canSubmit ? onCashPayment : null,
                     ),
                   ),
-                  SizedBox(width: AppSpacing.sm),
+                  rSpacing.gapHorizontalSm,
                   Expanded(
                     child: _MainActionButton(
                       label: l10n.translate(LocaleKeys.cancel),
@@ -121,7 +123,7 @@ class PosBottomBarWidget extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
+            rSpacing.gapHorizontalMd,
             // Total display
             Expanded(
               child: Row(
@@ -130,7 +132,7 @@ class PosBottomBarWidget extends StatelessWidget {
                     flex: 2,
                     child: Text(
                       '${l10n.translate(LocaleKeys.totalPayable)}: $currencySymbol${total.toStringAsFixed(2)}',
-                      style: AppTypography.headlineSmall.copyWith(
+                      style: rTypography.headlineSmall.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
@@ -142,8 +144,8 @@ class PosBottomBarWidget extends StatelessWidget {
                         leading: Icon(Icons.history),
                         text: l10n.translate(LocaleKeys.previousPayments),
                         padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
+                          horizontal: rSpacing.sm,
+                          vertical: rSpacing.xs,
                         ),
                         onPressed: () {
                           // Show history
@@ -176,22 +178,26 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
+    
     return InkWell(
       onTap: onTap,
       borderRadius: AppRadius.borderRadiusSm,
       child: Padding(
         padding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
+          horizontal: rSpacing.sm,
+          vertical: rSpacing.xs,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 20),
-            SizedBox(height: AppSpacing.xxs),
+            Icon(icon, color: color, size: rSizes.iconSm),
+            rSpacing.gapVerticalXxs,
             Text(
               label,
-              style: AppTypography.labelSmall,
+              style: rTypography.labelSmall,
             ),
           ],
         ),
@@ -217,12 +223,16 @@ class _MainActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
+    
     return ElevatedButton(
       onPressed: isLoading ? null : onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.white,
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+        padding: EdgeInsets.symmetric(vertical: rSpacing.md),
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.borderRadiusSm,
         ),
@@ -230,9 +240,9 @@ class _MainActionButton extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 18),
-          SizedBox(width: AppSpacing.xs),
-          Text(label, style: AppTypography.labelMedium),
+          Icon(icon, size: rSizes.iconXs),
+          rSpacing.gapHorizontalXs,
+          Text(label, style: rTypography.labelMedium),
         ],
       ),
     );

@@ -31,11 +31,14 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
 
     return AppBar(
       leading: const SizedBox(),
@@ -45,24 +48,22 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           // Location selector
           Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xxs,
+              horizontal: rSpacing.sm,
+              vertical: rSpacing.xxs,
             ),
             child: Text(
               locations.where((element) => element.id == selectedLocationId,).firstOrNull?.name ?? '',
-              style: AppTypography.titleMedium,
+              style: rTypography.titleMedium,
             ),
           ),
-          SizedBox(width: AppSpacing.md),
+          rSpacing.gapHorizontalMd,
           // Date/time display
           AppGradientButton(
             text: '',
             leading: Row(
               children: [
-                const Icon(Icons.calendar_today, color: Colors.white, size: 16),
-                const SizedBox(
-                  width: AppSpacing.xs,
-                ),
+                Icon(Icons.calendar_today, color: Colors.white, size: rSizes.iconXs),
+                rSpacing.gapHorizontalXs,
                 const LiveClockWidget()
               ],
             ),
@@ -76,34 +77,26 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           tooltip: l10n.translate(LocaleKeys.refresh),
           iconColor: Colors.purple,
         ),
-        const SizedBox(
-          width: AppSpacing.xs,
-        ),
+        rSpacing.gapHorizontalXs,
         IconWrapper(
           icon: Icons.pause_circle_outline,
           onTap: onSuspendedSales,
           tooltip: l10n.translate(LocaleKeys.suspendedSales),
           iconColor: Colors.grey,
         ),
-        const SizedBox(
-          width: AppSpacing.xs,
-        ),
+        rSpacing.gapHorizontalXs,
         IconWrapper(
           icon: Icons.fullscreen,
           onTap: onOpenFullScreen,
           iconColor: Colors.blueAccent,
         ),
-        const SizedBox(
-          width: AppSpacing.xs,
-        ),
+        rSpacing.gapHorizontalXs,
         IconWrapper(
           icon: Icons.close,
           onTap: (){},
           iconColor: Colors.red,
         ),
-        const SizedBox(
-          width: AppSpacing.sm,
-        ),
+        rSpacing.gapHorizontalSm,
         BlocBuilder<AuthCubit, AuthState>(
           builder: (context, authState) {
             if (authState is Authenticated) {
@@ -121,9 +114,7 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                       );
                     },
                   ),
-                  const SizedBox(
-                    width: AppSpacing.sm,
-                  ),
+                  rSpacing.gapHorizontalSm,
                   // Logout button
                   IconWrapper(
                     iconColor: Colors.red,
@@ -135,9 +126,7 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                       );
                     },
                   ),
-                  const SizedBox(
-                    width: AppSpacing.sm,
-                  ),
+                  rSpacing.gapHorizontalSm,
                 ],
               );
             }

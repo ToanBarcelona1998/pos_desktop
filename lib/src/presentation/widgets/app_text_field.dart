@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_spacing.dart';
-import '../../core/constants/app_typography.dart';
+import '../../core/constants/app_responsive.dart';
 import '../../core/constants/app_radius.dart';
 
 /// Text field with app styling
@@ -46,6 +45,8 @@ class AppTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
 
     return TextFormField(
       controller: controller,
@@ -59,7 +60,7 @@ class AppTextField extends StatelessWidget {
       enabled: enabled,
       focusNode: focusNode,
       autofocus: autofocus,
-      style: AppTypography.bodyLarge,
+      style: rTypography.bodyLarge,
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText,
@@ -88,8 +89,8 @@ class AppTextField extends StatelessWidget {
           borderSide: BorderSide(color: theme.disabledColor),
         ),
         contentPadding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
+          horizontal: rSpacing.md,
+          vertical: rSpacing.sm,
         ),
       ),
     );
@@ -116,18 +117,21 @@ class AppSearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
 
     return TextField(
       controller: controller,
       onChanged: onChanged,
       onSubmitted: onSubmit != null ? (_) => onSubmit!() : null,
-      style: AppTypography.bodyMedium,
+      style: rTypography.bodyMedium,
       decoration: InputDecoration(
         hintText: hintText ?? 'Search...',
-        prefixIcon: const Icon(Icons.search),
+        prefixIcon: Icon(Icons.search, size: rSizes.iconMd),
         suffixIcon: controller?.text.isNotEmpty == true
             ? IconButton(
-                icon: const Icon(Icons.clear),
+                icon: Icon(Icons.clear, size: rSizes.iconMd),
                 onPressed: () {
                   controller?.clear();
                   onClear?.call();
@@ -141,8 +145,8 @@ class AppSearchField extends StatelessWidget {
           borderSide: BorderSide.none,
         ),
         contentPadding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
+          horizontal: rSpacing.md,
+          vertical: rSpacing.sm,
         ),
       ),
     );

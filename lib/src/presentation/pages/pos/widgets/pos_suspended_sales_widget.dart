@@ -2,8 +2,7 @@ import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
+import '../../../../core/constants/app_responsive.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/localization/app_localization.dart';
 import '../../../../core/localization/locale_keys.dart';
@@ -29,10 +28,12 @@ class PosSuspendedSalesWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      padding: AppSpacing.paddingMd,
+      padding: rSpacing.paddingMd,
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(
@@ -48,7 +49,7 @@ class PosSuspendedSalesWidget extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.translate(LocaleKeys.suspendedSales),
-                  style: AppTypography.titleLarge,
+                  style: rTypography.titleLarge,
                 ),
               ),
               IconWrapper(
@@ -58,7 +59,7 @@ class PosSuspendedSalesWidget extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: AppSpacing.md),
+          rSpacing.gapVerticalMd,
           // List
           Expanded(
             child: isLoading
@@ -97,19 +98,23 @@ class _EmptySuspendedSales extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.pause_circle_outline,
-            size: 64,
+            size: rSizes.illustrationXs,
             color: Colors.grey[400],
           ),
-          SizedBox(height: AppSpacing.md),
+          rSpacing.gapVerticalMd,
           Text(
             l10n.translate(LocaleKeys.noData),
-            style: AppTypography.bodyLarge.copyWith(color: Colors.grey),
+            style: rTypography.bodyLarge.copyWith(color: Colors.grey),
           ),
         ],
       ),
@@ -139,10 +144,13 @@ class _SuspendedSaleItem extends StatelessWidget {
         ? DateTime.tryParse(sell.transactionDate!)
         : null;
 
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    
     return Card(
-      margin: EdgeInsets.only(bottom: AppSpacing.sm),
+      margin: EdgeInsets.only(bottom: rSpacing.sm),
       child: Padding(
-        padding: AppSpacing.paddingSm,
+        padding: rSpacing.paddingSm,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -154,14 +162,14 @@ class _SuspendedSaleItem extends StatelessWidget {
                     children: [
                       Text(
                         sell.invoiceNo ?? 'N/A',
-                        style: AppTypography.titleMedium.copyWith(
+                        style: rTypography.titleMedium.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       if (transactionDate != null)
                         Text(
                           dateFormat.format(transactionDate),
-                          style: AppTypography.bodySmall.copyWith(
+                          style: rTypography.bodySmall.copyWith(
                             color: Colors.grey,
                           ),
                         ),
@@ -170,8 +178,8 @@ class _SuspendedSaleItem extends StatelessWidget {
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
+                    horizontal: rSpacing.sm,
+                    vertical: rSpacing.xs,
                   ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
@@ -179,7 +187,7 @@ class _SuspendedSaleItem extends StatelessWidget {
                   ),
                   child: Text(
                     sell.invoiceAmount?.toStringAsFixed(0) ?? '0',
-                    style: AppTypography.labelLarge.copyWith(
+                    style: rTypography.labelLarge.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
@@ -188,13 +196,13 @@ class _SuspendedSaleItem extends StatelessWidget {
               ],
             ),
             if (sell.sellLines.isNotEmpty) ...[
-              SizedBox(height: AppSpacing.xs),
+              rSpacing.gapVerticalXs,
               Text(
                 '${sell.sellLines.length} ${l10n.translate(LocaleKeys.items)}',
-                style: AppTypography.bodySmall,
+                style: rTypography.bodySmall,
               ),
             ],
-            SizedBox(height: AppSpacing.sm),
+            rSpacing.gapVerticalSm,
             Row(
               children: [
                 Expanded(
@@ -205,7 +213,7 @@ class _SuspendedSaleItem extends StatelessWidget {
                     backgroundColor: theme.colorScheme.primary,
                   ),
                 ),
-                SizedBox(width: AppSpacing.sm),
+                rSpacing.gapHorizontalSm,
                 AppButton(
                   text: l10n.translate(LocaleKeys.delete),
                   icon: Icons.delete_outline,
