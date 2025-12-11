@@ -622,5 +622,6 @@
   "history": "Lịch sử",
   "filters": "Bộ lọc",
   "subtotal": "Tổng phụ",
-  "price_after_tax": "Giá sau thuế"
+  "price_after_tax": "Giá sau thuế",
+  "delete": "Xoá"
 }

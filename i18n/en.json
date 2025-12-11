@@ -622,5 +622,6 @@
   "filters": "Filters",
   "subtotal": "Subtotal",
   "product": "Product",
-  "price_after_tax": "Price after tax"
+  "price_after_tax": "Price after tax",
+  "delete": "Delete"
 }

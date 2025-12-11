@@ -228,28 +228,13 @@ class _CustomerSelectorSection extends StatelessWidget {
             ),
             rSpacing.gapHorizontalSm,
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    customer?.name ?? l10n.translate(LocaleKeys.selectCustomer),
-                    style: rTypography.bodySmall.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (customer?.mobile != null)
-                    Text(
-                      customer!.mobile!,
-                      style: rTypography.labelSmall.copyWith(
-                        color: theme.textTheme.bodySmall?.color,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
+              child: Text(
+                customer?.name ?? l10n.translate(LocaleKeys.selectCustomer),
+                style: rTypography.bodySmall.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Icon(

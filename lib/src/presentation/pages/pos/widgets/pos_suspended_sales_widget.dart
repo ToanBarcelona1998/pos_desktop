@@ -1,6 +1,9 @@
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pos_final/helpers/other_helpers.dart';
+import 'package:pos_final/src/core/core.dart';
+import 'package:pos_final/src/presentation/presentation.dart';
 
 import '../../../../core/constants/app_responsive.dart';
 import '../../../../core/constants/app_radius.dart';
@@ -146,86 +149,84 @@ class _SuspendedSaleItem extends StatelessWidget {
 
     final rSpacing = context.rSpacing;
     final rTypography = context.rTypography;
+
+    final t = AppThemes.light;
     
-    return Card(
-      margin: EdgeInsets.only(bottom: rSpacing.sm),
-      child: Padding(
-        padding: rSpacing.paddingSm,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sell.invoiceNo ?? '',
+                      style: rTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (transactionDate != null)
                       Text(
-                        sell.invoiceNo ?? 'N/A',
-                        style: rTypography.titleMedium.copyWith(
-                          fontWeight: FontWeight.bold,
+                        dateFormat.format(transactionDate),
+                        style: rTypography.bodySmall.copyWith(
+                          color: Colors.grey,
                         ),
                       ),
-                      if (transactionDate != null)
-                        Text(
-                          dateFormat.format(transactionDate),
-                          style: rTypography.bodySmall.copyWith(
-                            color: Colors.grey,
-                          ),
-                        ),
-                    ],
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: rSpacing.sm,
+                  vertical: rSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
+                  borderRadius: AppRadius.borderRadiusSm,
+                ),
+                child: Text(
+                  '${Helper().formatCurrency(sell.invoiceAmount)}đ',
+                  style: rTypography.labelLarge.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: rSpacing.sm,
-                    vertical: rSpacing.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
-                    borderRadius: AppRadius.borderRadiusSm,
-                  ),
-                  child: Text(
-                    sell.invoiceAmount?.toStringAsFixed(0) ?? '0',
-                    style: rTypography.labelLarge.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (sell.sellLines.isNotEmpty) ...[
-              rSpacing.gapVerticalXs,
-              Text(
-                '${sell.sellLines.length} ${l10n.translate(LocaleKeys.items)}',
-                style: rTypography.bodySmall,
               ),
             ],
-            rSpacing.gapVerticalSm,
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    text: l10n.translate(LocaleKeys.continueSale),
-                    icon: Icons.play_arrow,
-                    onPressed: onContinue,
-                    backgroundColor: theme.colorScheme.primary,
-                  ),
-                ),
-                rSpacing.gapHorizontalSm,
-                AppButton(
-                  text: l10n.translate(LocaleKeys.delete),
-                  icon: Icons.delete_outline,
-                  onPressed: onDelete,
-                  isOutlined: true,
-                  backgroundColor: theme.colorScheme.error,
-                  foregroundColor: theme.colorScheme.error,
-                ),
-              ],
+          ),
+          if (sell.sellLines.isNotEmpty) ...[
+            rSpacing.gapVerticalXs,
+            Text(
+              '${sell.sellLines.length} ${l10n.translate(LocaleKeys.items)}',
+              style: rTypography.bodySmall,
             ),
           ],
-        ),
+          rSpacing.gapVerticalSm,
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  text: l10n.translate(LocaleKeys.continueSale),
+                  icon: Icons.play_arrow,
+                  onPressed: onContinue,
+                  backgroundColor: t.primaryColor,
+                ),
+              ),
+              rSpacing.gapHorizontalSm,
+              AppButton(
+                text: l10n.translate(LocaleKeys.delete),
+                icon: Icons.delete_outline,
+                onPressed: onDelete,
+                isOutlined: true,
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.error,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
