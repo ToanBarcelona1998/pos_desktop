@@ -650,9 +650,9 @@ class _CartItemRowState extends State<_CartItemRow> {
             width: rSpacing.xxxl,
             child: IconButton(
               icon: Icon(
-                Icons.delete_outline,
+                Icons.delete,
                 size: rSizes.iconSm,
-                color: widget.theme.colorScheme.error,
+                color: Colors.red,
               ),
               onPressed: widget.onDelete,
               constraints: const BoxConstraints(),

@@ -154,7 +154,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     emit(state.copyWith(
       selectedLocationId: event.locationId,
       status: PosStatus.loadingProducts,
-      cartItems: [], // Clear cart on location change
+      cartItems: [],
+      // Clear cart on location change
       clearCustomer: true,
       clearMessages: true,
       currentPage: 1,
@@ -214,8 +215,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
     // Check if item already in cart
     final existingIndex = updatedCart.indexWhere(
-      (item) =>
-          item.productId == productId && item.variationId == variationId,
+      (item) => item.productId == productId && item.variationId == variationId,
     );
 
     // Calculate new quantity
@@ -305,9 +305,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     Emitter<PosState> emit,
   ) {
     final updatedCart = state.cartItems
-        .where((item) =>
-            !(item.productId == event.productId &&
-                item.variationId == event.variationId))
+        .where((item) => !(item.productId == event.productId &&
+            item.variationId == event.variationId))
         .toList();
     emit(state.copyWith(cartItems: updatedCart));
   }
@@ -395,14 +394,20 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer!.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: saleStatus.value, // Dynamic: isCredit ? 'pending' : invoiceType
+        status: saleStatus.value,
+        // Dynamic: isCredit ? 'pending' : invoiceType
         taxRateId: state.taxId,
-        discountAmount: state.discountAmount, // Use raw discount amount
+        discountAmount: state.discountAmount,
+        // Use raw discount amount
         discountType: state.discountType.value,
-        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (after discount, before tax)
-        pendingAmount: event.isCredit ? adjustedInvoiceAmount : 0.0, // Like old code
-        isQuotation: state.isQuotation, // Use state value
-        isSuspend: state.isSuspended, // Use state value
+        invoiceAmount: adjustedInvoiceAmount,
+        // Use adjusted amount (after discount, before tax)
+        pendingAmount: event.isCredit ? adjustedInvoiceAmount : 0.0,
+        // Like old code
+        isQuotation: state.isQuotation,
+        // Use state value
+        isSuspend: state.isSuspended,
+        // Use state value
         sellLines: sellLines,
       );
 
@@ -419,8 +424,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         payments.add(SellPaymentEntity(
           id: 0,
           sellId: null,
-          method: paymentMethod.value, // Dynamic: based on isCredit or provided
-          amount: paymentAmount, // Dynamic: isCredit ? 0 : adjustedInvoiceAmount
+          method: paymentMethod.value,
+          // Dynamic: based on isCredit or provided
+          amount: paymentAmount,
+          // Dynamic: isCredit ? 0 : adjustedInvoiceAmount
           transactionDate: DateTime.now().toIso8601String(),
         ));
       }
@@ -433,7 +440,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         onSuccess: (createdSell) {
           // Only print if not suspended and printInvoice is true
           final shouldPrint = event.printInvoice && !state.isSuspended;
-          
+
           emit(state.copyWith(
             status: PosStatus.success,
             successMessage: event.isCredit
@@ -443,8 +450,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
                     : (state.isSuspended
                         ? LocaleKeys.saleSuspendedSuccessfully
                         : LocaleKeys.saleCompletedSuccessfully)),
-            createdSellId: createdSell.id, // Store created sell ID for printing
-            shouldPrintInvoice: shouldPrint, // Flag to trigger printing
+            createdSellId: createdSell.id,
+            // Store created sell ID for printing
+            shouldPrintInvoice: shouldPrint,
+            // Flag to trigger printing
             cartItems: [],
             discountAmount: 0,
             discountType: DiscountType.fixed,
@@ -520,13 +529,18 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer!.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: SellStatus.draft.value, // Draft always uses 'draft' status
+        status: SellStatus.draft.value,
+        // Draft always uses 'draft' status
         taxRateId: state.taxId,
-        discountAmount: state.discountAmount, // Use raw discount amount
+        discountAmount: state.discountAmount,
+        // Use raw discount amount
         discountType: state.discountType.value,
-        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (like old code)
-        isQuotation: false, // Draft is not a quotation
-        isSuspend: false, // Draft is not suspended
+        invoiceAmount: adjustedInvoiceAmount,
+        // Use adjusted amount (like old code)
+        isQuotation: false,
+        // Draft is not a quotation
+        isSuspend: false,
+        // Draft is not suspended
         sellLines: sellLines,
       );
 
@@ -599,13 +613,18 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer!.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: SellStatus.quotation.value, // Quotation always uses 'quotation' status
+        status: SellStatus.quotation.value,
+        // Quotation always uses 'quotation' status
         taxRateId: state.taxId,
-        discountAmount: state.discountAmount, // Use raw discount amount
+        discountAmount: state.discountAmount,
+        // Use raw discount amount
         discountType: state.discountType.value,
-        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (like old code)
-        isQuotation: true, // Quotation always has isQuotation = true
-        isSuspend: state.isSuspended, // Use state value
+        invoiceAmount: adjustedInvoiceAmount,
+        // Use adjusted amount (like old code)
+        isQuotation: true,
+        // Quotation always has isQuotation = true
+        isSuspend: state.isSuspended,
+        // Use state value
         sellLines: sellLines,
       );
 
@@ -678,13 +697,18 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer?.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: SellStatus.suspended.value, // Suspended sale always uses 'suspended' status
+        status: SellStatus.suspended.value,
+        // Suspended sale always uses 'suspended' status
         taxRateId: state.taxId,
-        discountAmount: state.discountAmount, // Use raw discount amount
+        discountAmount: state.discountAmount,
+        // Use raw discount amount
         discountType: state.discountType.value,
-        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (like old code)
-        isQuotation: state.isQuotation, // Use state value
-        isSuspend: true, // Suspended sale always has isSuspend = true
+        invoiceAmount: adjustedInvoiceAmount,
+        // Use adjusted amount (like old code)
+        isQuotation: state.isQuotation,
+        // Use state value
+        isSuspend: true,
+        // Suspended sale always has isSuspend = true
         sellLines: sellLines,
       );
 
@@ -783,7 +807,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.loadingMore , clearMessages: true));
+    emit(state.copyWith(status: PosStatus.loadingMore, clearMessages: true));
 
     final nextPage = state.currentPage + 1;
     final result = await _productRepository.getProducts(
@@ -889,8 +913,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     return products.where((product) {
       // Search filter
       if (query.isNotEmpty) {
-        final name = (product.displayName ?? product.productName ?? '')
-            .toLowerCase();
+        final name =
+            (product.displayName ?? product.productName ?? '').toLowerCase();
         final sku = (product.subSku ?? product.sku ?? '').toLowerCase();
         final searchLower = query.toLowerCase();
         if (!name.contains(searchLower) && !sku.contains(searchLower)) {
@@ -916,15 +940,18 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosLoadCustomers event,
     Emitter<PosState> emit,
   ) async {
-    emit(state.copyWith(status: PosStatus.loadingCustomers, clearMessages: true));
+    emit(state.copyWith(
+        status: PosStatus.loadingCustomers, clearMessages: true));
 
-    final result = await _contactRepository.getContacts(type: ContactType.customer.value);
+    final result =
+        await _contactRepository.getContacts(type: ContactType.customer.value);
 
     result.fold(
       onSuccess: (customers) {
         emit(state.copyWith(
           status: PosStatus.idle,
           customers: customers,
+          selectedCustomer: customers.isNotEmpty ? customers[0] : null,
         ));
       },
       onError: (failure) {
@@ -978,7 +1005,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     // Load customer if available
     ContactEntity? customer;
     if (sell.contactId != null) {
-      final customerResult = await _contactRepository.getContactById(sell.contactId!);
+      final customerResult =
+          await _contactRepository.getContactById(sell.contactId!);
       customerResult.fold(
         onSuccess: (c) => customer = c,
         onError: (_) {},
@@ -1000,7 +1028,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           for (final line in sell.sellLines) {
             // Find matching product
             final product = products.firstWhere(
-              (p) => (p.productId ?? p.id) == line.productId &&
+              (p) =>
+                  (p.productId ?? p.id) == line.productId &&
                   (p.variationId ?? 0) == line.variationId,
               orElse: () => products.first, // Fallback, should not happen
             );
@@ -1012,7 +1041,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
               quantity: line.quantity!.toInt(),
               unitPrice: line.unitPrice!,
               discountAmount: line.discountAmount ?? 0,
-              discountType: DiscountTypeExtension.fromString(line.discountType) ?? DiscountType.fixed,
+              discountType:
+                  DiscountTypeExtension.fromString(line.discountType) ??
+                      DiscountType.fixed,
               taxId: line.taxRateId,
             ));
           }
@@ -1023,7 +1054,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
     // Set discount and tax
     final discountAmount = sell.discountAmount ?? 0;
-    final discountType = DiscountTypeExtension.fromString(sell.discountType) ?? DiscountType.fixed;
+    final discountType = DiscountTypeExtension.fromString(sell.discountType) ??
+        DiscountType.fixed;
     final taxId = sell.taxRateId;
 
     // Get tax rate if taxId is available
@@ -1127,7 +1159,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
             final variationId = product.variationId ?? 0;
             final existingIndex = state.cartItems.indexWhere(
               (item) =>
-                  item.productId == productId && item.variationId == variationId,
+                  item.productId == productId &&
+                  item.variationId == variationId,
             );
 
             if (existingIndex >= 0) {
