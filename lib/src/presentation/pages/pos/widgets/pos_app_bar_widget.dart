@@ -55,14 +55,21 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
               children: [
                 Text(
                   '${l10n.translate(LocaleKeys.location)}:  ',
-                  style: rTypography.titleMedium.copyWith(
-                    fontWeight: FontWeight.bold
-                  ),
+                  style: rTypography.titleMedium
+                      .copyWith(fontWeight: FontWeight.bold),
                 ),
-                Text(
-                  locations.where((element) => element.id == selectedLocationId,).firstOrNull?.name ?? '',
-                  style: rTypography.titleMedium,
-                ),
+                Builder(builder: (ctx) {
+                  return Text( // [TODO] should be display selector if locations.length > 0
+                    locations
+                            .where(
+                              (element) => element.id == selectedLocationId,
+                            )
+                            .firstOrNull
+                            ?.name ??
+                        '',
+                    style: rTypography.titleMedium,
+                  );
+                }),
               ],
             ),
           ),
@@ -72,7 +79,8 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
             text: '',
             leading: Row(
               children: [
-                Icon(Icons.calendar_today, color: Colors.white, size: rSizes.iconXs),
+                Icon(Icons.calendar_today,
+                    color: Colors.white, size: rSizes.iconXs),
                 rSpacing.gapHorizontalXs,
                 const LiveClockWidget()
               ],
@@ -103,7 +111,7 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
         rSpacing.gapHorizontalXs,
         IconWrapper(
           icon: Icons.close,
-          onTap: (){},
+          onTap: () {},
           iconColor: Colors.red,
         ),
         rSpacing.gapHorizontalSm,
@@ -120,8 +128,8 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                     tooltip: l10n.translate(LocaleKeys.syncData),
                     onTap: () {
                       context.read<PosOnlineBloc>().add(
-                        const PosOnlineSync(),
-                      );
+                            const PosOnlineSync(),
+                          );
                     },
                   ),
                   rSpacing.gapHorizontalSm,
@@ -132,8 +140,8 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                     tooltip: l10n.translate(LocaleKeys.logout),
                     onTap: () {
                       context.read<PosOnlineBloc>().add(
-                        const PosOnlineLogout(),
-                      );
+                            const PosOnlineLogout(),
+                          );
                     },
                   ),
                   rSpacing.gapHorizontalSm,

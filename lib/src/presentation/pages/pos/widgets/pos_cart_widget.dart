@@ -94,7 +94,7 @@ class PosCartWidget extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1, color: Colors.black.withAlpha((255 * 0.1).round())),
           // Cart items
           // Table header
           Container(
@@ -169,7 +169,7 @@ class PosCartWidget extends StatelessWidget {
                     l10n: l10n,
                   ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1, color: Colors.black.withAlpha((255 * 0.1).round())),
           // Summary
           _CartSummary(
             subtotal: subtotal,
@@ -367,7 +367,7 @@ class _CartItemsList extends StatelessWidget {
       padding: EdgeInsets.zero,
       itemCount: cartItems.length,
       separatorBuilder: (_, __) =>
-          Divider(height: 1, color: theme.dividerColor),
+          Divider(height: 1, color: Colors.black.withAlpha((255 * 0.1).round())),
       itemBuilder: (context, index) {
         final item = cartItems[index];
         final productId = item.productId;
@@ -555,10 +555,11 @@ class _CartItemRowState extends State<_CartItemRow> {
                 IconButton(
                   onPressed: widget.quantity > 1 ? _onMinusQuantity : null,
                   padding: EdgeInsets.symmetric(horizontal: rSpacing.xxs),
-                  icon: Icon(
-                    Icons.minimize,
-                    size: rSizes.iconSm,
-                    color: widget.quantity > 1 ? Colors.red : Colors.grey,
+                  icon: Text(
+                    '-',
+                    style: rTypography.titleLarge.copyWith(
+                      color: widget.quantity > 1 ? Colors.red : Colors.grey,
+                    ),
                   ),
                 ),
                 Expanded(
@@ -612,10 +613,11 @@ class _CartItemRowState extends State<_CartItemRow> {
                     return IconButton(
                       onPressed: canIncrement ? _onPlusQuantity : null,
                       padding: EdgeInsets.symmetric(horizontal: rSpacing.xxs),
-                      icon: Icon(
-                        Icons.add,
-                        size: rSizes.iconSm,
-                        color: canIncrement ? Colors.green : Colors.grey,
+                      icon: Text(
+                        '+',
+                        style: rTypography.titleLarge.copyWith(
+                          color: canIncrement ? Colors.green : Colors.grey
+                        ),
                       ),
                     );
                   },
@@ -685,16 +687,7 @@ class _CartSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rSpacing = context.rSpacing;
-    final rTypography = context.rTypography;
-    final appColor = AppThemes.light;
-    final gradient = LinearGradient(
-      colors: [
-        appColor.primaryColor,
-        appColor.primaryColor.withAlpha((0.8 * 255).round()),
-      ],
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-    );
+    final rTypography = context.rTypography;;
     return Container(
       padding: rSpacing.paddingMd,
       decoration: BoxDecoration(
@@ -705,51 +698,38 @@ class _CartSummary extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _SummaryRow(
-            label: l10n.translate(LocaleKeys.subtotal),
-            value: '${Helper().formatCurrency(subtotal)}$currencySymbol',
-          ),
-          if (discount > 0)
-            _SummaryRow(
-              label: l10n.translate(LocaleKeys.discount),
-              value: '-${Helper().formatCurrency(discount)}$currencySymbol',
-              valueColor: Colors.red,
-            ),
-          if (tax > 0)
-            _SummaryRow(
-              label: l10n.translate(LocaleKeys.tax),
-              value: '${Helper().formatCurrency(tax)}$currencySymbol',
-            ),
-          rSpacing.gapVerticalXs,
-          Container(
-            padding: EdgeInsets.symmetric(
-              vertical: rSpacing.sm,
-              horizontal: rSpacing.md,
-            ),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: AppRadius.borderRadiusSm,
-              gradient: gradient,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.translate(LocaleKeys.total),
-                  style: rTypography.titleMedium.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+          // _SummaryRow(
+          //   label: l10n.translate(LocaleKeys.subtotal),
+          //   value: '${Helper().formatCurrency(subtotal)}$currencySymbol',
+          // ),
+          // if (discount > 0)
+          //   _SummaryRow(
+          //     label: l10n.translate(LocaleKeys.discount),
+          //     value: '-${Helper().formatCurrency(discount)}$currencySymbol',
+          //     valueColor: Colors.red,
+          //   ),
+          // if (tax > 0)
+          //   _SummaryRow(
+          //     label: l10n.translate(LocaleKeys.tax),
+          //     value: '${Helper().formatCurrency(tax)}$currencySymbol',
+          //   ),
+          // rSpacing.gapVerticalXs,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                l10n.translate(LocaleKeys.total),
+                style: rTypography.titleMedium.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                Text(
-                  '${Helper().formatCurrency(total)}$currencySymbol',
-                  style: rTypography.headlineSmall.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              Text(
+                '${Helper().formatCurrency(total)}$currencySymbol',
+                style: rTypography.headlineSmall.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

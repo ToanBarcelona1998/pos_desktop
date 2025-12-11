@@ -463,7 +463,7 @@ class _ProductItem extends StatelessWidget {
       child: Stack(
         children: [
           Opacity(
-            opacity: isOutOfStock ? 0.5 : 1.0,
+            opacity: isOutOfStock ? 0.3 : 1.0,
             child: InkWell(
               onTap: onTap,
               borderRadius: AppRadius.borderRadiusSm,
@@ -551,35 +551,6 @@ class _ProductItem extends StatelessWidget {
                   style: rTypography.labelSmall.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          // Out of stock overlay
-          if (isOutOfStock)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withAlpha((255 * 0.3).round()),
-                  borderRadius: AppRadius.borderRadiusSm,
-                ),
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: rSpacing.xs,
-                      vertical: rSpacing.xxs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: AppRadius.borderRadiusSm,
-                    ),
-                    child: Text(
-                      l10n.translate(LocaleKeys.outOfStock),
-                      style: rTypography.labelSmall.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                   ),
                 ),
               ),

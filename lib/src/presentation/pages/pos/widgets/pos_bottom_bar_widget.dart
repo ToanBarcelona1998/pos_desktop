@@ -142,7 +142,7 @@ class PosBottomBarWidget extends StatelessWidget {
                   Expanded(
                     child: IntrinsicHeight(
                       child: AppGradientButton(
-                        leading: Icon(Icons.history),
+                        leading: Icon(Icons.history, size: rSizes.iconSm,),
                         text: l10n.translate(LocaleKeys.previousPayments),
                         padding: EdgeInsets.symmetric(
                           horizontal: rSpacing.sm,
