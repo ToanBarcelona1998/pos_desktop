@@ -50,7 +50,8 @@ class _PosPageState extends State<PosPage> {
           previous.createdSellId != current.createdSellId,
       listener: (context, state) {
         if (state.status == PosStatus.error && state.errorMessage != null) {
-          ToastManager.showError(context, state.errorMessage!);
+          final translatedMessage = l10n.translate(state.errorMessage!);
+          ToastManager.showError(context, translatedMessage);
         }
         if (state.status == PosStatus.success && state.successMessage != null) {
           // Translate success message key
@@ -297,7 +298,9 @@ class _PosPageState extends State<PosPage> {
       bloc.add(const PosLoadSuspendedSells());
       // Wait a bit for the data to load, then search
       Future.delayed(const Duration(milliseconds: 500), () {
-        _performSuspendSellSearch(context, query);
+        if(context.mounted){
+          _performSuspendSellSearch(context, query);
+        }
       });
     } else {
       _performSuspendSellSearch(context, query);
