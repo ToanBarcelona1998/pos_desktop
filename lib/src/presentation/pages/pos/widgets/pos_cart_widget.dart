@@ -381,6 +381,8 @@ class _CartItemsList extends StatelessWidget {
           priceAfterTax: item.unitPrice,
           pricePay: item.lineTotal,
           currencySymbol: currencySymbol,
+          qtyAvailable: item.product.qtyAvailable,
+          enableStock: item.product.enableStock ?? false,
           onQuantityChanged: (newQuantity) {
             onQuantityChanged?.call(productId, item.variationId, newQuantity);
           },
@@ -400,6 +402,8 @@ class _CartItemRow extends StatefulWidget {
   final double priceAfterTax;
   final double pricePay;
   final String currencySymbol;
+  final double? qtyAvailable;
+  final bool enableStock;
   final void Function(int) onQuantityChanged;
   final VoidCallback onDelete;
   final ThemeData theme;
@@ -410,6 +414,8 @@ class _CartItemRow extends StatefulWidget {
     required this.priceAfterTax,
     required this.pricePay,
     required this.currencySymbol,
+    this.qtyAvailable,
+    this.enableStock = false,
     required this.onQuantityChanged,
     required this.onDelete,
     required this.theme,
@@ -461,34 +467,61 @@ class _CartItemRowState extends State<_CartItemRow> {
 
     final parsed = int.tryParse(text);
     if (parsed == null || parsed < 1) {
-      _quantityController.text = '1';
-      widget.onQuantityChanged(1);
-    } else if (parsed != widget.quantity) {
+      _quantityController.text = widget.quantity.toString();
+      return;
+    }
+
+    // Validate stock if enabled
+    if (widget.enableStock && widget.qtyAvailable != null) {
+      final available = widget.qtyAvailable!;
+      if (available <= 0) {
+        // Reset to current quantity if out of stock
+        _quantityController.text = widget.quantity.toString();
+        return;
+      }
+      if (parsed > available) {
+        // Cap at available stock
+        _quantityController.text = available.toInt().toString();
+        widget.onQuantityChanged(available.toInt());
+        return;
+      }
+    }
+
+    if (parsed != widget.quantity) {
       widget.onQuantityChanged(parsed);
     }
   }
 
   void _onMinusQuantity() {
     final text = _quantityController.text.trim();
-
-    int parsed = int.tryParse(text) ?? 1;
+    int parsed = int.tryParse(text) ?? widget.quantity;
 
     if (parsed > 1) {
       parsed--;
-    } else {
-      parsed = 1;
+      _quantityController.text = parsed.toString();
+      widget.onQuantityChanged(parsed);
     }
-    _quantityController.text = parsed.toString();
-    widget.onQuantityChanged(parsed);
+    // If already at 1, don't do anything (can't go below 1)
   }
 
   void _onPlusQuantity() {
     final text = _quantityController.text.trim();
+    int parsed = int.tryParse(text) ?? widget.quantity;
 
-    int parsed = int.tryParse(text) ?? 1;
+    // Validate stock if enabled
+    if (widget.enableStock && widget.qtyAvailable != null) {
+      final available = widget.qtyAvailable!;
+      if (available <= 0) {
+        // Out of stock, don't increment
+        return;
+      }
+      if (parsed >= available) {
+        // Already at max stock, don't increment
+        return;
+      }
+    }
 
     parsed++;
-
     _quantityController.text = parsed.toString();
     widget.onQuantityChanged(parsed);
   }
@@ -520,12 +553,12 @@ class _CartItemRowState extends State<_CartItemRow> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 IconButton(
-                  onPressed: _onMinusQuantity,
+                  onPressed: widget.quantity > 1 ? _onMinusQuantity : null,
                   padding: EdgeInsets.symmetric(horizontal: rSpacing.xxs),
                   icon: Icon(
                     Icons.minimize,
                     size: rSizes.iconSm,
-                    color: Colors.red,
+                    color: widget.quantity > 1 ? Colors.red : Colors.grey,
                   ),
                 ),
                 Expanded(
@@ -570,14 +603,22 @@ class _CartItemRowState extends State<_CartItemRow> {
                     },
                   ),
                 ),
-                IconButton(
-                  onPressed: _onPlusQuantity,
-                  padding: EdgeInsets.symmetric(horizontal: rSpacing.xxs),
-                  icon: Icon(
-                    Icons.add,
-                    size: rSizes.iconSm,
-                    color: Colors.green,
-                  ),
+                Builder(
+                  builder: (context) {
+                    final canIncrement = !widget.enableStock ||
+                        widget.qtyAvailable == null ||
+                        widget.qtyAvailable! > 0 &&
+                            widget.quantity < widget.qtyAvailable!;
+                    return IconButton(
+                      onPressed: canIncrement ? _onPlusQuantity : null,
+                      padding: EdgeInsets.symmetric(horizontal: rSpacing.xxs),
+                      icon: Icon(
+                        Icons.add,
+                        size: rSizes.iconSm,
+                        color: canIncrement ? Colors.green : Colors.grey,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

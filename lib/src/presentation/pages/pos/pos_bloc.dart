@@ -218,11 +218,27 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           item.productId == productId && item.variationId == variationId,
     );
 
+    // Calculate new quantity
+    final newQuantity = existingIndex >= 0
+        ? updatedCart[existingIndex].quantity + event.quantity
+        : event.quantity;
+
+    // Validate stock if product has stock enabled
+    if (product.enableStock == true) {
+      final qtyAvailable = product.qtyAvailable ?? 0;
+      if (qtyAvailable <= 0 || newQuantity > qtyAvailable) {
+        emit(state.copyWith(
+          errorMessage: LocaleKeys.outOfStock,
+        ));
+        return;
+      }
+    }
+
     if (existingIndex >= 0) {
       // Update quantity
       final existing = updatedCart[existingIndex];
       updatedCart[existingIndex] = existing.copyWith(
-        quantity: existing.quantity + event.quantity,
+        quantity: newQuantity,
       );
     } else {
       // Add new item
@@ -236,7 +252,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       ));
     }
 
-    emit(state.copyWith(cartItems: updatedCart));
+    emit(state.copyWith(cartItems: updatedCart, clearMessages: true));
   }
 
   void _onUpdateCartItemQuantity(
@@ -253,12 +269,34 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     if (index >= 0) {
       if (event.quantity <= 0) {
         updatedCart.removeAt(index);
-      } else {
-        updatedCart[index] = updatedCart[index].copyWith(
-          quantity: event.quantity,
-        );
+        emit(state.copyWith(cartItems: updatedCart, clearMessages: true));
+        return;
       }
-      emit(state.copyWith(cartItems: updatedCart));
+
+      final cartItem = updatedCart[index];
+      final product = cartItem.product;
+
+      // Validate stock if product has stock enabled
+      if (product.enableStock == true) {
+        final qtyAvailable = product.qtyAvailable ?? 0;
+        if (qtyAvailable <= 0) {
+          emit(state.copyWith(
+            errorMessage: LocaleKeys.outOfStock,
+          ));
+          return;
+        }
+        if (event.quantity > qtyAvailable) {
+          emit(state.copyWith(
+            errorMessage: '${LocaleKeys.stockAvailable}: $qtyAvailable',
+          ));
+          return;
+        }
+      }
+
+      updatedCart[index] = cartItem.copyWith(
+        quantity: event.quantity,
+      );
+      emit(state.copyWith(cartItems: updatedCart, clearMessages: true));
     }
   }
 
@@ -1073,13 +1111,35 @@ class PosBloc extends Bloc<PosEvent, PosState> {
             return;
           }
 
-          // Check if product is out of stock
-          if ((product.qtyAvailable ?? 0) <= 0) {
-            emit(state.copyWith(
-              status: PosStatus.error,
-              errorMessage: LocaleKeys.outOfStock,
-            ));
-            return;
+          // Check if product has stock enabled and validate stock
+          if (product.enableStock == true) {
+            final qtyAvailable = product.qtyAvailable ?? 0;
+            if (qtyAvailable <= 0) {
+              emit(state.copyWith(
+                status: PosStatus.error,
+                errorMessage: LocaleKeys.outOfStock,
+              ));
+              return;
+            }
+
+            // Check if product is already in cart and if adding 1 would exceed stock
+            final productId = product.productId ?? product.id;
+            final variationId = product.variationId ?? 0;
+            final existingIndex = state.cartItems.indexWhere(
+              (item) =>
+                  item.productId == productId && item.variationId == variationId,
+            );
+
+            if (existingIndex >= 0) {
+              final existingQuantity = state.cartItems[existingIndex].quantity;
+              if (existingQuantity >= qtyAvailable) {
+                emit(state.copyWith(
+                  status: PosStatus.error,
+                  errorMessage: '${LocaleKeys.stockAvailable}: $qtyAvailable',
+                ));
+                return;
+              }
+            }
           }
 
           // Add product to cart
