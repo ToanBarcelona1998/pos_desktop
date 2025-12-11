@@ -745,7 +745,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.loadingMore));
+    emit(state.copyWith(status: PosStatus.loadingMore , clearMessages: true));
 
     final nextPage = state.currentPage + 1;
     final result = await _productRepository.getProducts(
@@ -878,7 +878,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosLoadCustomers event,
     Emitter<PosState> emit,
   ) async {
-    emit(state.copyWith(status: PosStatus.loadingCustomers));
+    emit(state.copyWith(status: PosStatus.loadingCustomers, clearMessages: true));
 
     final result = await _contactRepository.getContacts(type: ContactType.customer.value);
 
@@ -933,6 +933,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosLoadSuspendedSell event,
     Emitter<PosState> emit,
   ) async {
+    emit(state.copyWith(clearMessages: true));
+
     final sell = event.sell;
 
     // Load customer if available
@@ -1009,7 +1011,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       taxRate: taxRate,
       isSuspended: true,
       invoiceType: invoiceType,
-      successMessage: LocaleKeys.suspendedSaleLoaded,
     ));
   }
 

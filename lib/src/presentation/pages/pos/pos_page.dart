@@ -312,16 +312,13 @@ class _PosPageState extends State<PosPage> {
     final state = bloc.state;
     final searchQuery = query.trim().toLowerCase();
 
-    // Search by ID or invoice number
     SellEntity? foundSell;
     try {
       foundSell = state.suspendedSells.firstWhere(
         (sell) {
-          final idMatch = sell.id.toString().toLowerCase().contains(searchQuery);
           final invoiceMatch = (sell.invoiceNo ?? '')
-              .toLowerCase()
-              .contains(searchQuery);
-          return idMatch || invoiceMatch;
+              .toLowerCase() == searchQuery.toLowerCase();
+          return invoiceMatch;
         },
       );
     } catch (e) {
@@ -330,15 +327,6 @@ class _PosPageState extends State<PosPage> {
 
     if (foundSell != null) {
       bloc.add(PosLoadSuspendedSell(foundSell));
-      ToastManager.showSuccess(
-        context,
-        AppLocalizations.of(context).translate(LocaleKeys.suspendedSaleLoaded),
-      );
-    } else {
-      ToastManager.showError(
-        context,
-        AppLocalizations.of(context).translate(LocaleKeys.noData),
-      );
     }
   }
 
