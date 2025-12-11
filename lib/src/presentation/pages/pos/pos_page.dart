@@ -75,16 +75,13 @@ class _PosPageState extends State<PosPage> {
       builder: (context, state) {
         if (state.status == PosStatus.loading || state.status == PosStatus.initial) {
           return Scaffold(
-            appBar: AppBar(
-              title: Text(l10n.translate(LocaleKeys.pos)),
-            ),
             body: const AppLoadingCenter(),
           );
         }
 
         return RawBarCodeListenerWidget(
-          onBarcodeScanned: (barcode){
-            //
+          onBarcodeScanned: (barcode) {
+            context.read<PosBloc>().add(PosScanBarcode(barcode));
           },
           child: Scaffold(
             backgroundColor: const Color(0xffdcdee3),

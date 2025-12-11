@@ -38,6 +38,12 @@ abstract class ProductRepository {
 
   /// Checks if products need update
   Future<Result<bool>> needsUpdate();
+
+  /// Finds a product by SKU (exact match)
+  Future<Result<ProductEntity?>> findProductBySku({
+    required int locationId,
+    required String sku,
+  });
 }
 
 

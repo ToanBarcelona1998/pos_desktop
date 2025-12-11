@@ -177,5 +177,11 @@ class PosClearPrintFlag extends PosEvent {
   const PosClearPrintFlag();
 }
 
+/// Scan barcode to find and add product
+class PosScanBarcode extends PosEvent {
+  final String barcode;
+  const PosScanBarcode(this.barcode);
+}
+
 
 

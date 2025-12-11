@@ -221,6 +221,30 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
+  @override
+  Future<Result<ProductEntity?>> findProductBySku({
+    required int locationId,
+    required String sku,
+  }) async {
+    // Always try local first (offline-first)
+    try {
+      final product = await _localDataSource.findProductBySku(
+        locationId: locationId,
+        sku: sku,
+      );
+      
+      if (product != null) {
+        return Success(_mapToEntity(product));
+      }
+    } catch (e) {
+      Logger.logE('Error finding product by SKU locally', e);
+    }
+
+    // If not found locally, try remote (but this is less common for barcode scanning)
+    // For barcode scanning, we typically want fast local lookup
+    return const Success(null);
+  }
+
   ProductEntity _mapToEntity(ProductModel model) {
     // Use variation_id as id if id is null (like old code)
     final id = model.id ?? model.variationId ?? 0;

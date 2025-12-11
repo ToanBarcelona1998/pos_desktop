@@ -21,6 +21,12 @@ abstract class ProductLocalDataSource {
     List<Map<String, dynamic>>? productsJson,
   });
 
+  /// Finds a product by SKU (exact match)
+  Future<ProductModel?> findProductBySku({
+    required int locationId,
+    required String sku,
+  });
+
   /// Clears product cache
   Future<void> clearCache();
 
@@ -199,6 +205,43 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
       await batch.commit(noResult: true);
     });
+  }
+
+  @override
+  Future<ProductModel?> findProductBySku({
+    required int locationId,
+    required String sku,
+  }) async {
+    final db = await _dbHelper.database;
+
+    // Query variations with exact SKU match (sub_sku or sku)
+    String query = '''
+      SELECT DISTINCT v.*, vld.qty_available
+      FROM variations v
+      JOIN product_locations pl 
+        ON v.product_id = pl.product_id 
+        AND pl.location_id = ?
+      LEFT JOIN variations_location_details vld 
+        ON v.variation_id = vld.variation_id 
+        AND v.product_id = vld.product_id 
+        AND vld.location_id = ?
+      WHERE (v.sub_sku = ? OR v.sku = ?)
+      LIMIT 1
+    ''';
+
+    final result = await db.rawQuery(query, [locationId, locationId, sku, sku]);
+
+    if (result.isEmpty) return null;
+
+    final jsonMap = Map<String, dynamic>.from(result.first);
+    // Ensure display_name is constructed if missing from DB
+    if (jsonMap['display_name'] == null || jsonMap['display_name'].toString().isEmpty) {
+      final productName = jsonMap['product_name']?.toString() ?? '';
+      final productVariationName = jsonMap['product_variation_name']?.toString() ?? '';
+      final variationName = jsonMap['variation_name']?.toString() ?? '';
+      jsonMap['display_name'] = '$productName $productVariationName $variationName'.trim();
+    }
+    return ProductModel.fromJson(jsonMap);
   }
 
   static double? _parseDouble(dynamic value) {

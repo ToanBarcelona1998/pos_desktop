@@ -34,6 +34,7 @@ export 'location/get_locations_use_case.dart';
 export 'notification/get_notifications_use_case.dart';
 
 // Product use cases
+export 'product/find_product_by_sku_use_case.dart';
 export 'product/get_products_use_case.dart';
 export 'product/search_products_use_case.dart';
 

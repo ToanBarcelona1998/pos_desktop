@@ -64,6 +64,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     on<PosLoadSuspendedSell>(_onLoadSuspendedSell);
     on<PosDeleteSuspendedSell>(_onDeleteSuspendedSell);
     on<PosClearPrintFlag>(_onClearPrintFlag);
+    on<PosScanBarcode>(_onScanBarcode);
   }
 
   static const int _perPage = 50;
@@ -1034,6 +1035,70 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         ));
       },
     );
+  }
+
+  Future<void> _onScanBarcode(
+    PosScanBarcode event,
+    Emitter<PosState> emit,
+  ) async {
+    if (state.selectedLocationId == null) {
+      emit(state.copyWith(
+        status: PosStatus.error,
+        errorMessage: LocaleKeys.pleaseSelectBranch,
+      ));
+      return;
+    }
+
+    if (event.barcode.trim().isEmpty) {
+      return;
+    }
+
+    emit(state.copyWith(clearMessages: true));
+
+    try {
+      // Find product by SKU (barcode)
+      final result = await _productRepository.findProductBySku(
+        locationId: state.selectedLocationId!,
+        sku: event.barcode.trim(),
+      );
+
+      result.fold(
+        onSuccess: (product) {
+          if (product == null) {
+            emit(state.copyWith(
+              status: PosStatus.error,
+              errorMessage: LocaleKeys.noProductsFound,
+            ));
+            return;
+          }
+
+          // Check if product is out of stock
+          if ((product.qtyAvailable ?? 0) <= 0) {
+            emit(state.copyWith(
+              status: PosStatus.error,
+              errorMessage: LocaleKeys.outOfStock,
+            ));
+            return;
+          }
+
+          // Add product to cart
+          add(PosAddToCart(product: product, quantity: 1));
+          emit(state.copyWith(
+            successMessage: LocaleKeys.addedToCart,
+          ));
+        },
+        onError: (failure) {
+          emit(state.copyWith(
+            errorMessage: failure.message,
+          ));
+        },
+      );
+    } catch (e) {
+      emit(state.copyWith(
+        status: PosStatus.error,
+        errorMessage: e.toString(),
+      ));
+    }
   }
 
   void _onClearPrintFlag(
