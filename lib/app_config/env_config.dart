@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'app_config.dart';
 
 /// Environment types
-enum Environment { development, production }
+enum Environment { development, staging, production }
 
 /// Loads configuration from JSON files in assets/config
 class EnvConfig {
@@ -30,9 +30,11 @@ class EnvConfig {
   static Future<AppConfig> load([Environment env = Environment.development]) async {
     _environment = env;
 
-    final configFileName = env == Environment.production
-        ? 'env_production.json'
-        : 'env_development.json';
+    final configFileName = switch(env){
+      Environment.development => 'env_development.json',
+      Environment.staging => 'env_staging.json',
+      Environment.production => 'env_production.json'
+    };
 
     final jsonString = await rootBundle.loadString('assets/config/$configFileName');
     final jsonMap = json.decode(jsonString) as Map<String, dynamic>;
