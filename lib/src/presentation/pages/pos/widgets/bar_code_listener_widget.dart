@@ -21,8 +21,42 @@ class _RawBarCodeListenerWidgetState extends State<RawBarCodeListenerWidget> {
 
   final FocusNode _focusNode = FocusNode();
 
+  void _addFocusListener(){
+    if(!mounted) return;
+    final currentFocus = FocusManager.instance.primaryFocus;
+
+    void requestFocus(){
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (!mounted) return;
+
+        _focusNode.requestFocus();
+      });
+    }
+    bool isEditableText = false;
+
+    if (currentFocus != null) {
+      final widget = currentFocus.context?.widget;
+      if (widget is Focus && widget.debugLabel == 'EditableText') {
+        isEditableText = true;
+      }
+    }
+
+    if (!isEditableText) {
+      requestFocus();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.requestFocus();
+
+    FocusManager.instance.addListener(_addFocusListener);
+  }
+
   @override
   void dispose() {
+    FocusManager.instance.removeListener(_addFocusListener);
     _focusNode.dispose();
     super.dispose();
   }
@@ -43,11 +77,14 @@ class _RawBarCodeListenerWidgetState extends State<RawBarCodeListenerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardListener(
-      focusNode: _focusNode,
-      onKeyEvent: _handleKey,
-      autofocus: true,
-      child: widget.child,
+    return FocusTraversalGroup(
+      policy: ReadingOrderTraversalPolicy(),
+      child: KeyboardListener(
+        focusNode: _focusNode,
+        onKeyEvent: _handleKey,
+        autofocus: false,
+        child: widget.child,
+      ),
     );
   }
 }
