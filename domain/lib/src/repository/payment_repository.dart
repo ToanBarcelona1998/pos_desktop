@@ -21,6 +21,9 @@ abstract class PaymentRepository {
   /// Get payment accounts from local storage
   Future<Result<List<PaymentAccountEntity>>> getLocalPaymentAccounts();
 
+  /// Get payment accounts by payment method type (e.g., 'e-wallet', 'bank_transfer')
+  Future<Result<List<PaymentAccountEntity>>> getPaymentAccountsByType(String paymentMethod);
+
   /// Get customer due
   Future<Result<Map<String, dynamic>>> getCustomerDue(int customerId);
 

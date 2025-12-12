@@ -105,6 +105,30 @@ class PaymentRepositoryImpl implements PaymentRepository {
   }
 
   @override
+  Future<Result<List<PaymentAccountEntity>>> getPaymentAccountsByType(
+    String paymentMethod,
+  ) async {
+    try {
+      final accountsResult = await getLocalPaymentAccounts();
+      return accountsResult.fold(
+        onSuccess: (accounts) {
+          // Filter by payment method and only active, non-closed accounts
+          final filtered = accounts
+              .where((account) =>
+                  account.paymentMethod?.toLowerCase() == paymentMethod.toLowerCase() &&
+                  !account.isClosed)
+              .toList();
+          return Success(filtered);
+        },
+        onError: (failure) => Error(failure),
+      );
+    } catch (e) {
+      Logger.logE('Error getting payment accounts by type', e);
+      return Error(ExceptionHandler.handleException(e));
+    }
+  }
+
+  @override
   Future<Result<Map<String, dynamic>>> getCustomerDue(int customerId) async {
     try {
       final response = await _remoteDataSource.getCustomerDue(customerId);
@@ -180,7 +204,6 @@ class PaymentRepositoryImpl implements PaymentRepository {
       accountNumber: json['account_number']?.toString(),
       accountType: json['account_type']?.toString(),
       note: json['note']?.toString(),
-      isActive: json['is_active'] == 1 || json['is_active'] == true,
       isClosed: json['is_closed'] == 1 || json['is_closed'] == true,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())

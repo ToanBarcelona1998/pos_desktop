@@ -125,6 +125,10 @@ class PosState {
   // Suspended Sells
   final List<SellEntity> suspendedSells;
 
+  // Payment Accounts
+  final List<PaymentAccountEntity> eWalletAccounts;
+  final List<PaymentAccountEntity> bankTransferAccounts;
+
   // Currency
   final String currencySymbol;
 
@@ -159,6 +163,8 @@ class PosState {
     this.isQuotation = false,
     this.isSuspended = false,
     this.suspendedSells = const [],
+    this.eWalletAccounts = const [],
+    this.bankTransferAccounts = const [],
     this.currencySymbol = '\$',
     this.errorMessage,
     this.successMessage,
@@ -235,6 +241,8 @@ class PosState {
     bool? isQuotation,
     bool? isSuspended,
     List<SellEntity>? suspendedSells,
+    List<PaymentAccountEntity>? eWalletAccounts,
+    List<PaymentAccountEntity>? bankTransferAccounts,
     String? currencySymbol,
     String? errorMessage,
     String? successMessage,
@@ -274,6 +282,8 @@ class PosState {
       isQuotation: isQuotation ?? this.isQuotation,
       isSuspended: isSuspended ?? this.isSuspended,
       suspendedSells: suspendedSells ?? this.suspendedSells,
+      eWalletAccounts: eWalletAccounts ?? this.eWalletAccounts,
+      bankTransferAccounts: bankTransferAccounts ?? this.bankTransferAccounts,
       currencySymbol: currencySymbol ?? this.currencySymbol,
       errorMessage: clearMessages ? null : (errorMessage ?? this.errorMessage),
       successMessage:

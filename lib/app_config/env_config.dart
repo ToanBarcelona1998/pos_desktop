@@ -9,7 +9,7 @@ enum Environment { development, staging, production }
 
 /// Loads configuration from JSON files in assets/config
 class EnvConfig {
-  static Environment _environment = Environment.development;
+  static Environment _environment = Environment.staging;
   static AppConfig? _config;
 
   /// Current environment

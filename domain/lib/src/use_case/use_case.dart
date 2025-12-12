@@ -51,6 +51,9 @@ export 'sell/get_sells_use_case.dart';
 export 'sell/get_suspended_sells_use_case.dart';
 export 'sell/delete_sell_use_case.dart';
 
+// Payment use cases
+export 'payment/get_payment_accounts_by_type_use_case.dart';
+
 // Tax use cases
 export 'tax/get_taxes_use_case.dart';
 export 'tax/sync_taxes_use_case.dart';

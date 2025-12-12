@@ -20,6 +20,7 @@ import 'widgets/pos_cart_widget.dart';
 import 'widgets/pos_product_grid_widget.dart';
 import 'widgets/pos_customer_selector_widget.dart';
 import 'widgets/pos_suspended_sales_widget.dart';
+import 'widgets/pos_payment_method_dialog.dart';
 
 /// POS page
 class PosPage extends StatefulWidget {
@@ -30,7 +31,6 @@ class PosPage extends StatefulWidget {
 }
 
 class _PosPageState extends State<PosPage> {
-
   @override
   void initState() {
     super.initState();
@@ -74,7 +74,8 @@ class _PosPageState extends State<PosPage> {
         }
       },
       builder: (context, state) {
-        if (state.status == PosStatus.loading || state.status == PosStatus.initial) {
+        if (state.status == PosStatus.loading ||
+            state.status == PosStatus.initial) {
           return Scaffold(
             body: const AppLoadingCenter(),
           );
@@ -89,7 +90,7 @@ class _PosPageState extends State<PosPage> {
             appBar: PosAppBarWidget(
               locations: state.locations,
               selectedLocationId: state.selectedLocationId,
-              onOpenFullScreen: (){
+              onOpenFullScreen: () {
                 WindowManagerUtils.openFullScreen();
               },
               onLocationChanged: (locationId) {
@@ -150,13 +151,17 @@ class _PosPageState extends State<PosPage> {
                     hasMore: state.hasMore,
                     cartItems: state.cartItems,
                     onProductTap: (product) {
-                      context.read<PosBloc>().add(PosAddToCart(product: product));
+                      context
+                          .read<PosBloc>()
+                          .add(PosAddToCart(product: product));
                     },
                     onSearch: (query) {
                       context.read<PosBloc>().add(PosSearchProducts(query));
                     },
                     onCategoryFilter: (categoryId) {
-                      context.read<PosBloc>().add(PosFilterByCategory(categoryId));
+                      context
+                          .read<PosBloc>()
+                          .add(PosFilterByCategory(categoryId));
                     },
                     onBrandFilter: (brandId) {
                       context.read<PosBloc>().add(PosFilterByBrand(brandId));
@@ -177,7 +182,12 @@ class _PosPageState extends State<PosPage> {
               isSubmitting: state.status == PosStatus.submitting,
               canSubmit: state.canSubmit,
               onCashPayment: () {
-                context.read<PosBloc>().add(const PosSubmitSale());
+                context
+                    .read<PosBloc>()
+                    .add(PosSubmitSale(paymentMethod: PaymentMethod.cash));
+              },
+              onPaymentMethods: () {
+                _showPaymentDialog(context);
               },
               onCreditPayment: () {
                 context.read<PosBloc>().add(const PosSubmitCreditSale());
@@ -222,7 +232,8 @@ class _PosPageState extends State<PosPage> {
                 : state.customers.where((customer) {
                     final query = state.customerSearchQuery.toLowerCase();
                     return customer.name.toLowerCase().contains(query) ||
-                        (customer.mobile?.toLowerCase().contains(query) ?? false);
+                        (customer.mobile?.toLowerCase().contains(query) ??
+                            false);
                   }).toList();
 
             return PosCustomerSelectorWidget(
@@ -294,11 +305,12 @@ class _PosPageState extends State<PosPage> {
     final state = bloc.state;
 
     // Load suspended sells if not loaded
-    if (state.suspendedSells.isEmpty && state.status != PosStatus.loadingSuspendedSells) {
+    if (state.suspendedSells.isEmpty &&
+        state.status != PosStatus.loadingSuspendedSells) {
       bloc.add(const PosLoadSuspendedSells());
       // Wait a bit for the data to load, then search
       Future.delayed(const Duration(milliseconds: 500), () {
-        if(context.mounted){
+        if (context.mounted) {
           _performSuspendSellSearch(context, query);
         }
       });
@@ -316,8 +328,8 @@ class _PosPageState extends State<PosPage> {
     try {
       foundSell = state.suspendedSells.firstWhere(
         (sell) {
-          final invoiceMatch = (sell.invoiceNo ?? '')
-              .toLowerCase() == searchQuery.toLowerCase();
+          final invoiceMatch =
+              (sell.invoiceNo ?? '').toLowerCase() == searchQuery.toLowerCase();
           return invoiceMatch;
         },
       );
@@ -335,7 +347,8 @@ class _PosPageState extends State<PosPage> {
     final state = bloc.state;
 
     // Load suspended sells if not loaded
-    if (state.suspendedSells.isEmpty && state.status != PosStatus.loadingSuspendedSells) {
+    if (state.suspendedSells.isEmpty &&
+        state.status != PosStatus.loadingSuspendedSells) {
       bloc.add(const PosLoadSuspendedSells());
     }
 
@@ -360,6 +373,26 @@ class _PosPageState extends State<PosPage> {
       ),
       actions: [],
       width: 500,
+    );
+  }
+
+  void _showPaymentDialog(BuildContext context) {
+    final bloc = context.read<PosBloc>();
+    DialogProvider.showCustomDialog(
+      context,
+      child: BlocProvider.value(
+        value: bloc,
+        child: BlocBuilder<PosBloc, PosState>(
+          builder: (_, state) {
+            return PosPaymentMethodDialog(
+              eWalletAccounts: state.eWalletAccounts,
+              bankTransferAccounts: state.bankTransferAccounts,
+              total: state.total,
+              currencySymbol: state.currencySymbol,
+            );
+          },
+        ),
+      ),
     );
   }
 }

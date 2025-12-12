@@ -14,6 +14,7 @@ class PosBottomBarWidget extends StatelessWidget {
   final bool isSubmitting;
   final bool canSubmit;
   final VoidCallback? onCashPayment;
+  final VoidCallback? onPaymentMethods; // New callback for payment methods button
   final VoidCallback? onCreditPayment;
   final VoidCallback? onDraft;
   final VoidCallback? onQuotation;
@@ -27,6 +28,7 @@ class PosBottomBarWidget extends StatelessWidget {
     this.isSubmitting = false,
     this.canSubmit = false,
     this.onCashPayment,
+    this.onPaymentMethods,
     this.onCreditPayment,
     this.onDraft,
     this.onQuotation,
@@ -98,7 +100,7 @@ class PosBottomBarWidget extends StatelessWidget {
                       color: Colors.deepOrange,
                       icon: Icons.payment,
                       isLoading: isSubmitting,
-                      onTap: canSubmit ? onCashPayment : null,
+                      onTap: canSubmit ? onPaymentMethods : null,
                     ),
                   ),
                   rSpacing.gapHorizontalSm,

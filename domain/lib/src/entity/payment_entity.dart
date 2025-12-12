@@ -38,7 +38,6 @@ class PaymentAccountEntity extends Entity {
   final String? accountNumber;
   final String? accountType;
   final String? note;
-  final bool isActive;
   final bool isClosed;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -56,7 +55,6 @@ class PaymentAccountEntity extends Entity {
     this.accountNumber,
     this.accountType,
     this.note,
-    this.isActive = true,
     this.isClosed = false,
     this.createdAt,
     this.updatedAt,
@@ -76,7 +74,6 @@ class PaymentAccountEntity extends Entity {
         accountNumber,
         accountType,
         note,
-        isActive,
         isClosed,
         createdAt,
         updatedAt,

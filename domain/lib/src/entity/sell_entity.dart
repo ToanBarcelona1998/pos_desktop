@@ -158,7 +158,14 @@ final class SellPaymentEntity extends Entity {
   });
 
   @override
-  List<Object?> get props => [id, sellId, method, amount];
+  List<Object?> get props => [
+        id,
+        sellId,
+        method,
+        amount,
+        accountId,
+
+      ];
 }
 
 

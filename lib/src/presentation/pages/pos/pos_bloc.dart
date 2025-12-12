@@ -16,6 +16,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   final GetSuspendedSellsUseCase _getSuspendedSellsUseCase;
   final DeleteSellUseCase _deleteSellUseCase;
   final BusinessRepository _businessRepository;
+  final GetPaymentAccountsByTypeUseCase _getPaymentAccountsByTypeUseCase;
 
   PosBloc({
     required LocationRepository locationRepository,
@@ -27,6 +28,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     required GetSuspendedSellsUseCase getSuspendedSellsUseCase,
     required DeleteSellUseCase deleteSellUseCase,
     required BusinessRepository businessRepository,
+    required GetPaymentAccountsByTypeUseCase getPaymentAccountsByTypeUseCase,
   })  : _locationRepository = locationRepository,
         _productRepository = productRepository,
         _categoryRepository = categoryRepository,
@@ -36,6 +38,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         _getSuspendedSellsUseCase = getSuspendedSellsUseCase,
         _deleteSellUseCase = deleteSellUseCase,
         _businessRepository = businessRepository,
+        _getPaymentAccountsByTypeUseCase = getPaymentAccountsByTypeUseCase,
         super(PosState.initial()) {
     on<PosInitialize>(_onInitialize);
     on<PosSelectLocation>(_onSelectLocation);
@@ -47,7 +50,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     on<PosApplyDiscount>(_onApplyDiscount);
     on<PosSetTax>(_onSetTax);
     on<PosSubmitSale>(_onSubmitSale);
-    on<PosSubmitCreditSale>(_onSubmitCreditSale);
     on<PosCreateDraft>(_onCreateDraft);
     on<PosCreateQuotation>(_onCreateQuotation);
     on<PosSuspendSale>(_onSuspendSale);
@@ -122,6 +124,28 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         onError: (_) {},
       );
 
+      final eWalletResult = await _getPaymentAccountsByTypeUseCase.call(
+        GetPaymentAccountsByTypeParams(paymentMethod: PaymentMethod.eWallet.value),
+      );
+
+      // Fetch bank transfer accounts
+      final bankTransferResult = await _getPaymentAccountsByTypeUseCase.call(
+        GetPaymentAccountsByTypeParams(paymentMethod: PaymentMethod.bankTransfer.value),
+      );
+
+      List<PaymentAccountEntity> eWalletAccounts = [];
+      List<PaymentAccountEntity> bankTransferAccounts = [];
+
+      eWalletResult.fold(
+        onSuccess: (accounts) => eWalletAccounts = accounts,
+        onError: (_) {},
+      );
+
+      bankTransferResult.fold(
+        onSuccess: (accounts) => bankTransferAccounts = accounts,
+        onError: (_) {},
+      );
+
       emit(state.copyWith(
         status: PosStatus.idle,
         locations: locations,
@@ -129,6 +153,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         categories: categories,
         brands: brands,
         currencySymbol: currencySymbol,
+        eWalletAccounts: eWalletAccounts,
+        bankTransferAccounts: bankTransferAccounts,
       ));
 
       // Load products for default location
@@ -376,12 +402,16 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         );
       }).toList();
 
+      final bool isCredit = event.paymentMethod == PaymentMethod.eWallet || event.paymentMethod == PaymentMethod.bankTransfer;
+
       // Calculate adjusted invoice amount (like old code: invoiceAmount - discount)
       // Note: old code uses invoiceAmount (subtotal) before tax, then subtracts discount
       final adjustedInvoiceAmount = state.adjustedInvoiceAmount;
 
+      final paymentAmount = isCredit ? 0.0 : adjustedInvoiceAmount;
+
       // Determine status (like old code: isCredit ? 'pending' : invoiceType)
-      final saleStatus = event.isCredit
+      final saleStatus = isCredit
           ? SellStatus.pending
           : state.invoiceType.toSellStatus();
 
@@ -401,7 +431,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         discountType: state.discountType.value,
         invoiceAmount: adjustedInvoiceAmount,
         // Use adjusted amount (after discount, before tax)
-        pendingAmount: event.isCredit ? adjustedInvoiceAmount : 0.0,
+        pendingAmount: isCredit ? adjustedInvoiceAmount : 0.0,
         // Like old code
         isQuotation: state.isQuotation,
         // Use state value
@@ -413,21 +443,16 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       // Create payment only if not quotation and not suspended (like old code)
       final List<SellPaymentEntity> payments = [];
       if (!state.isQuotation && !state.isSuspended) {
-        // Determine payment method (like old code: isCredit ? 'card' : 'cash')
-        final paymentMethod = event.paymentMethod ??
-            (event.isCredit ? PaymentMethod.card : PaymentMethod.cash);
-
-        // Payment amount (like old code: isCredit ? 0 : adjustedInvoiceAmount)
-        final paymentAmount = event.isCredit ? 0.0 : adjustedInvoiceAmount;
+        final paymentMethod = event.paymentMethod;
 
         payments.add(SellPaymentEntity(
           id: 0,
           sellId: null,
           method: paymentMethod.value,
-          // Dynamic: based on isCredit or provided
           amount: paymentAmount,
-          // Dynamic: isCredit ? 0 : adjustedInvoiceAmount
+          accountId: event.paymentAccount?.id,
           transactionDate: DateTime.now().toIso8601String(),
+          // Full payment account info
         ));
       }
 
@@ -442,7 +467,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
           emit(state.copyWith(
             status: PosStatus.success,
-            successMessage: event.isCredit
+            successMessage: isCredit
                 ? LocaleKeys.creditSaleCreatedSuccessfully
                 : (state.isQuotation
                     ? LocaleKeys.quotationCreatedSuccessfully
@@ -477,15 +502,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         errorMessage: e.toString(),
       ));
     }
-  }
-
-  Future<void> _onSubmitCreditSale(
-    PosSubmitCreditSale event,
-    Emitter<PosState> emit,
-  ) async {
-    // Credit sale is now handled by PosSubmitSale with isCredit=true
-    // This method redirects to the unified submit method
-    add(PosSubmitSale(isCredit: true));
   }
 
   Future<void> _onCreateDraft(

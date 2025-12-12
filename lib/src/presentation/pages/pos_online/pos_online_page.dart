@@ -43,6 +43,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   bool _isFirstLoad = true;
   bool _syncDialogShowing = false;
+  bool _popupOfflineIsShowed = false;
 
   final AppConfig _appConfig = sl.get<AppConfig>();
   final WebViewEnvironment? _webViewEnvironment =
@@ -102,6 +103,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
             getSuspendedSellsUseCase: sl.get<GetSuspendedSellsUseCase>(),
             deleteSellUseCase: sl.get<DeleteSellUseCase>(),
             businessRepository: sl.get<BusinessRepository>(),
+            getPaymentAccountsByTypeUseCase: sl.get<GetPaymentAccountsByTypeUseCase>(),
           ),
         ),
       ],
@@ -329,14 +331,18 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   void update(bool newState) {
-    if (!newState && mounted && !_posOnlineBloc.state.showOfflinePos && context.authCubit.isAuthenticated) {
+    if (!newState && mounted && !_posOnlineBloc.state.showOfflinePos && context.authCubit.isAuthenticated && !_popupOfflineIsShowed) {
       final l10n = AppLocalizations.of(context);
       DialogProvider.showConfirmDialog(
         context,
         message: l10n.translate(LocaleKeys.networkConnectionIssue),
         onConfirm: () {
+          _popupOfflineIsShowed = false;
           _posOnlineBloc.add(const PosOnlineShowOffline());
         },
+        onCancel: (){
+          _popupOfflineIsShowed = false;
+        }
       );
     }
   }

@@ -263,6 +263,7 @@ class AppNavigator {
               getSuspendedSellsUseCase: sl.get<GetSuspendedSellsUseCase>(),
               deleteSellUseCase: sl.get<DeleteSellUseCase>(),
               businessRepository: sl.get<BusinessRepository>(),
+              getPaymentAccountsByTypeUseCase: sl.get<GetPaymentAccountsByTypeUseCase>(),
             ),
             child: const PosPage(),
           ),
