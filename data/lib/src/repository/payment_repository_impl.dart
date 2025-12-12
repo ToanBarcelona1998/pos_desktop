@@ -153,21 +153,51 @@ class PaymentRepositoryImpl implements PaymentRepository {
   }
 
   PaymentAccountEntity _mapAccountToEntity(Map<String, dynamic> json) {
+    // Parse account_details
+    List<PaymentAccountDetailEntity>? accountDetails;
+    if (json['account_details'] != null) {
+      final details = json['account_details'] as List<dynamic>?;
+      if (details != null) {
+        accountDetails = details
+            .map((item) {
+              if (item is Map<String, dynamic>) {
+                return PaymentAccountDetailEntity(
+                  label: item['label']?.toString(),
+                  value: item['value']?.toString(),
+                );
+              }
+              return null;
+            })
+            .whereType<PaymentAccountDetailEntity>()
+            .toList();
+      }
+    }
+
     return PaymentAccountEntity(
       id: json['id'] as int,
       businessId: json['business_id'] as int,
       name: json['name'] as String,
-      accountNumber: json['account_number'] as String? ?? '',
-      accountType: json['account_type'] as String?,
-      note: json['note'] as String?,
-      isActive: json['is_active'] == 1,
-      isClosed: json['is_closed'] == 1,
+      accountNumber: json['account_number']?.toString(),
+      accountType: json['account_type']?.toString(),
+      note: json['note']?.toString(),
+      isActive: json['is_active'] == 1 || json['is_active'] == true,
+      isClosed: json['is_closed'] == 1 || json['is_closed'] == true,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
       updatedAt: json['updated_at'] != null
           ? DateTime.tryParse(json['updated_at'].toString())
           : null,
+      paymentMethod: json['payment_method']?.toString(),
+      bankBin: json['bank_bin']?.toString(),
+      imageEWallet: json['image_e_wallet']?.toString(),
+      cachedImagePath: json['cached_image_path']?.toString(),
+      accountTypeId: json['account_type_id'] != null
+          ? (json['account_type_id'] is int
+              ? json['account_type_id'] as int
+              : int.tryParse(json['account_type_id'].toString()))
+          : null,
+      accountDetails: accountDetails,
     );
   }
 }

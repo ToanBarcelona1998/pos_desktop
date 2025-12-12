@@ -357,6 +357,7 @@ void _registerServices() {
         productDataSource: sl.get<ProductRemoteDataSource>(),
         productLocalDataSource: sl.get<ProductLocalDataSource>(),
         contactLocalDataSource: sl.get<ContactLocalDataSource>(),
+        baseUrl: sl.get<AppConfig>().baseUrl,
       ));
 }
 

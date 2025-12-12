@@ -16,6 +16,7 @@ import '../data_source/remote/permission_remote_data_source.dart';
 import '../data_source/remote/product_remote_data_source.dart';
 import '../data_source/remote/subscription_remote_data_source.dart';
 import '../data_source/remote/tax_remote_data_source.dart';
+import '../utils/image_cache_helper.dart';
 
 /// Service for syncing system data for offline mode
 /// This mirrors the functionality of the original SystemApi class
@@ -33,6 +34,7 @@ class SystemSyncService {
   final ProductRemoteDataSource _productDataSource;
   final ProductLocalDataSource _productLocalDataSource;
   final ContactLocalDataSource _contactLocalDataSource;
+  final String _baseUrl;
 
   const SystemSyncService({
     required SystemLocalDataSource localDataSource,
@@ -48,6 +50,7 @@ class SystemSyncService {
     required ProductRemoteDataSource productDataSource,
     required ProductLocalDataSource productLocalDataSource,
     required ContactLocalDataSource contactLocalDataSource,
+    required String baseUrl,
   })  : _localDataSource = localDataSource,
         _brandDataSource = brandDataSource,
         _categoryDataSource = categoryDataSource,
@@ -60,7 +63,8 @@ class SystemSyncService {
         _contactDataSource = contactDataSource,
         _productDataSource = productDataSource,
         _productLocalDataSource = productLocalDataSource,
-        _contactLocalDataSource = contactLocalDataSource;
+        _contactLocalDataSource = contactLocalDataSource,
+        _baseUrl = baseUrl;
 
   /// Sync all system data from remote to local storage
   /// This should be called after login to cache data for offline use
@@ -228,11 +232,56 @@ class SystemSyncService {
   Future<void> _syncPaymentAccounts() async {
     try {
       final paymentAccounts = await _paymentDataSource.getPaymentAccounts();
+
+      // Process each account to download images
+      final List<Map<String, dynamic>> processedAccounts = [];
+
+      for (final account in paymentAccounts) {
+        final Map<String, dynamic> processedAccount = Map.from(account);
+
+        // Check if image_e_wallet exists and is not null
+        final imageEWallet = account['image_e_wallet']?.toString();
+        if (imageEWallet != null && imageEWallet.isNotEmpty) {
+          try {
+            // Construct full image URL
+            // If image_e_wallet is already a full URL, use it; otherwise construct from baseUrl
+            String imageUrl = imageEWallet;
+            if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+              // Assume images are stored in /uploads/payment/ directory
+              imageUrl = '$_baseUrl/uploads/payment/$imageEWallet';
+            }
+
+            // Download and cache the image
+            final cachedPath = await ImageCacheHelper.downloadAndCacheImage(
+              imageUrl: imageUrl,
+              cacheSubdirectory: 'payment_accounts',
+              fileName: '${account['id']}_$imageEWallet',
+            );
+
+            if (cachedPath != null) {
+              processedAccount['cached_image_path'] = cachedPath;
+            } else {
+              // If download failed, clear cached_image_path
+              processedAccount['cached_image_path'] = null;
+            }
+          } catch (e) {
+            Logger.logE('Error downloading image for payment account ${account['id']}', e);
+            processedAccount['cached_image_path'] = null;
+          }
+        } else {
+          // No image, clear cached path
+          processedAccount['cached_image_path'] = null;
+        }
+
+        processedAccounts.add(processedAccount);
+      }
+
+      // Save processed accounts to local storage
       await _localDataSource.insert(
         'payment_accounts',
-        jsonEncode(paymentAccounts),
+        jsonEncode(processedAccounts),
       );
-      Logger.logI('Payment accounts synced: ${paymentAccounts.length}');
+      Logger.logI('Payment accounts synced: ${processedAccounts.length}');
     } catch (e) {
       Logger.logE('Error syncing payment accounts: $e');
       // Silently fail
@@ -354,6 +403,7 @@ class SystemSyncService {
       await _localDataSource.clearAll();
       await _productLocalDataSource.clearCache();
       await _contactLocalDataSource.clearCache();
+      await ImageCacheHelper.clearCache(cacheSubdirectory: 'payment_accounts');
       Logger.logI('System cache cleared');
     } catch (e) {
       Logger.logE('Error clearing cache', e);
