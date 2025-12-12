@@ -2,7 +2,6 @@ import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/core.dart';
-import '../../../core/localization/locale_keys.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
 
@@ -321,7 +320,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       discountType: DiscountType.fixed,
       taxId: null,
       taxRate: 0,
-      clearCustomer: true,
+      selectedCustomer: state.customers.isNotEmpty ? state.customers[0] : null,
       invoiceType: InvoiceType.final_,
       isQuotation: false,
       isSuspended: false,
@@ -459,7 +458,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
             discountType: DiscountType.fixed,
             taxId: null,
             taxRate: 0,
-            clearCustomer: true,
+            selectedCustomer: state.customers.isNotEmpty ? state.customers[0] : null,
             invoiceType: InvoiceType.final_,
             isQuotation: false,
             isSuspended: false,
@@ -639,7 +638,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
             status: PosStatus.success,
             successMessage: LocaleKeys.quotationCreatedSuccessfully,
             cartItems: [],
-            clearCustomer: true,
+            selectedCustomer: state.customers.isNotEmpty ? state.customers[0] : null,
           ));
         },
         onError: (failure) {
@@ -723,7 +722,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
             status: PosStatus.success,
             successMessage: LocaleKeys.saleSuspendedSuccessfully,
             cartItems: [],
-            clearCustomer: true,
+            selectedCustomer: state.customers.isNotEmpty ? state.customers[0] : null,
             isSuspended: true,
           ));
         },
