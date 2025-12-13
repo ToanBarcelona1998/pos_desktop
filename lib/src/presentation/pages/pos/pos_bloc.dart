@@ -181,7 +181,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       status: PosStatus.loadingProducts,
       cartItems: [],
       // Clear cart on location change
-      clearCustomer: true,
       clearMessages: true,
       currentPage: 1,
       hasMore: true,
@@ -761,6 +760,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosCancelSale event,
     Emitter<PosState> emit,
   ) {
+    emit(state.copyWith(clearMessages: true));
     add(const PosClearCart());
   }
 

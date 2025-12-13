@@ -161,7 +161,6 @@ class _PosPaymentMethodDialogState extends State<PosPaymentMethodDialog> {
                               File(selectedAccount!.cachedImagePath!),
                               width: rSizes.modalWidthSm,
                               height: rSizes.modalWidthSm,
-                              fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
                               const SizedBox.shrink(),
                             )

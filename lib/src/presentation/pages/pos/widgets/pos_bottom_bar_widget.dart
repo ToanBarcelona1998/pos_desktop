@@ -83,12 +83,12 @@ class PosBottomBarWidget extends StatelessWidget {
               color: Colors.red,
               onTap: onSuspend,
             ),
-            _ActionButton(
-              icon: Icons.credit_card,
-              label: l10n.translate(LocaleKeys.credit),
-              color: Colors.purple,
-              onTap: onCreditPayment,
-            ),
+            // _ActionButton(
+            //   icon: Icons.credit_card,
+            //   label: l10n.translate(LocaleKeys.credit),
+            //   color: Colors.purple,
+            //   onTap: onCreditPayment,
+            // ),
             rSpacing.gapHorizontalMd,
             // Main action buttons
             Expanded(

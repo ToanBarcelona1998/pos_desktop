@@ -304,7 +304,7 @@ class SystemSyncService {
   /// Sync contacts
   Future<void> _syncContacts() async {
     try {
-      final contacts = await _contactDataSource.getContacts(perPage: 750);
+      final contacts = await _contactDataSource.getContacts(perPage: -1, type: 'customer');
       // Save contacts to local database
       await _contactLocalDataSource.saveContacts(contacts);
       Logger.logI('Contacts synced: ${contacts.length}');

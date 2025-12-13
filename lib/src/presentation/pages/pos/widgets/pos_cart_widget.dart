@@ -7,7 +7,6 @@ import 'package:pos_final/src/presentation/presentation.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/localization/app_localization.dart';
 import '../../../../core/localization/locale_keys.dart';
-import '../../../../core/theme/app_theme_base.dart';
 import '../pos_state.dart';
 
 /// POS cart widget
@@ -111,7 +110,7 @@ class PosCartWidget extends StatelessWidget {
               children: [
                 // Product column
                 Expanded(
-                  flex: 4,
+                  flex: 3,
                   child: Text(
                     l10n.translate(LocaleKeys.product),
                     style: rTypography.bodyMedium.copyWith(
@@ -177,6 +176,7 @@ class PosCartWidget extends StatelessWidget {
             tax: tax,
             total: total,
             currencySymbol: currencySymbol,
+            totalItems: cartItems.length,
             l10n: l10n,
             theme: theme,
           ),
@@ -203,7 +203,7 @@ class _CustomerSelectorSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final rSpacing = context.rSpacing;
     final rTypography = context.rTypography;
-    
+
     return InkWell(
       onTap: onSelect,
       borderRadius: AppRadius.borderRadiusSm,
@@ -267,7 +267,7 @@ class _SearchField extends StatelessWidget {
     final rSpacing = context.rSpacing;
     final rTypography = context.rTypography;
     final rSizes = context.rSizes;
-    
+
     return TextField(
       onChanged: onChanged,
       style: rTypography.bodySmall,
@@ -322,7 +322,7 @@ class _EmptyCart extends StatelessWidget {
     final rSpacing = context.rSpacing;
     final rTypography = context.rTypography;
     final rSizes = context.rSizes;
-    
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -531,14 +531,14 @@ class _CartItemRowState extends State<_CartItemRow> {
     final rSpacing = context.rSpacing;
     final rTypography = context.rTypography;
     final rSizes = context.rSizes;
-    
+
     return Container(
       padding: rSpacing.paddingSm,
       child: Row(
         children: [
           // Product column
           Expanded(
-            flex: 4,
+            flex: 3,
             child: Text(
               widget.productName,
               style: rTypography.bodyMedium.copyWith(color: Colors.lightBlue),
@@ -670,6 +670,7 @@ class _CartSummary extends StatelessWidget {
   final double discount;
   final double tax;
   final double total;
+  final int totalItems;
   final String currencySymbol;
   final AppLocalizations l10n;
   final ThemeData theme;
@@ -680,6 +681,7 @@ class _CartSummary extends StatelessWidget {
     required this.tax,
     required this.total,
     required this.currencySymbol,
+    required this.totalItems,
     required this.l10n,
     required this.theme,
   });
@@ -717,17 +719,37 @@ class _CartSummary extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                l10n.translate(LocaleKeys.total),
-                style: rTypography.titleMedium.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  Text(
+                    '${l10n.translate(LocaleKeys.totalItems)}: ',
+                    style: rTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '$totalItems',
+                    style: rTypography.headlineSmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '${Helper().formatCurrency(total)}$currencySymbol',
-                style: rTypography.headlineSmall.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  Text(
+                    '${l10n.translate(LocaleKeys.total)}: ',
+                    style: rTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '${Helper().formatCurrency(total)}$currencySymbol',
+                    style: rTypography.headlineSmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -752,7 +774,7 @@ class _SummaryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final rSpacing = context.rSpacing;
     final rTypography = context.rTypography;
-    
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: rSpacing.xxs),
       child: Row(

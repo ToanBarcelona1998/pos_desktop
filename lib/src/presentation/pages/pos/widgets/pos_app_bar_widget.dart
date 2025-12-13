@@ -54,22 +54,12 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
             child: Row(
               children: [
                 Text(
-                  '${l10n.translate(LocaleKeys.location)}:  ',
+                  '${l10n.translate(LocaleKeys.location)}:',
                   style: rTypography.titleMedium
                       .copyWith(fontWeight: FontWeight.bold),
                 ),
-                Builder(builder: (ctx) {
-                  return Text( // [TODO] should be display selector if locations.length > 0
-                    locations
-                            .where(
-                              (element) => element.id == selectedLocationId,
-                            )
-                            .firstOrNull
-                            ?.name ??
-                        '',
-                    style: rTypography.titleMedium,
-                  );
-                }),
+                rSpacing.gapHorizontalMd,
+                _buildLocations(context),
               ],
             ),
           ),
@@ -152,6 +142,91 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildLocations(BuildContext context) {
+    // Multiple accounts - dropdown
+    final theme = Theme.of(context);
+
+    final rTypography = context.rTypography;
+    
+    if(locations.isEmpty){
+      return const SizedBox();
+    }
+
+    final initValue = locations
+        .where(
+          (element) => element.id == selectedLocationId,
+    )
+        .first;
+    
+    if(locations.length == 1){
+      return Text(
+        initValue.name,
+        style: rTypography.titleMedium,
+      );
+    }
+    
+    return IntrinsicWidth(
+      child: DropdownButtonFormField<LocationEntity>(
+        initialValue: initValue,
+        dropdownColor: Colors.white,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: AppRadius.borderRadiusSm,
+            borderSide: BorderSide(
+              color: theme.dividerColor,
+              width: 1,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: AppRadius.borderRadiusSm,
+            borderSide: BorderSide(
+              color: theme.dividerColor,
+              width: 1,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: AppRadius.borderRadiusSm,
+            borderSide: BorderSide(
+              color: theme.primaryColor,
+              width: 1,
+            ),
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: context.rSpacing.md,
+            vertical: context.rSpacing.sm,
+          ),
+        ),
+        style: context.rTypography.bodyMedium.copyWith(color: Colors.black),
+        selectedItemBuilder: (context) {
+          return locations.map((location) {
+            return Text(
+              location.name,
+              overflow: TextOverflow.ellipsis,
+              style: context.rTypography.bodyMedium,
+            );
+          }).toList();
+        },
+        items: locations.map((location) {
+          return DropdownMenuItem<LocationEntity>(
+            value: location,
+            child: Text(
+              location.name,
+              overflow: TextOverflow.ellipsis,
+              style: context.rTypography.bodyMedium.copyWith(color: Colors.black),
+            ),
+          );
+        }).toList(),
+        onChanged: (location) {
+          if(location != null){
+            onLocationChanged?.call(location.id); 
+          }
+        },
+      ),
     );
   }
 }
