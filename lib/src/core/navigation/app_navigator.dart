@@ -261,6 +261,7 @@ class AppNavigator {
               contactRepository: sl.get<ContactRepository>(),
               createSellUseCase: sl.get<CreateSellUseCase>(),
               getSuspendedSellsUseCase: sl.get<GetSuspendedSellsUseCase>(),
+              getFinalSellsUseCase: sl.get<GetFinalSellsUseCase>(),
               deleteSellUseCase: sl.get<DeleteSellUseCase>(),
               businessRepository: sl.get<BusinessRepository>(),
               getPaymentAccountsByTypeUseCase: sl.get<GetPaymentAccountsByTypeUseCase>(),

@@ -104,6 +104,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
             deleteSellUseCase: sl.get<DeleteSellUseCase>(),
             businessRepository: sl.get<BusinessRepository>(),
             getPaymentAccountsByTypeUseCase: sl.get<GetPaymentAccountsByTypeUseCase>(),
+            getFinalSellsUseCase: sl.get<GetFinalSellsUseCase>(),
           ),
         ),
       ],

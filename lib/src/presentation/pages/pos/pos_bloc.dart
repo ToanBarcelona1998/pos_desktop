@@ -14,6 +14,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   final ContactRepository _contactRepository;
   final CreateSellUseCase _createSellUseCase;
   final GetSuspendedSellsUseCase _getSuspendedSellsUseCase;
+  final GetFinalSellsUseCase _getFinalSellsUseCase;
   final DeleteSellUseCase _deleteSellUseCase;
   final BusinessRepository _businessRepository;
   final GetPaymentAccountsByTypeUseCase _getPaymentAccountsByTypeUseCase;
@@ -26,6 +27,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     required ContactRepository contactRepository,
     required CreateSellUseCase createSellUseCase,
     required GetSuspendedSellsUseCase getSuspendedSellsUseCase,
+    required GetFinalSellsUseCase getFinalSellsUseCase,
     required DeleteSellUseCase deleteSellUseCase,
     required BusinessRepository businessRepository,
     required GetPaymentAccountsByTypeUseCase getPaymentAccountsByTypeUseCase,
@@ -36,6 +38,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         _contactRepository = contactRepository,
         _createSellUseCase = createSellUseCase,
         _getSuspendedSellsUseCase = getSuspendedSellsUseCase,
+        _getFinalSellsUseCase = getFinalSellsUseCase,
         _deleteSellUseCase = deleteSellUseCase,
         _businessRepository = businessRepository,
         _getPaymentAccountsByTypeUseCase = getPaymentAccountsByTypeUseCase,
@@ -64,6 +67,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     on<PosLoadSuspendedSells>(_onLoadSuspendedSells);
     on<PosLoadSuspendedSell>(_onLoadSuspendedSell);
     on<PosDeleteSuspendedSell>(_onDeleteSuspendedSell);
+    on<PosLoadHistorySells>(_onLoadHistorySells);
     on<PosClearPrintFlag>(_onClearPrintFlag);
     on<PosScanBarcode>(_onScanBarcode);
   }
@@ -1003,7 +1007,32 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       },
       onError: (failure) {
         emit(state.copyWith(
-          actionStatus: PosStatus.error,
+          pageStatus: PosPageStatus.idle,
+          errorMessage: failure.message,
+        ));
+      },
+    );
+  }
+
+  Future<void> _onLoadHistorySells(
+    PosLoadHistorySells event,
+    Emitter<PosState> emit,
+  ) async {
+    emit(state.copyWith(pageStatus: PosPageStatus.loadingFinalSells));
+
+    final result = await _getFinalSellsUseCase.call();
+
+    result.fold(
+      onSuccess: (sells) {
+        print(sells.length);
+        emit(state.copyWith(
+          pageStatus: PosPageStatus.idle,
+          historySells: sells,
+        ));
+      },
+      onError: (failure) {
+        emit(state.copyWith(
+          pageStatus: PosPageStatus.idle,
           errorMessage: failure.message,
         ));
       },

@@ -159,6 +159,11 @@ class PosLoadSuspendedSells extends PosEvent {
   const PosLoadSuspendedSells();
 }
 
+/// Load history sells (final status)
+class PosLoadHistorySells extends PosEvent {
+  const PosLoadHistorySells();
+}
+
 /// Load suspended sell into POS
 class PosLoadSuspendedSell extends PosEvent {
   final SellEntity sell;

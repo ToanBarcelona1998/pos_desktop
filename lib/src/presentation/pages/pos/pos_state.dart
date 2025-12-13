@@ -20,7 +20,10 @@ enum PosPageStatus {
   
   /// Loading suspended sells
   loadingSuspendedSells,
-  
+
+  ///
+  loadingFinalSells,
+
   /// Idle/ready state
   idle,
 }
@@ -132,6 +135,9 @@ class PosState {
   // Suspended Sells
   final List<SellEntity> suspendedSells;
 
+  // History Sells (Final status)
+  final List<SellEntity> historySells;
+
   // Payment Accounts
   final List<PaymentAccountEntity> eWalletAccounts;
   final List<PaymentAccountEntity> bankTransferAccounts;
@@ -171,6 +177,7 @@ class PosState {
     this.isQuotation = false,
     this.isSuspended = false,
     this.suspendedSells = const [],
+    this.historySells = const [],
     this.eWalletAccounts = const [],
     this.bankTransferAccounts = const [],
     this.currencySymbol = '\$',
@@ -253,6 +260,7 @@ class PosState {
     bool? isQuotation,
     bool? isSuspended,
     List<SellEntity>? suspendedSells,
+    List<SellEntity>? historySells,
     List<PaymentAccountEntity>? eWalletAccounts,
     List<PaymentAccountEntity>? bankTransferAccounts,
     String? currencySymbol,
@@ -295,6 +303,7 @@ class PosState {
       isQuotation: isQuotation ?? this.isQuotation,
       isSuspended: isSuspended ?? this.isSuspended,
       suspendedSells: suspendedSells ?? this.suspendedSells,
+      historySells: historySells ?? this.historySells,
       eWalletAccounts: eWalletAccounts ?? this.eWalletAccounts,
       bankTransferAccounts: bankTransferAccounts ?? this.bankTransferAccounts,
       currencySymbol: currencySymbol ?? this.currencySymbol,

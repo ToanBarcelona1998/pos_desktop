@@ -20,6 +20,7 @@ class PosBottomBarWidget extends StatelessWidget {
   final VoidCallback? onQuotation;
   final VoidCallback? onSuspend;
   final VoidCallback? onCancel;
+  final VoidCallback? onPreviousPayments;
 
   const PosBottomBarWidget({
     super.key,
@@ -34,6 +35,7 @@ class PosBottomBarWidget extends StatelessWidget {
     this.onQuotation,
     this.onSuspend,
     this.onCancel,
+    this.onPreviousPayments,
   });
 
   @override
@@ -150,9 +152,7 @@ class PosBottomBarWidget extends StatelessWidget {
                           horizontal: rSpacing.sm,
                           vertical: rSpacing.xs,
                         ),
-                        onPressed: () {
-                          // Show history
-                        },
+                        onPressed: onPreviousPayments,
                       ),
                     ),
                   ),

@@ -20,6 +20,7 @@ import 'widgets/pos_cart_widget.dart';
 import 'widgets/pos_product_grid_widget.dart';
 import 'widgets/pos_customer_selector_widget.dart';
 import 'widgets/pos_suspended_sales_widget.dart';
+import 'widgets/pos_history_sells_widget.dart';
 import 'widgets/pos_payment_method_dialog.dart';
 
 /// POS page
@@ -49,11 +50,13 @@ class _PosPageState extends State<PosPage> {
           previous.shouldPrintInvoice != current.shouldPrintInvoice ||
           previous.createdSellId != current.createdSellId,
       listener: (context, state) {
-        if (state.actionStatus == PosStatus.error && state.errorMessage != null) {
+        if (state.actionStatus == PosStatus.error &&
+            state.errorMessage != null) {
           final translatedMessage = l10n.translate(state.errorMessage!);
           ToastManager.showError(context, translatedMessage);
         }
-        if (state.actionStatus == PosStatus.success && state.successMessage != null) {
+        if (state.actionStatus == PosStatus.success &&
+            state.successMessage != null) {
           // Translate success message key
           final translatedMessage = l10n.translate(state.successMessage!);
           ToastManager.showSuccess(context, translatedMessage);
@@ -146,8 +149,10 @@ class _PosPageState extends State<PosPage> {
                     selectedCategoryId: state.selectedCategoryId,
                     selectedBrandId: state.selectedBrandId,
                     searchQuery: state.searchQuery,
-                    isLoading: state.pageStatus == PosPageStatus.loadingProducts,
-                    isLoadingMore: state.pageStatus == PosPageStatus.loadingMore,
+                    isLoading:
+                        state.pageStatus == PosPageStatus.loadingProducts,
+                    isLoadingMore:
+                        state.pageStatus == PosPageStatus.loadingMore,
                     hasMore: state.hasMore,
                     cartItems: state.cartItems,
                     onProductTap: (product) {
@@ -204,6 +209,9 @@ class _PosPageState extends State<PosPage> {
               onCancel: () {
                 context.read<PosBloc>().add(const PosCancelSale());
               },
+              onPreviousPayments: () {
+                _showHistorySells(context);
+              },
             ),
           ),
         );
@@ -216,7 +224,8 @@ class _PosPageState extends State<PosPage> {
     final state = bloc.state;
 
     // Load customers if not loaded
-    if (state.customers.isEmpty && state.pageStatus != PosPageStatus.loadingCustomers) {
+    if (state.customers.isEmpty &&
+        state.pageStatus != PosPageStatus.loadingCustomers) {
       bloc.add(const PosLoadCustomers());
     }
 
@@ -342,6 +351,35 @@ class _PosPageState extends State<PosPage> {
     }
   }
 
+  void _showHistorySells(BuildContext context) {
+    final bloc = context.read<PosBloc>();
+    final state = bloc.state;
+
+    // Load history sells if not loaded
+
+    if (state.historySells.isEmpty &&
+        state.pageStatus != PosPageStatus.loadingSuspendedSells) {
+      bloc.add(const PosLoadHistorySells());
+    }
+
+    DialogProvider.showCustomDialog(
+      context,
+      child: BlocProvider.value(
+        value: bloc,
+        child: BlocBuilder<PosBloc, PosState>(
+          builder: (context, state) {
+            return PosHistorySellsWidget(
+              historySells: state.historySells,
+              isLoading:
+                  state.pageStatus == PosPageStatus.loadingSuspendedSells,
+              currencySymbol: state.currencySymbol,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   void showSuspendedSalesDialog(BuildContext context) {
     final bloc = context.read<PosBloc>();
     final state = bloc.state;
@@ -360,7 +398,8 @@ class _PosPageState extends State<PosPage> {
           builder: (context, state) {
             return PosSuspendedSalesWidget(
               suspendedSells: state.suspendedSells,
-              isLoading: state.pageStatus == PosPageStatus.loadingSuspendedSells,
+              isLoading:
+                  state.pageStatus == PosPageStatus.loadingSuspendedSells,
               onContinue: (sell) {
                 context.read<PosBloc>().add(PosLoadSuspendedSell(sell));
               },

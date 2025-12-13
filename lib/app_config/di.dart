@@ -416,6 +416,7 @@ void _registerUseCases() {
   sl.registerLazy<GetSellsByIdsUseCase>(() => GetSellsByIdsUseCase(sl.get<SellRepository>()));
   sl.registerLazy<CreateSellUseCase>(() => CreateSellUseCase(sl.get<SellRepository>()));
   sl.registerLazy<GetSuspendedSellsUseCase>(() => GetSuspendedSellsUseCase(sl.get<SellRepository>()));
+  sl.registerLazy<GetFinalSellsUseCase>(() => GetFinalSellsUseCase(sl.get<SellRepository>()));
   sl.registerLazy<DeleteSellUseCase>(() => DeleteSellUseCase(
     sl.get<SellRepository>(),
   ));

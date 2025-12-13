@@ -38,6 +38,9 @@ abstract class SellLocalDataSource {
   /// Gets quotations
   Future<List<Map<String, dynamic>>> getQuotations();
 
+  /// Gets final sells (status = 'final')
+  Future<List<Map<String, dynamic>>> getFinalSells();
+
   /// Deletes a sell
   Future<void> deleteSell(int sellId);
 }
@@ -328,6 +331,28 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
       'sell',
       where: 'is_quotation = ?',
       whereArgs: [1],
+      orderBy: 'transaction_date DESC',
+    );
+
+    return sells.map((sell) {
+      return {
+        ...sell,
+        'shipping_charges': 0.0,
+        'shipping_details': null,
+        'shipping_address': null,
+        'shipping_status': null,
+        'delivered_to': null,
+      };
+    }).toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getFinalSells() async {
+    final db = await _dbHelper.database;
+    final sells = await db.query(
+      'sell',
+      where: 'status = ? AND is_suspend = ? AND is_quotation = ?',
+      whereArgs: ['final', 0, 0],
       orderBy: 'transaction_date DESC',
     );
 

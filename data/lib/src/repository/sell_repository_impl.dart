@@ -324,6 +324,20 @@ class SellRepositoryImpl implements SellRepository {
     return Success(entities);
   }
 
+  @override
+  Future<Result<List<SellEntity>>> getFinalSells() async {
+    final finalSells = await _localDataSource.getFinalSells();
+    final entities = <SellEntity>[];
+
+    for (var sell in finalSells) {
+      final sellLines = await _localDataSource.getSellLines(sell['id'] as int);
+      final payments = await _localDataSource.getPayments(sell['id'] as int);
+      entities.add(_mapToEntityFromLocal(sell, sellLines, payments));
+    }
+
+    return Success(entities);
+  }
+
   SellEntity _mapToEntity(SellModel model) {
     // Map payment lines from server response
     final payments = model.paymentLines != null
