@@ -1,16 +1,13 @@
 import 'package:domain/domain.dart';
 import 'package:pos_final/src/core/core.dart';
 
-/// POS page status enum
-enum PosStatus {
+/// POS page status enum - for page-level states (loading, pagination, etc.)
+enum PosPageStatus {
   /// Initial state
   initial,
   
   /// Loading initial data
   loading,
-  
-  /// Submitting sale
-  submitting,
   
   /// Loading products
   loadingProducts,
@@ -24,14 +21,23 @@ enum PosStatus {
   /// Loading suspended sells
   loadingSuspendedSells,
   
-  /// Success state
-  success,
-  
-  /// Error state
-  error,
-  
   /// Idle/ready state
   idle,
+}
+
+/// POS action status enum - for action-level states (submit, create, etc.)
+enum PosStatus {
+  /// No action in progress
+  idle,
+  
+  /// Action in progress (e.g., submitting sale)
+  submitting,
+  
+  /// Action succeeded
+  success,
+  
+  /// Action failed
+  error,
 }
 
 /// Cart item model
@@ -88,7 +94,8 @@ class CartItem {
 
 /// POS page state
 class PosState {
-  final PosStatus status;
+  final PosPageStatus pageStatus;
+  final PosStatus actionStatus;
 
   // Location
   final List<LocationEntity> locations;
@@ -139,7 +146,8 @@ class PosState {
   final bool shouldPrintInvoice; // Flag to trigger invoice printing
 
   const PosState({
-    this.status = PosStatus.idle,
+    this.pageStatus = PosPageStatus.idle,
+    this.actionStatus = PosStatus.idle,
     this.locations = const [],
     this.selectedLocationId,
     this.selectedCustomer,
@@ -172,7 +180,10 @@ class PosState {
     this.shouldPrintInvoice = false,
   });
 
-  factory PosState.initial() => const PosState(status: PosStatus.initial);
+  factory PosState.initial() => const PosState(
+        pageStatus: PosPageStatus.initial,
+        actionStatus: PosStatus.idle,
+      );
 
   /// Calculate subtotal (before discount and tax)
   double get subtotal => cartItems.fold(0, (sum, item) => sum + item.lineTotal);
@@ -214,10 +225,11 @@ class PosState {
       selectedLocationId != null &&
       cartItems.isNotEmpty;
 
-  bool get isLoadingMore => status == PosStatus.loadingMore;
+  bool get isLoadingMore => pageStatus == PosPageStatus.loadingMore;
 
   PosState copyWith({
-    PosStatus? status,
+    PosPageStatus? pageStatus,
+    PosStatus? actionStatus,
     List<LocationEntity>? locations,
     int? selectedLocationId,
     ContactEntity? selectedCustomer,
@@ -254,7 +266,8 @@ class PosState {
     bool clearMessages = false,
   }) {
     return PosState(
-      status: status ?? this.status,
+      pageStatus: pageStatus ?? this.pageStatus,
+      actionStatus: actionStatus ?? this.actionStatus,
       locations: locations ?? this.locations,
       selectedLocationId: selectedLocationId ?? this.selectedLocationId,
       selectedCustomer:

@@ -74,7 +74,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosInitialize event,
     Emitter<PosState> emit,
   ) async {
-    emit(state.copyWith(status: PosStatus.loading, clearMessages: true));
+    emit(state.copyWith(pageStatus: PosPageStatus.loading, clearMessages: true));
 
     try {
       // Get business details for currency symbol
@@ -101,7 +101,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         },
         onError: (failure) {
           emit(state.copyWith(
-            status: PosStatus.error,
+            pageStatus: PosPageStatus.idle,
+            actionStatus: PosStatus.error,
             errorMessage: failure.message,
           ));
           return;
@@ -147,7 +148,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       );
 
       emit(state.copyWith(
-        status: PosStatus.idle,
+        pageStatus: PosPageStatus.idle,
         locations: locations,
         selectedLocationId: defaultLocationId,
         categories: categories,
@@ -166,7 +167,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       add(const PosLoadCustomers());
     } catch (e) {
       emit(state.copyWith(
-        status: PosStatus.error,
         errorMessage: e.toString(),
       ));
     }
@@ -178,7 +178,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     emit(state.copyWith(
       selectedLocationId: event.locationId,
-      status: PosStatus.loadingProducts,
+      pageStatus: PosPageStatus.loadingProducts,
       cartItems: [],
       // Clear cart on location change
       clearMessages: true,
@@ -202,7 +202,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           state.selectedBrandId,
         );
         emit(state.copyWith(
-          status: PosStatus.idle,
+          pageStatus: PosPageStatus.idle,
           products: products,
           filteredProducts: filtered,
           hasMore: products.length >= _perPage,
@@ -210,7 +210,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
+          pageStatus: PosPageStatus.idle,
+          actionStatus: PosStatus.error,
           errorMessage: failure.message,
         ));
       },
@@ -378,13 +379,13 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     if (!state.canSubmit) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: LocaleKeys.pleaseSelectCustomerAndAddItems,
       ));
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.submitting, clearMessages: true));
+    emit(state.copyWith(actionStatus: PosStatus.submitting, clearMessages: true));
 
     try {
       // Create sell lines from cart items (like old code)
@@ -465,7 +466,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           final shouldPrint = event.printInvoice && !state.isSuspended;
 
           emit(state.copyWith(
-            status: PosStatus.success,
+            actionStatus: PosStatus.success,
             successMessage: isCredit
                 ? LocaleKeys.creditSaleCreatedSuccessfully
                 : (state.isQuotation
@@ -490,14 +491,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         },
         onError: (failure) {
           emit(state.copyWith(
-            status: PosStatus.error,
+            actionStatus: PosStatus.error,
             errorMessage: failure.message,
           ));
         },
       );
     } catch (e) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: e.toString(),
       ));
     }
@@ -509,13 +510,13 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     if (!state.canSubmit) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: LocaleKeys.pleaseSelectCustomerAndAddItems,
       ));
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.submitting, clearMessages: true));
+    emit(state.copyWith(actionStatus: PosStatus.submitting, clearMessages: true));
 
     try {
       // Create sell lines from cart items (like old code)
@@ -566,7 +567,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       result.fold(
         onSuccess: (_) {
           emit(state.copyWith(
-            status: PosStatus.success,
+            actionStatus: PosStatus.success,
             successMessage: LocaleKeys.draftCreatedSuccessfully,
             cartItems: [],
             clearCustomer: true,
@@ -574,14 +575,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         },
         onError: (failure) {
           emit(state.copyWith(
-            status: PosStatus.error,
+            actionStatus: PosStatus.error,
             errorMessage: failure.message,
           ));
         },
       );
     } catch (e) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: e.toString(),
       ));
     }
@@ -593,13 +594,13 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     if (!state.canSubmit) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: LocaleKeys.pleaseSelectCustomerAndAddItems,
       ));
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.submitting, clearMessages: true));
+    emit(state.copyWith(actionStatus: PosStatus.submitting, clearMessages: true));
 
     try {
       // Create sell lines from cart items (like old code)
@@ -650,7 +651,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       result.fold(
         onSuccess: (_) {
           emit(state.copyWith(
-            status: PosStatus.success,
+            actionStatus: PosStatus.success,
             successMessage: LocaleKeys.quotationCreatedSuccessfully,
             cartItems: [],
             selectedCustomer: state.customers.isNotEmpty ? state.customers[0] : null,
@@ -658,14 +659,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         },
         onError: (failure) {
           emit(state.copyWith(
-            status: PosStatus.error,
+            actionStatus: PosStatus.error,
             errorMessage: failure.message,
           ));
         },
       );
     } catch (e) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: e.toString(),
       ));
     }
@@ -677,13 +678,13 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     if (state.cartItems.isEmpty) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: LocaleKeys.cartIsEmpty,
       ));
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.submitting, clearMessages: true));
+    emit(state.copyWith(actionStatus: PosStatus.submitting, clearMessages: true));
 
     try {
       // Create sell lines from cart items (like old code)
@@ -734,7 +735,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       result.fold(
         onSuccess: (_) {
           emit(state.copyWith(
-            status: PosStatus.success,
+            actionStatus: PosStatus.success,
             successMessage: LocaleKeys.saleSuspendedSuccessfully,
             cartItems: [],
             selectedCustomer: state.customers.isNotEmpty ? state.customers[0] : null,
@@ -743,14 +744,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         },
         onError: (failure) {
           emit(state.copyWith(
-            status: PosStatus.error,
+            actionStatus: PosStatus.error,
             errorMessage: failure.message,
           ));
         },
       );
     } catch (e) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: e.toString(),
       ));
     }
@@ -771,7 +772,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     if (state.selectedLocationId == null) return;
 
     emit(state.copyWith(
-      status: PosStatus.loadingProducts,
+      pageStatus: PosPageStatus.loadingProducts,
       clearMessages: true,
       currentPage: 1,
     ));
@@ -795,7 +796,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           state.selectedBrandId,
         );
         emit(state.copyWith(
-          status: PosStatus.success,
+          actionStatus: PosStatus.success,
           products: products,
           filteredProducts: filtered,
           currentPage: 1,
@@ -805,7 +806,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
+          actionStatus: PosStatus.error,
           errorMessage: failure.message,
         ));
       },
@@ -822,7 +823,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.loadingMore, clearMessages: true));
+    emit(state.copyWith(pageStatus: PosPageStatus.loadingMore, clearMessages: true));
 
     final nextPage = state.currentPage + 1;
     final result = await _productRepository.getProducts(
@@ -835,7 +836,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       onSuccess: (newProducts) {
         if (newProducts.isEmpty) {
           emit(state.copyWith(
-            status: PosStatus.idle,
+            pageStatus: PosPageStatus.idle,
             hasMore: false,
           ));
           return;
@@ -850,7 +851,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         );
 
         emit(state.copyWith(
-          status: PosStatus.idle,
+          pageStatus: PosPageStatus.idle,
           products: allProducts,
           filteredProducts: filtered,
           currentPage: nextPage,
@@ -859,7 +860,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
+          actionStatus: PosStatus.error,
           errorMessage: failure.message,
         ));
       },
@@ -956,7 +957,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     Emitter<PosState> emit,
   ) async {
     emit(state.copyWith(
-        status: PosStatus.loadingCustomers, clearMessages: true));
+        pageStatus: PosPageStatus.loadingCustomers, clearMessages: true));
 
     final result =
         await _contactRepository.getContacts(type: ContactType.customer.value);
@@ -964,14 +965,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     result.fold(
       onSuccess: (customers) {
         emit(state.copyWith(
-          status: PosStatus.idle,
+          pageStatus: PosPageStatus.idle,
           customers: customers,
           selectedCustomer: customers.isNotEmpty ? customers[0] : null,
         ));
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
+          actionStatus: PosStatus.error,
           errorMessage: failure.message,
         ));
       },
@@ -989,20 +990,20 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosLoadSuspendedSells event,
     Emitter<PosState> emit,
   ) async {
-    emit(state.copyWith(status: PosStatus.loadingSuspendedSells));
+    emit(state.copyWith(pageStatus: PosPageStatus.loadingSuspendedSells));
 
     final result = await _getSuspendedSellsUseCase.call();
 
     result.fold(
       onSuccess: (sells) {
         emit(state.copyWith(
-          status: PosStatus.idle,
+          pageStatus: PosPageStatus.idle,
           suspendedSells: sells,
         ));
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
+          actionStatus: PosStatus.error,
           errorMessage: failure.message,
         ));
       },
@@ -1110,13 +1111,13 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         // Reload suspended sells
         add(const PosLoadSuspendedSells());
         emit(state.copyWith(
-          status: PosStatus.success,
+          actionStatus: PosStatus.success,
           successMessage: LocaleKeys.suspendedSaleDeleted,
         ));
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
+          actionStatus: PosStatus.error,
           errorMessage: failure.message,
         ));
       },
@@ -1129,7 +1130,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     if (state.selectedLocationId == null) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: LocaleKeys.pleaseSelectBranch,
       ));
       return;
@@ -1152,7 +1153,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         onSuccess: (product) {
           if (product == null) {
             emit(state.copyWith(
-              status: PosStatus.error,
+              actionStatus: PosStatus.error,
               errorMessage: LocaleKeys.noProductsFound,
             ));
             return;
@@ -1163,7 +1164,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
             final qtyAvailable = product.qtyAvailable ?? 0;
             if (qtyAvailable <= 0) {
               emit(state.copyWith(
-                status: PosStatus.error,
+                actionStatus: PosStatus.error,
                 errorMessage: LocaleKeys.outOfStock,
               ));
               return;
@@ -1182,7 +1183,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
               final existingQuantity = state.cartItems[existingIndex].quantity;
               if (existingQuantity >= qtyAvailable) {
                 emit(state.copyWith(
-                  status: PosStatus.error,
+                  actionStatus: PosStatus.error,
                   errorMessage: '${LocaleKeys.stockAvailable}: $qtyAvailable',
                 ));
                 return;
@@ -1204,7 +1205,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       );
     } catch (e) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: e.toString(),
       ));
     }

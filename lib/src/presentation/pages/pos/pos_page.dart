@@ -43,17 +43,17 @@ class _PosPageState extends State<PosPage> {
 
     return BlocConsumer<PosBloc, PosState>(
       listenWhen: (previous, current) =>
-          previous.status != current.status ||
+          previous.actionStatus != current.actionStatus ||
           previous.errorMessage != current.errorMessage ||
           previous.successMessage != current.successMessage ||
           previous.shouldPrintInvoice != current.shouldPrintInvoice ||
           previous.createdSellId != current.createdSellId,
       listener: (context, state) {
-        if (state.status == PosStatus.error && state.errorMessage != null) {
+        if (state.actionStatus == PosStatus.error && state.errorMessage != null) {
           final translatedMessage = l10n.translate(state.errorMessage!);
           ToastManager.showError(context, translatedMessage);
         }
-        if (state.status == PosStatus.success && state.successMessage != null) {
+        if (state.actionStatus == PosStatus.success && state.successMessage != null) {
           // Translate success message key
           final translatedMessage = l10n.translate(state.successMessage!);
           ToastManager.showSuccess(context, translatedMessage);
@@ -74,8 +74,8 @@ class _PosPageState extends State<PosPage> {
         }
       },
       builder: (context, state) {
-        if (state.status == PosStatus.loading ||
-            state.status == PosStatus.initial) {
+        if (state.pageStatus == PosPageStatus.loading ||
+            state.pageStatus == PosPageStatus.initial) {
           return Scaffold(
             body: const AppLoadingCenter(),
           );
@@ -146,8 +146,8 @@ class _PosPageState extends State<PosPage> {
                     selectedCategoryId: state.selectedCategoryId,
                     selectedBrandId: state.selectedBrandId,
                     searchQuery: state.searchQuery,
-                    isLoading: state.status == PosStatus.loadingProducts,
-                    isLoadingMore: state.status == PosStatus.loadingMore,
+                    isLoading: state.pageStatus == PosPageStatus.loadingProducts,
+                    isLoadingMore: state.pageStatus == PosPageStatus.loadingMore,
                     hasMore: state.hasMore,
                     cartItems: state.cartItems,
                     onProductTap: (product) {
@@ -179,7 +179,7 @@ class _PosPageState extends State<PosPage> {
             bottomNavigationBar: PosBottomBarWidget(
               total: state.total,
               currencySymbol: state.currencySymbol,
-              isSubmitting: state.status == PosStatus.submitting,
+              isSubmitting: state.actionStatus == PosStatus.submitting,
               canSubmit: state.canSubmit,
               onCashPayment: () {
                 context
@@ -216,7 +216,7 @@ class _PosPageState extends State<PosPage> {
     final state = bloc.state;
 
     // Load customers if not loaded
-    if (state.customers.isEmpty && state.status != PosStatus.loadingCustomers) {
+    if (state.customers.isEmpty && state.pageStatus != PosPageStatus.loadingCustomers) {
       bloc.add(const PosLoadCustomers());
     }
 
@@ -239,7 +239,7 @@ class _PosPageState extends State<PosPage> {
             return PosCustomerSelectorWidget(
               customers: filteredCustomers,
               selectedCustomer: state.selectedCustomer,
-              isLoading: state.status == PosStatus.loadingCustomers,
+              isLoading: state.pageStatus == PosPageStatus.loadingCustomers,
               searchQuery: state.customerSearchQuery,
               onSearch: (query) {
                 context.read<PosBloc>().add(PosSearchCustomers(query));
@@ -306,7 +306,7 @@ class _PosPageState extends State<PosPage> {
 
     // Load suspended sells if not loaded
     if (state.suspendedSells.isEmpty &&
-        state.status != PosStatus.loadingSuspendedSells) {
+        state.pageStatus != PosPageStatus.loadingSuspendedSells) {
       bloc.add(const PosLoadSuspendedSells());
       // Wait a bit for the data to load, then search
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -348,7 +348,7 @@ class _PosPageState extends State<PosPage> {
 
     // Load suspended sells if not loaded
     if (state.suspendedSells.isEmpty &&
-        state.status != PosStatus.loadingSuspendedSells) {
+        state.pageStatus != PosPageStatus.loadingSuspendedSells) {
       bloc.add(const PosLoadSuspendedSells());
     }
 
@@ -360,7 +360,7 @@ class _PosPageState extends State<PosPage> {
           builder: (context, state) {
             return PosSuspendedSalesWidget(
               suspendedSells: state.suspendedSells,
-              isLoading: state.status == PosStatus.loadingSuspendedSells,
+              isLoading: state.pageStatus == PosPageStatus.loadingSuspendedSells,
               onContinue: (sell) {
                 context.read<PosBloc>().add(PosLoadSuspendedSell(sell));
               },
