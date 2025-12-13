@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:domain/domain.dart';
+import 'package:pos_final/app_config/di.dart';
+import '../../presentation/pages/pos/pos_bloc.dart';
 
 import '../../../pages/cart.dart';
 import '../../../pages/category_screen.dart';
@@ -246,7 +250,25 @@ class AppNavigator {
 
       // POS routes
       case '/pos':
-        return _buildRoute(settings, const PosPage());
+        return _buildRoute(
+          settings,
+          BlocProvider(
+            create: (context) => PosBloc(
+              locationRepository: sl.get<LocationRepository>(),
+              productRepository: sl.get<ProductRepository>(),
+              categoryRepository: sl.get<CategoryRepository>(),
+              brandRepository: sl.get<BrandRepository>(),
+              contactRepository: sl.get<ContactRepository>(),
+              createSellUseCase: sl.get<CreateSellUseCase>(),
+              getSuspendedSellsUseCase: sl.get<GetSuspendedSellsUseCase>(),
+              getFinalSellsUseCase: sl.get<GetFinalSellsUseCase>(),
+              deleteSellUseCase: sl.get<DeleteSellUseCase>(),
+              businessRepository: sl.get<BusinessRepository>(),
+              getPaymentAccountsByTypeUseCase: sl.get<GetPaymentAccountsByTypeUseCase>(),
+            ),
+            child: const PosPage(),
+          ),
+        );
 
       case '/online_pos':
         return _buildRoute(settings, const PosOnlinePage());

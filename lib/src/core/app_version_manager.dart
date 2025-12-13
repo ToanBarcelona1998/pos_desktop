@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Manages app version and handles cache/database clearing on version updates
 class AppVersionManager {
   static const String _versionKey = 'app_version';
-  static const String _appVersion = '1.0.2'; // Update this when releasing new version
+  static const String _appVersion = '1.0.4'; // Update this when releasing new version
 
   /// Checks if app version has changed and clears cache/database if needed
   static Future<void> checkAndHandleVersionUpdate() async {

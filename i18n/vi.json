@@ -119,7 +119,7 @@
   "expenses": "Chi phí",
   "expense_amount": "Số tiền chi phí",
   "expense_note": "Ghi chú chi phí",
-  "location": "Địa điểm",
+  "location": "Cửa hàng",
   "payment_amount": "Thành tiền",
   "please_enter_expense_amount": "Vui lòng nhập số tiền chi phí",
   "enter_valid_payment_amount": "Nhập số tiền thanh toán hợp lệ",
@@ -353,6 +353,9 @@
   "card": "Thẻ",
   "cheque": "Séc",
   "bank_transfer": "Chuyển khoản",
+  "e_wallet": "Ví điện tử",
+  "payment_type": "Loại thanh toán",
+  "select_account": "Chọn tài khoản",
   "payment_date": "Ngày thanh toán",
   "bank_number": "Số tài khoản ngân hàng",
   "cheque_number": "Số séc",
@@ -406,7 +409,7 @@
   "logout_without_sync": "Đăng xuất không đồng bộ",
   "add_expenses": "Thêm chi phí",
   "sell_credit": "Bán chịu",
-  "previous_payments": "Lịch sử giao dịch",
+  "previous_payments": "Lịch sử",
   "delete_payment": "Xóa thanh toán",
   "payment_added": "Thêm thanh toán thành công",
   "payment_removed": "Đã xóa thanh toán",
@@ -622,5 +625,6 @@
   "history": "Lịch sử",
   "filters": "Bộ lọc",
   "subtotal": "Tổng phụ",
-  "price_after_tax": "Giá sau thuế"
+  "price_after_tax": "Giá sau thuế",
+  "delete": "Xoá"
 }

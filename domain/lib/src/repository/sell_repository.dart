@@ -45,6 +45,9 @@ abstract class SellRepository {
 
   /// Gets suspended sells
   Future<Result<List<SellEntity>>> getSuspendedSells();
+
+  /// Gets final sells (status = 'final')
+  Future<Result<List<SellEntity>>> getFinalSells();
 }
 
 

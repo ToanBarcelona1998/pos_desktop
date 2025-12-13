@@ -6,7 +6,6 @@ import 'package:pos_final/helpers/size_config.dart';
 import 'package:pos_final/helpers/other_helpers.dart';
 import 'package:pos_final/locale/my_localizations.dart';
 import 'package:pos_final/models/system.dart';
-import 'package:pos_final/src/presentation/widgets/product_table_row_widget.dart';
 
 class CartSummary extends StatefulWidget {
   final List<dynamic> cartItems;
@@ -249,7 +248,7 @@ class CartSummaryState extends State<CartSummary> {
         color: Colors.white,
         borderRadius: BorderRadius.circular((MySize.size12 ?? 12.0).toDouble()),
       ),
-      child: ProductTableRow(),
+      child: SizedBox(),
       // child: Column(
       //   crossAxisAlignment: CrossAxisAlignment.start,
       //   children: [

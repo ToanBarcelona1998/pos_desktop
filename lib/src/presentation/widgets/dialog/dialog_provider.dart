@@ -3,6 +3,18 @@ import 'package:flutter/material.dart';
 import 'base_dialog_widget.dart';
 
 sealed class DialogProvider {
+  static Future<T?> showCustomDialog<T>(
+    BuildContext context, {
+    required Widget child,
+  }) {
+    return showDialog<T>(
+      context: context,
+      builder: (BuildContext context) {
+        return child;
+      },
+    );
+  }
+
   static Future<T?> showAppDialog<T>(
     BuildContext context, {
     Widget? titleWidget,

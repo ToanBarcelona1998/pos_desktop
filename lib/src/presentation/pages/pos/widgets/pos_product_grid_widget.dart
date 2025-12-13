@@ -1,12 +1,12 @@
+import 'dart:math';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:pos_final/helpers/other_helpers.dart';
-import 'package:pos_final/src/core/constants/app_sizes.dart';
+import 'package:pos_final/src/core/constants/app_responsive.dart';
 import 'package:pos_final/src/presentation/presentation.dart';
 
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/localization/app_localization.dart';
 import '../../../../core/localization/locale_keys.dart';
@@ -55,9 +55,12 @@ class PosProductGridWidget extends StatefulWidget {
   State<PosProductGridWidget> createState() => _PosProductGridWidgetState();
 }
 
+enum FilterType { category, brand }
+
 class _PosProductGridWidgetState extends State<PosProductGridWidget>
     with SingleTickerProviderStateMixin {
   bool _isFilterDrawerOpen = false;
+  FilterType? _currentFilterType;
   late AnimationController _drawerController;
   late Animation<Offset> _drawerAnimation;
 
@@ -83,43 +86,50 @@ class _PosProductGridWidgetState extends State<PosProductGridWidget>
     super.dispose();
   }
 
-  void _toggleFilterDrawer() {
+  void _openFilterDrawer(FilterType filterType) {
     setState(() {
-      _isFilterDrawerOpen = !_isFilterDrawerOpen;
-      if (_isFilterDrawerOpen) {
-        _drawerController.forward();
-      } else {
-        _drawerController.reverse();
-      }
+      _currentFilterType = filterType;
+      _isFilterDrawerOpen = true;
+      _drawerController.forward();
+    });
+  }
+
+  void _closeFilterDrawer() {
+    setState(() {
+      _isFilterDrawerOpen = false;
+      _currentFilterType = null;
+      _drawerController.reverse();
     });
   }
 
   void _handleCategorySelected(int? categoryId) {
     widget.onCategoryFilter?.call(categoryId);
-    _toggleFilterDrawer();
+    _closeFilterDrawer();
   }
 
   void _handleBrandSelected(int? brandId) {
     widget.onBrandFilter?.call(brandId);
-    _toggleFilterDrawer();
+    _closeFilterDrawer();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final rSpacing = context.rSpacing;
 
     return Stack(
       children: [
         // Main content
         Padding(
-          padding: EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.sm),
+          padding: EdgeInsets.only(top: rSpacing.sm, bottom: rSpacing.sm),
           child: Column(
             children: [
               // Filter buttons
               _FilterSection(
                 selectedCategoryId: widget.selectedCategoryId,
                 selectedBrandId: widget.selectedBrandId,
-                onFilterTap: _toggleFilterDrawer,
+                onCategoryTap: () => _openFilterDrawer(FilterType.category),
+                onBrandTap: () => _openFilterDrawer(FilterType.brand),
                 l10n: l10n,
               ),
               Expanded(
@@ -147,27 +157,29 @@ class _PosProductGridWidgetState extends State<PosProductGridWidget>
         // Filter drawer overlay
         if (_isFilterDrawerOpen)
           GestureDetector(
-            onTap: _toggleFilterDrawer,
+            onTap: _closeFilterDrawer,
             child: Container(
               color: Colors.black.withAlpha((0.5 * 255).round()),
             ),
           ),
         // Filter drawer
-        SlideTransition(
-          position: _drawerAnimation,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: PosFilterDrawer(
-              categories: widget.categories,
-              brands: widget.brands,
-              selectedCategoryId: widget.selectedCategoryId,
-              selectedBrandId: widget.selectedBrandId,
-              onCategorySelected: _handleCategorySelected,
-              onBrandSelected: _handleBrandSelected,
-              onClose: _toggleFilterDrawer,
+        if (_isFilterDrawerOpen && _currentFilterType != null)
+          SlideTransition(
+            position: _drawerAnimation,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: PosFilterDrawer(
+                filterType: _currentFilterType!,
+                categories: widget.categories,
+                brands: widget.brands,
+                selectedCategoryId: widget.selectedCategoryId,
+                selectedBrandId: widget.selectedBrandId,
+                onCategorySelected: _handleCategorySelected,
+                onBrandSelected: _handleBrandSelected,
+                onClose: _closeFilterDrawer,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -176,24 +188,24 @@ class _PosProductGridWidgetState extends State<PosProductGridWidget>
 class _FilterSection extends StatelessWidget {
   final int? selectedCategoryId;
   final int? selectedBrandId;
-  final VoidCallback? onFilterTap;
+  final VoidCallback? onCategoryTap;
+  final VoidCallback? onBrandTap;
   final AppLocalizations l10n;
 
   const _FilterSection({
     this.selectedCategoryId,
     this.selectedBrandId,
-    this.onFilterTap,
+    this.onCategoryTap,
+    this.onBrandTap,
     required this.l10n,
   });
 
   @override
   Widget build(BuildContext context) {
-    // final theme = Theme.of(context);
-    final hasActiveFilter =
-        selectedCategoryId != null || selectedBrandId != null;
+    final rSpacing = context.rSpacing;
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      padding: EdgeInsets.symmetric(horizontal: rSpacing.sm),
       child: Row(
         children: [
           Expanded(
@@ -201,18 +213,16 @@ class _FilterSection extends StatelessWidget {
               icon: Icons.category,
               label: l10n.translate(LocaleKeys.category),
               isSelected: selectedCategoryId != null,
-              hasActiveFilter: hasActiveFilter,
-              onTap: onFilterTap,
+              onTap: onCategoryTap,
             ),
           ),
-          SizedBox(width: AppSpacing.sm),
+          rSpacing.gapHorizontalSm,
           Expanded(
             child: _FilterButton(
               icon: Icons.branding_watermark,
               label: l10n.translate(LocaleKeys.brand),
               isSelected: selectedBrandId != null,
-              hasActiveFilter: hasActiveFilter,
-              onTap: onFilterTap,
+              onTap: onBrandTap,
             ),
           ),
         ],
@@ -225,70 +235,73 @@ class _FilterButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isSelected;
-  final bool hasActiveFilter;
   final VoidCallback? onTap;
 
   const _FilterButton({
     required this.icon,
     required this.label,
     this.isSelected = false,
-    this.hasActiveFilter = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: AppRadius.borderRadiusSm,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          vertical: AppSpacing.xs,
-          horizontal: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.colorScheme.primary.withAlpha((0.1 * 255).round())
-              : theme.cardColor,
-          borderRadius: AppRadius.borderRadiusSm,
-          border: Border.all(
-            color: isSelected ? theme.colorScheme.primary : theme.dividerColor,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected ? theme.colorScheme.primary : null,
-            ),
-            SizedBox(width: AppSpacing.xs),
-            Flexible(
-              child: Text(
-                label,
-                style: AppTypography.labelMedium.copyWith(
-                  color: isSelected ? theme.colorScheme.primary : null,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (isSelected) ...[
-              SizedBox(width: AppSpacing.xs),
-              Icon(
-                Icons.check_circle,
-                size: 16,
-                color: theme.colorScheme.primary,
-              ),
-            ],
-          ],
-        ),
-      ),
+    return AppGradientButton(
+      text: label,
+      onPressed: onTap,
     );
+
+    // return InkWell(
+    //   onTap: onTap,
+    //   borderRadius: AppRadius.borderRadiusSm,
+    //   child: Container(
+    //     padding: EdgeInsets.symmetric(
+    //       vertical: AppSpacing.xs,
+    //       horizontal: AppSpacing.sm,
+    //     ),
+    //     decoration: BoxDecoration(
+    //       color: isSelected
+    //           ? theme.colorScheme.primary.withAlpha((0.1 * 255).round())
+    //           : theme.cardColor,
+    //       borderRadius: AppRadius.borderRadiusSm,
+    //       border: Border.all(
+    //         color: isSelected ? theme.colorScheme.primary : theme.dividerColor,
+    //         width: isSelected ? 2 : 1,
+    //       ),
+    //     ),
+    //     child: Row(
+    //       mainAxisAlignment: MainAxisAlignment.center,
+    //       children: [
+    //         Icon(
+    //           icon,
+    //           size: 18,
+    //           color: isSelected ? theme.colorScheme.primary : null,
+    //         ),
+    //         SizedBox(width: AppSpacing.xs),
+    //         Flexible(
+    //           child: Text(
+    //             label,
+    //             style: AppTypography.labelMedium.copyWith(
+    //               color: isSelected ? theme.colorScheme.primary : null,
+    //               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    //             ),
+    //             overflow: TextOverflow.ellipsis,
+    //           ),
+    //         ),
+    //         if (isSelected) ...[
+    //           SizedBox(width: AppSpacing.xs),
+    //           Icon(
+    //             Icons.check_circle,
+    //             size: 16,
+    //             color: theme.colorScheme.primary,
+    //           ),
+    //         ],
+    //       ],
+    //     ),
+    //   ),
+    // );
   }
 }
 
@@ -299,19 +312,23 @@ class _EmptyProducts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.inventory_2_outlined,
-            size: 64,
+            size: rSizes.illustrationXs,
             color: Colors.grey[400],
           ),
-          SizedBox(height: AppSpacing.md),
+          rSpacing.gapVerticalMd,
           Text(
             l10n.translate(LocaleKeys.noProductsAvailable),
-            style: AppTypography.bodyLarge.copyWith(color: Colors.grey),
+            style: rTypography.bodyLarge.copyWith(color: Colors.grey),
           ),
         ],
       ),
@@ -350,51 +367,59 @@ class _ProductGrid extends StatelessWidget {
         }
         return false;
       },
-      child: GridView.builder(
-        padding: AppSpacing.paddingSm,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          childAspectRatio: 0.95,
-        ),
-        itemCount: products.length + (isLoadingMore ? 2 : 0),
-        itemBuilder: (context, index) {
-          // Show loading indicator at the end
-          if (index >= products.length) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
-
-          final product = products[index];
-          final productId = product.productId ?? product.id;
-          final variationId = product.variationId ?? 0;
-          final cartItem = cartItems.firstWhere(
-            (item) =>
-                item.productId == productId && item.variationId == variationId,
-            orElse: () => CartItem(
-              product: product,
-              productId: productId,
-              variationId: variationId,
-              unitPrice: 0,
+      child: Builder(
+        builder: (context) {
+          final rSpacing = context.rSpacing;
+          return GridView.builder(
+            padding: rSpacing.paddingSm,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              mainAxisSpacing: rSpacing.xxs,
+              crossAxisSpacing: rSpacing.xxs,
+              childAspectRatio: max(rSpacing.scale, 1.1),
             ),
-          );
-          final inCart = cartItems.any(
-            (item) =>
-                item.productId == productId && item.variationId == variationId,
-          );
+            itemCount: products.length + (isLoadingMore ? 2 : 0),
+            itemBuilder: (context, index) {
+              final rSpacing2 = context.rSpacing;
+              // Show loading indicator at the end
+              if (index >= products.length) {
+                return Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(rSpacing2.sm),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
 
-          final isOutOfStock = (product.qtyAvailable ?? 0) <= 0;
+              final product = products[index];
+              final productId = product.productId ?? product.id;
+              final variationId = product.variationId ?? 0;
+              final cartItem = cartItems.firstWhere(
+                (item) =>
+                    item.productId == productId &&
+                    item.variationId == variationId,
+                orElse: () => CartItem(
+                  product: product,
+                  productId: productId,
+                  variationId: variationId,
+                  unitPrice: 0,
+                ),
+              );
+              final inCart = cartItems.any(
+                (item) =>
+                    item.productId == productId &&
+                    item.variationId == variationId,
+              );
 
-          return _ProductItem(
-            product: product,
-            quantity: inCart ? cartItem.quantity : 0,
-            onTap: isOutOfStock ? null : () => onProductTap?.call(product),
-            isOutOfStock: isOutOfStock,
+              final isOutOfStock = (product.qtyAvailable ?? 0) <= 0;
+
+              return _ProductItem(
+                product: product,
+                quantity: inCart ? cartItem.quantity : 0,
+                onTap: isOutOfStock ? null : () => onProductTap?.call(product),
+                isOutOfStock: isOutOfStock,
+              );
+            },
           );
         },
       ),
@@ -419,6 +444,10 @@ class _ProductItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
+
     final name = product.displayName ??
         product.productName ??
         l10n.translate(LocaleKeys.product);
@@ -434,7 +463,7 @@ class _ProductItem extends StatelessWidget {
       child: Stack(
         children: [
           Opacity(
-            opacity: isOutOfStock ? 0.5 : 1.0,
+            opacity: isOutOfStock ? 0.3 : 1.0,
             child: InkWell(
               onTap: onTap,
               borderRadius: AppRadius.borderRadiusSm,
@@ -444,7 +473,8 @@ class _ProductItem extends StatelessWidget {
                   // Product image
                   Container(
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withAlpha((255 * 0.1).round()),
+                      color: theme.colorScheme.primary
+                          .withAlpha((255 * 0.1).round()),
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(4),
                       ),
@@ -457,40 +487,40 @@ class _ProductItem extends StatelessWidget {
                             ),
                             child: CachedNetworkImage(
                               imageUrl: product.productImageUrl ?? '',
-                              height: AppSizes.avatarLg,
+                              height: rSizes.avatarLg,
                               width: double.infinity,
                               fit: BoxFit.cover,
                               placeholder: (context, url) =>
-                                  _buildPlaceholder(theme),
+                                  _buildPlaceholder(theme, context),
                               errorWidget: (context, url, error) => Image.asset(
                                 'assets/images/default_product.png',
-                                height: AppSizes.avatarLg,
+                                height: rSizes.avatarLg,
                                 fit: BoxFit.cover,
                               ),
                             ),
                           )
-                        : _buildPlaceholder(theme),
+                        : _buildPlaceholder(theme, context),
                   ),
                   // Product info
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.all(AppSpacing.xs),
+                      padding: EdgeInsets.all(rSpacing.xs),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             name,
-                            style: AppTypography.labelSmall,
-                            maxLines: 2,
+                            style: rTypography.labelSmall,
+                            maxLines: rSizes.scale <= 0.8 ? 1 : 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: AppSpacing.xxs),
+                          rSpacing.gapVerticalXxs,
                           Expanded(
                             child: Align(
                               alignment: AlignmentGeometry.bottomCenter,
                               child: Text(
                                 '${Helper().formatCurrency(price)}đ',
-                                style: AppTypography.labelLarge.copyWith(
+                                style: rTypography.labelMedium.copyWith(
                                   color: Color(0xff244ca3),
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -511,45 +541,16 @@ class _ProductItem extends StatelessWidget {
               top: 4,
               right: 4,
               child: Container(
-                padding: const EdgeInsets.all(6),
+                padding: EdgeInsets.all(rSpacing.xxxs * 1.5),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
                   shape: BoxShape.circle,
                 ),
                 child: Text(
                   '$quantity',
-                  style: AppTypography.labelSmall.copyWith(
+                  style: rTypography.labelSmall.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          // Out of stock overlay
-          if (isOutOfStock)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  borderRadius: AppRadius.borderRadiusSm,
-                ),
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xs,
-                      vertical: AppSpacing.xxs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: AppRadius.borderRadiusSm,
-                    ),
-                    child: Text(
-                      l10n.translate(LocaleKeys.outOfStock),
-                      style: AppTypography.labelSmall.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                   ),
                 ),
               ),
@@ -559,12 +560,15 @@ class _ProductItem extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder(ThemeData theme) {
-    return Center(
+  Widget _buildPlaceholder(ThemeData theme, BuildContext context) {
+    final rSizes = context.rSizes;
+    return Container(
+      height: rSizes.avatarLg,
+      color: theme.colorScheme.primary.withAlpha((255 * 0.1).round()),
       child: Icon(
-        Icons.inventory_2_outlined,
-        size: 32,
-        color: theme.colorScheme.primary.withAlpha((0.5 * 255).round()),
+        Icons.image_not_supported,
+        size: rSizes.iconMd,
+        color: theme.colorScheme.primary.withAlpha((255 * 0.5).round()),
       ),
     );
   }

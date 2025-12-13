@@ -1,5 +1,4 @@
 import 'package:domain/domain.dart';
-import 'package:pos_final/src/core/core.dart';
 
 import '../../base/base_event.dart';
 
@@ -75,13 +74,13 @@ class PosSetTax extends PosEvent {
 
 /// Submit sale
 class PosSubmitSale extends PosEvent {
-  final bool isCredit;
   final bool printInvoice;
-  final PaymentMethod? paymentMethod; // Optional payment method, defaults based on isCredit
+  final PaymentMethod paymentMethod; // Optional payment method, defaults based on isCredit
+  final PaymentAccountEntity ? paymentAccount; // Full payment account info when using payment account
   const PosSubmitSale({
-    this.isCredit = false,
     this.printInvoice = true,
-    this.paymentMethod,
+    required this.paymentMethod,
+    this.paymentAccount,
   });
 }
 
@@ -160,6 +159,11 @@ class PosLoadSuspendedSells extends PosEvent {
   const PosLoadSuspendedSells();
 }
 
+/// Load history sells (final status)
+class PosLoadHistorySells extends PosEvent {
+  const PosLoadHistorySells();
+}
+
 /// Load suspended sell into POS
 class PosLoadSuspendedSell extends PosEvent {
   final SellEntity sell;
@@ -175,6 +179,12 @@ class PosDeleteSuspendedSell extends PosEvent {
 /// Clear print invoice flag
 class PosClearPrintFlag extends PosEvent {
   const PosClearPrintFlag();
+}
+
+/// Scan barcode to find and add product
+class PosScanBarcode extends PosEvent {
+  final String barcode;
+  const PosScanBarcode(this.barcode);
 }
 
 

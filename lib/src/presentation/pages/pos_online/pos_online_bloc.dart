@@ -49,6 +49,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
     emit(state.copyWith(
       status: PosOnlineStatus.syncing,
       showSyncDialog: true,
+      clearSuccessMessage: true,
       clearFailure: true,
     ));
 
@@ -73,7 +74,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
     PosOnlineLogout event,
     Emitter<PosOnlineState> emit,
   ) async {
-    emit(state.copyWith(clearFailure: true));
+    emit(state.copyWith(clearFailure: true, clearSuccessMessage: true));
     // Check for unsynced sells
     final unsyncedSellsResult = await _sellRepository.getLocalSells();
 
@@ -106,7 +107,7 @@ class PosOnlineBloc extends Bloc<PosOnlineEvent, PosOnlineState> {
       showSyncDialog: true,
       showLogoutDialog: false,
       clearFailure: true,
-      successMessage: null,
+      clearSuccessMessage: true
     ));
 
     try {

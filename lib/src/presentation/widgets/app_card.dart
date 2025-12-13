@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_spacing.dart';
-import '../../core/constants/app_typography.dart';
+import '../../core/constants/app_responsive.dart';
 import '../../core/constants/app_radius.dart';
 
 /// Card with app styling
@@ -28,6 +27,7 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
 
     return Card(
       margin: margin ?? EdgeInsets.zero,
@@ -40,7 +40,7 @@ class AppCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: borderRadius ?? AppRadius.borderRadiusMd,
         child: Padding(
-          padding: padding ?? AppSpacing.paddingMd,
+          padding: padding ?? rSpacing.paddingMd,
           child: child,
         ),
       ),
@@ -68,6 +68,8 @@ class AppListTileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
 
     return AppCard(
       onTap: onTap,
@@ -76,20 +78,20 @@ class AppListTileCard extends StatelessWidget {
         leading: leading,
         title: Text(
           title,
-          style: AppTypography.titleMedium,
+          style: rTypography.titleMedium,
         ),
         subtitle: subtitle != null
             ? Text(
                 subtitle!,
-                style: AppTypography.bodySmall.copyWith(
+                style: rTypography.bodySmall.copyWith(
                   color: theme.textTheme.bodySmall?.color,
                 ),
               )
             : null,
         trailing: trailing,
         contentPadding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
+          horizontal: rSpacing.md,
+          vertical: rSpacing.xs,
         ),
       ),
     );
@@ -118,6 +120,9 @@ class AppStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
 
     return AppCard(
       onTap: onTap,
@@ -130,19 +135,19 @@ class AppStatCard extends StatelessWidget {
             Icon(
               icon,
               color: iconColor ?? theme.colorScheme.primary,
-              size: 24,
+              size: rSizes.iconMd,
             ),
-          SizedBox(height: AppSpacing.sm),
+          rSpacing.gapVerticalSm,
           Text(
             value,
-            style: AppTypography.headlineMedium.copyWith(
+            style: rTypography.headlineMedium.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: AppSpacing.xxs),
+          rSpacing.gapVerticalXxs,
           Text(
             title,
-            style: AppTypography.bodySmall.copyWith(
+            style: rTypography.bodySmall.copyWith(
               color: theme.textTheme.bodySmall?.color,
             ),
           ),

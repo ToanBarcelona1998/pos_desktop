@@ -16,30 +16,54 @@ class PaymentMethodEntity extends Entity {
   List<Object?> get props => [name, label, isActive];
 }
 
+/// Payment account detail entity
+class PaymentAccountDetailEntity extends Entity {
+  final String? label;
+  final String? value;
+
+  const PaymentAccountDetailEntity({
+    this.label,
+    this.value,
+  });
+
+  @override
+  List<Object?> get props => [label, value];
+}
+
 /// Payment account entity
 class PaymentAccountEntity extends Entity {
   final int id;
   final int businessId;
   final String name;
-  final String accountNumber;
+  final String? accountNumber;
   final String? accountType;
   final String? note;
-  final bool isActive;
   final bool isClosed;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? paymentMethod;
+  final String? bankBin;
+  final String? imageEWallet;
+  final String? cachedImagePath;
+  final int? accountTypeId;
+  final List<PaymentAccountDetailEntity>? accountDetails;
 
   const PaymentAccountEntity({
     required this.id,
     required this.businessId,
     required this.name,
-    required this.accountNumber,
+    this.accountNumber,
     this.accountType,
     this.note,
-    this.isActive = true,
     this.isClosed = false,
     this.createdAt,
     this.updatedAt,
+    this.paymentMethod,
+    this.bankBin,
+    this.imageEWallet,
+    this.cachedImagePath,
+    this.accountTypeId,
+    this.accountDetails,
   });
 
   @override
@@ -50,10 +74,15 @@ class PaymentAccountEntity extends Entity {
         accountNumber,
         accountType,
         note,
-        isActive,
         isClosed,
         createdAt,
         updatedAt,
+        paymentMethod,
+        bankBin,
+        imageEWallet,
+        cachedImagePath,
+        accountTypeId,
+        accountDetails,
       ];
 }
 

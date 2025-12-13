@@ -1,11 +1,14 @@
 import 'dart:convert';
 
 import 'package:domain/domain.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:pos_final/app_config/app_config.dart';
 import 'package:pos_final/app_config/di.dart';
+import 'package:pos_final/src/application.dart';
 import 'package:pos_final/src/application/application.dart';
 import 'package:pos_final/src/core/core.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_observer.dart';
@@ -40,6 +43,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   bool _isFirstLoad = true;
   bool _syncDialogShowing = false;
+  bool _popupOfflineIsShowed = false;
 
   final AppConfig _appConfig = sl.get<AppConfig>();
   final WebViewEnvironment? _webViewEnvironment =
@@ -99,6 +103,8 @@ class _PosOnlinePageState extends State<PosOnlinePage>
             getSuspendedSellsUseCase: sl.get<GetSuspendedSellsUseCase>(),
             deleteSellUseCase: sl.get<DeleteSellUseCase>(),
             businessRepository: sl.get<BusinessRepository>(),
+            getPaymentAccountsByTypeUseCase: sl.get<GetPaymentAccountsByTypeUseCase>(),
+            getFinalSellsUseCase: sl.get<GetFinalSellsUseCase>(),
           ),
         ),
       ],
@@ -169,6 +175,17 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                         url: WebUri(_appConfig.webUrl),
                         headers: _requiredHeaders,
                       ),
+                      gestureRecognizers: {}..addAll([
+                          Factory<VerticalDragGestureRecognizer>(
+                            () => VerticalDragGestureRecognizer(),
+                          ),
+                          Factory<HorizontalDragGestureRecognizer>(
+                            () => HorizontalDragGestureRecognizer(),
+                          ),
+                          Factory<OneSequenceGestureRecognizer>(
+                            () => EagerGestureRecognizer(),
+                          ),
+                        ]),
                       onLoadStop: (controller, url) async {
                         // Listen to URL changes
                         final urlString = url.toString();
@@ -247,7 +264,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                     ),
                     // POS Offline Screen (stacked on top when network disconnects)
                     if (state.showOfflinePos)
-                    // if (true)
+                      // if (true)
                       Positioned.fill(
                         child: const PosPage(),
                       ),
@@ -315,14 +332,18 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   void update(bool newState) {
-    if (!newState && mounted && !_posOnlineBloc.state.showOfflinePos) {
+    if (!newState && mounted && !_posOnlineBloc.state.showOfflinePos && context.authCubit.isAuthenticated && !_popupOfflineIsShowed) {
       final l10n = AppLocalizations.of(context);
       DialogProvider.showConfirmDialog(
         context,
         message: l10n.translate(LocaleKeys.networkConnectionIssue),
         onConfirm: () {
+          _popupOfflineIsShowed = false;
           _posOnlineBloc.add(const PosOnlineShowOffline());
         },
+        onCancel: (){
+          _popupOfflineIsShowed = false;
+        }
       );
     }
   }

@@ -2,7 +2,6 @@ import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/core.dart';
-import '../../../core/localization/locale_keys.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
 
@@ -15,8 +14,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   final ContactRepository _contactRepository;
   final CreateSellUseCase _createSellUseCase;
   final GetSuspendedSellsUseCase _getSuspendedSellsUseCase;
+  final GetFinalSellsUseCase _getFinalSellsUseCase;
   final DeleteSellUseCase _deleteSellUseCase;
   final BusinessRepository _businessRepository;
+  final GetPaymentAccountsByTypeUseCase _getPaymentAccountsByTypeUseCase;
 
   PosBloc({
     required LocationRepository locationRepository,
@@ -26,8 +27,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     required ContactRepository contactRepository,
     required CreateSellUseCase createSellUseCase,
     required GetSuspendedSellsUseCase getSuspendedSellsUseCase,
+    required GetFinalSellsUseCase getFinalSellsUseCase,
     required DeleteSellUseCase deleteSellUseCase,
     required BusinessRepository businessRepository,
+    required GetPaymentAccountsByTypeUseCase getPaymentAccountsByTypeUseCase,
   })  : _locationRepository = locationRepository,
         _productRepository = productRepository,
         _categoryRepository = categoryRepository,
@@ -35,8 +38,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         _contactRepository = contactRepository,
         _createSellUseCase = createSellUseCase,
         _getSuspendedSellsUseCase = getSuspendedSellsUseCase,
+        _getFinalSellsUseCase = getFinalSellsUseCase,
         _deleteSellUseCase = deleteSellUseCase,
         _businessRepository = businessRepository,
+        _getPaymentAccountsByTypeUseCase = getPaymentAccountsByTypeUseCase,
         super(PosState.initial()) {
     on<PosInitialize>(_onInitialize);
     on<PosSelectLocation>(_onSelectLocation);
@@ -48,7 +53,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     on<PosApplyDiscount>(_onApplyDiscount);
     on<PosSetTax>(_onSetTax);
     on<PosSubmitSale>(_onSubmitSale);
-    on<PosSubmitCreditSale>(_onSubmitCreditSale);
     on<PosCreateDraft>(_onCreateDraft);
     on<PosCreateQuotation>(_onCreateQuotation);
     on<PosSuspendSale>(_onSuspendSale);
@@ -63,7 +67,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     on<PosLoadSuspendedSells>(_onLoadSuspendedSells);
     on<PosLoadSuspendedSell>(_onLoadSuspendedSell);
     on<PosDeleteSuspendedSell>(_onDeleteSuspendedSell);
+    on<PosLoadHistorySells>(_onLoadHistorySells);
     on<PosClearPrintFlag>(_onClearPrintFlag);
+    on<PosScanBarcode>(_onScanBarcode);
   }
 
   static const int _perPage = 50;
@@ -72,7 +78,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosInitialize event,
     Emitter<PosState> emit,
   ) async {
-    emit(state.copyWith(status: PosStatus.loading, clearMessages: true));
+    emit(
+        state.copyWith(pageStatus: PosPageStatus.loading, clearMessages: true));
 
     try {
       // Get business details for currency symbol
@@ -99,7 +106,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         },
         onError: (failure) {
           emit(state.copyWith(
-            status: PosStatus.error,
+            pageStatus: PosPageStatus.idle,
+            actionStatus: PosStatus.error,
             errorMessage: failure.message,
           ));
           return;
@@ -122,13 +130,39 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         onError: (_) {},
       );
 
+      final eWalletResult = await _getPaymentAccountsByTypeUseCase.call(
+        GetPaymentAccountsByTypeParams(
+            paymentMethod: PaymentMethod.eWallet.value),
+      );
+
+      // Fetch bank transfer accounts
+      final bankTransferResult = await _getPaymentAccountsByTypeUseCase.call(
+        GetPaymentAccountsByTypeParams(
+            paymentMethod: PaymentMethod.bankTransfer.value),
+      );
+
+      List<PaymentAccountEntity> eWalletAccounts = [];
+      List<PaymentAccountEntity> bankTransferAccounts = [];
+
+      eWalletResult.fold(
+        onSuccess: (accounts) => eWalletAccounts = accounts,
+        onError: (_) {},
+      );
+
+      bankTransferResult.fold(
+        onSuccess: (accounts) => bankTransferAccounts = accounts,
+        onError: (_) {},
+      );
+
       emit(state.copyWith(
-        status: PosStatus.idle,
+        pageStatus: PosPageStatus.idle,
         locations: locations,
         selectedLocationId: defaultLocationId,
         categories: categories,
         brands: brands,
         currencySymbol: currencySymbol,
+        eWalletAccounts: eWalletAccounts,
+        bankTransferAccounts: bankTransferAccounts,
       ));
 
       // Load products for default location
@@ -140,7 +174,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       add(const PosLoadCustomers());
     } catch (e) {
       emit(state.copyWith(
-        status: PosStatus.error,
         errorMessage: e.toString(),
       ));
     }
@@ -152,9 +185,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     emit(state.copyWith(
       selectedLocationId: event.locationId,
-      status: PosStatus.loadingProducts,
-      cartItems: [], // Clear cart on location change
-      clearCustomer: true,
+      pageStatus: PosPageStatus.loadingProducts,
+      cartItems: [],
+      // Clear cart on location change
       clearMessages: true,
       currentPage: 1,
       hasMore: true,
@@ -176,7 +209,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           state.selectedBrandId,
         );
         emit(state.copyWith(
-          status: PosStatus.idle,
+          pageStatus: PosPageStatus.idle,
           products: products,
           filteredProducts: filtered,
           hasMore: products.length >= _perPage,
@@ -184,8 +217,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
-          errorMessage: failure.message,
+          pageStatus: PosPageStatus.idle,
         ));
       },
     );
@@ -213,15 +245,30 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
     // Check if item already in cart
     final existingIndex = updatedCart.indexWhere(
-      (item) =>
-          item.productId == productId && item.variationId == variationId,
+      (item) => item.productId == productId && item.variationId == variationId,
     );
+
+    // Calculate new quantity
+    final newQuantity = existingIndex >= 0
+        ? updatedCart[existingIndex].quantity + event.quantity
+        : event.quantity;
+
+    // Validate stock if product has stock enabled
+    if (product.enableStock == true) {
+      final qtyAvailable = product.qtyAvailable ?? 0;
+      if (qtyAvailable <= 0 || newQuantity > qtyAvailable) {
+        emit(state.copyWith(
+          errorMessage: LocaleKeys.outOfStock,
+        ));
+        return;
+      }
+    }
 
     if (existingIndex >= 0) {
       // Update quantity
       final existing = updatedCart[existingIndex];
       updatedCart[existingIndex] = existing.copyWith(
-        quantity: existing.quantity + event.quantity,
+        quantity: newQuantity,
       );
     } else {
       // Add new item
@@ -235,13 +282,18 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       ));
     }
 
-    emit(state.copyWith(cartItems: updatedCart));
+    emit(state.copyWith(cartItems: updatedCart, clearMessages: true));
   }
 
   void _onUpdateCartItemQuantity(
     PosUpdateCartItemQuantity event,
     Emitter<PosState> emit,
   ) {
+    emit(state.copyWith(
+      actionStatus: PosStatus.idle,
+      clearMessages: true,
+    ));
+
     final updatedCart = List<CartItem>.from(state.cartItems);
     final index = updatedCart.indexWhere(
       (item) =>
@@ -252,12 +304,36 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     if (index >= 0) {
       if (event.quantity <= 0) {
         updatedCart.removeAt(index);
-      } else {
-        updatedCart[index] = updatedCart[index].copyWith(
-          quantity: event.quantity,
-        );
+        emit(state.copyWith(cartItems: updatedCart, clearMessages: true));
+        return;
       }
-      emit(state.copyWith(cartItems: updatedCart));
+
+      final cartItem = updatedCart[index];
+      final product = cartItem.product;
+
+      // Validate stock if product has stock enabled
+      if (product.enableStock == true) {
+        final qtyAvailable = product.qtyAvailable ?? 0;
+        if (qtyAvailable <= 0) {
+          emit(state.copyWith(
+            actionStatus: PosStatus.error,
+            errorMessage: LocaleKeys.outOfStock,
+          ));
+          return;
+        }
+        if (event.quantity > qtyAvailable) {
+          emit(state.copyWith(errorMessage: LocaleKeys.stockAvailable));
+          return;
+        }
+      }
+
+      updatedCart[index] = cartItem.copyWith(
+        quantity: event.quantity,
+      );
+      emit(state.copyWith(
+        cartItems: updatedCart,
+        clearMessages: true,
+      ));
     }
   }
 
@@ -266,11 +342,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     Emitter<PosState> emit,
   ) {
     final updatedCart = state.cartItems
-        .where((item) =>
-            !(item.productId == event.productId &&
-                item.variationId == event.variationId))
+        .where((item) => !(item.productId == event.productId &&
+            item.variationId == event.variationId))
         .toList();
-    emit(state.copyWith(cartItems: updatedCart));
+    emit(state.copyWith(cartItems: updatedCart, actionStatus: PosStatus.idle));
   }
 
   void _onClearCart(
@@ -278,12 +353,13 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     Emitter<PosState> emit,
   ) {
     emit(state.copyWith(
+      actionStatus: PosStatus.idle,
       cartItems: [],
       discountAmount: 0,
       discountType: DiscountType.fixed,
       taxId: null,
       taxRate: 0,
-      clearCustomer: true,
+      selectedCustomer: state.customers.isNotEmpty ? state.customers[0] : null,
       invoiceType: InvoiceType.final_,
       isQuotation: false,
       isSuspended: false,
@@ -316,13 +392,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     if (!state.canSubmit) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: LocaleKeys.pleaseSelectCustomerAndAddItems,
       ));
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.submitting, clearMessages: true));
+    emit(state.copyWith(
+        actionStatus: PosStatus.submitting, clearMessages: true));
 
     try {
       // Create sell lines from cart items (like old code)
@@ -339,14 +416,18 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         );
       }).toList();
 
+      final bool isCredit = event.paymentMethod == PaymentMethod.eWallet ||
+          event.paymentMethod == PaymentMethod.bankTransfer;
+
       // Calculate adjusted invoice amount (like old code: invoiceAmount - discount)
       // Note: old code uses invoiceAmount (subtotal) before tax, then subtracts discount
       final adjustedInvoiceAmount = state.adjustedInvoiceAmount;
 
+      final paymentAmount = isCredit ? 0.0 : adjustedInvoiceAmount;
+
       // Determine status (like old code: isCredit ? 'pending' : invoiceType)
-      final saleStatus = event.isCredit
-          ? SellStatus.pending
-          : state.invoiceType.toSellStatus();
+      final saleStatus =
+          isCredit ? SellStatus.pending : state.invoiceType.toSellStatus();
 
       // Create sell entity - use state values, no hardcoded values
       final invoiceNo = _generateInvoiceNo();
@@ -356,33 +437,36 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer!.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: saleStatus.value, // Dynamic: isCredit ? 'pending' : invoiceType
+        status: saleStatus.value,
+        // Dynamic: isCredit ? 'pending' : invoiceType
         taxRateId: state.taxId,
-        discountAmount: state.discountAmount, // Use raw discount amount
+        discountAmount: state.discountAmount,
+        // Use raw discount amount
         discountType: state.discountType.value,
-        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (after discount, before tax)
-        pendingAmount: event.isCredit ? adjustedInvoiceAmount : 0.0, // Like old code
-        isQuotation: state.isQuotation, // Use state value
-        isSuspend: state.isSuspended, // Use state value
+        invoiceAmount: adjustedInvoiceAmount,
+        // Use adjusted amount (after discount, before tax)
+        pendingAmount: isCredit ? adjustedInvoiceAmount : 0.0,
+        // Like old code
+        isQuotation: state.isQuotation,
+        // Use state value
+        isSuspend: state.isSuspended,
+        // Use state value
         sellLines: sellLines,
       );
 
       // Create payment only if not quotation and not suspended (like old code)
       final List<SellPaymentEntity> payments = [];
       if (!state.isQuotation && !state.isSuspended) {
-        // Determine payment method (like old code: isCredit ? 'card' : 'cash')
-        final paymentMethod = event.paymentMethod ??
-            (event.isCredit ? PaymentMethod.card : PaymentMethod.cash);
-
-        // Payment amount (like old code: isCredit ? 0 : adjustedInvoiceAmount)
-        final paymentAmount = event.isCredit ? 0.0 : adjustedInvoiceAmount;
+        final paymentMethod = event.paymentMethod;
 
         payments.add(SellPaymentEntity(
           id: 0,
           sellId: null,
-          method: paymentMethod.value, // Dynamic: based on isCredit or provided
-          amount: paymentAmount, // Dynamic: isCredit ? 0 : adjustedInvoiceAmount
+          method: paymentMethod.value,
+          amount: paymentAmount,
+          accountId: event.paymentAccount?.id,
           transactionDate: DateTime.now().toIso8601String(),
+          // Full payment account info
         ));
       }
 
@@ -394,24 +478,27 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         onSuccess: (createdSell) {
           // Only print if not suspended and printInvoice is true
           final shouldPrint = event.printInvoice && !state.isSuspended;
-          
+
           emit(state.copyWith(
-            status: PosStatus.success,
-            successMessage: event.isCredit
+            actionStatus: PosStatus.success,
+            successMessage: isCredit
                 ? LocaleKeys.creditSaleCreatedSuccessfully
                 : (state.isQuotation
                     ? LocaleKeys.quotationCreatedSuccessfully
                     : (state.isSuspended
                         ? LocaleKeys.saleSuspendedSuccessfully
                         : LocaleKeys.saleCompletedSuccessfully)),
-            createdSellId: createdSell.id, // Store created sell ID for printing
-            shouldPrintInvoice: shouldPrint, // Flag to trigger printing
+            createdSellId: createdSell.id,
+            // Store created sell ID for printing
+            shouldPrintInvoice: shouldPrint,
+            // Flag to trigger printing
             cartItems: [],
             discountAmount: 0,
             discountType: DiscountType.fixed,
             taxId: null,
             taxRate: 0,
-            clearCustomer: true,
+            selectedCustomer:
+                state.customers.isNotEmpty ? state.customers[0] : null,
             invoiceType: InvoiceType.final_,
             isQuotation: false,
             isSuspended: false,
@@ -419,26 +506,17 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         },
         onError: (failure) {
           emit(state.copyWith(
-            status: PosStatus.error,
+            actionStatus: PosStatus.error,
             errorMessage: failure.message,
           ));
         },
       );
     } catch (e) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: e.toString(),
       ));
     }
-  }
-
-  Future<void> _onSubmitCreditSale(
-    PosSubmitCreditSale event,
-    Emitter<PosState> emit,
-  ) async {
-    // Credit sale is now handled by PosSubmitSale with isCredit=true
-    // This method redirects to the unified submit method
-    add(PosSubmitSale(isCredit: true));
   }
 
   Future<void> _onCreateDraft(
@@ -447,13 +525,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     if (!state.canSubmit) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: LocaleKeys.pleaseSelectCustomerAndAddItems,
       ));
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.submitting, clearMessages: true));
+    emit(state.copyWith(
+        actionStatus: PosStatus.submitting, clearMessages: true));
 
     try {
       // Create sell lines from cart items (like old code)
@@ -481,13 +560,18 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer!.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: SellStatus.draft.value, // Draft always uses 'draft' status
+        status: SellStatus.draft.value,
+        // Draft always uses 'draft' status
         taxRateId: state.taxId,
-        discountAmount: state.discountAmount, // Use raw discount amount
+        discountAmount: state.discountAmount,
+        // Use raw discount amount
         discountType: state.discountType.value,
-        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (like old code)
-        isQuotation: false, // Draft is not a quotation
-        isSuspend: false, // Draft is not suspended
+        invoiceAmount: adjustedInvoiceAmount,
+        // Use adjusted amount (like old code)
+        isQuotation: false,
+        // Draft is not a quotation
+        isSuspend: false,
+        // Draft is not suspended
         sellLines: sellLines,
       );
 
@@ -499,7 +583,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       result.fold(
         onSuccess: (_) {
           emit(state.copyWith(
-            status: PosStatus.success,
+            actionStatus: PosStatus.success,
             successMessage: LocaleKeys.draftCreatedSuccessfully,
             cartItems: [],
             clearCustomer: true,
@@ -507,14 +591,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         },
         onError: (failure) {
           emit(state.copyWith(
-            status: PosStatus.error,
+            actionStatus: PosStatus.error,
             errorMessage: failure.message,
           ));
         },
       );
     } catch (e) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: e.toString(),
       ));
     }
@@ -526,13 +610,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     if (!state.canSubmit) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: LocaleKeys.pleaseSelectCustomerAndAddItems,
       ));
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.submitting, clearMessages: true));
+    emit(state.copyWith(
+        actionStatus: PosStatus.submitting, clearMessages: true));
 
     try {
       // Create sell lines from cart items (like old code)
@@ -560,13 +645,18 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer!.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: SellStatus.quotation.value, // Quotation always uses 'quotation' status
+        status: SellStatus.quotation.value,
+        // Quotation always uses 'quotation' status
         taxRateId: state.taxId,
-        discountAmount: state.discountAmount, // Use raw discount amount
+        discountAmount: state.discountAmount,
+        // Use raw discount amount
         discountType: state.discountType.value,
-        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (like old code)
-        isQuotation: true, // Quotation always has isQuotation = true
-        isSuspend: state.isSuspended, // Use state value
+        invoiceAmount: adjustedInvoiceAmount,
+        // Use adjusted amount (like old code)
+        isQuotation: true,
+        // Quotation always has isQuotation = true
+        isSuspend: state.isSuspended,
+        // Use state value
         sellLines: sellLines,
       );
 
@@ -578,22 +668,23 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       result.fold(
         onSuccess: (_) {
           emit(state.copyWith(
-            status: PosStatus.success,
+            actionStatus: PosStatus.success,
             successMessage: LocaleKeys.quotationCreatedSuccessfully,
             cartItems: [],
-            clearCustomer: true,
+            selectedCustomer:
+                state.customers.isNotEmpty ? state.customers[0] : null,
           ));
         },
         onError: (failure) {
           emit(state.copyWith(
-            status: PosStatus.error,
+            actionStatus: PosStatus.error,
             errorMessage: failure.message,
           ));
         },
       );
     } catch (e) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: e.toString(),
       ));
     }
@@ -605,13 +696,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   ) async {
     if (state.cartItems.isEmpty) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: LocaleKeys.cartIsEmpty,
       ));
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.submitting, clearMessages: true));
+    emit(state.copyWith(
+        actionStatus: PosStatus.submitting, clearMessages: true));
 
     try {
       // Create sell lines from cart items (like old code)
@@ -639,13 +731,18 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         contactId: state.selectedCustomer?.id,
         transactionDate: DateTime.now().toIso8601String(),
         invoiceNo: invoiceNo,
-        status: SellStatus.suspended.value, // Suspended sale always uses 'suspended' status
+        status: SellStatus.suspended.value,
+        // Suspended sale always uses 'suspended' status
         taxRateId: state.taxId,
-        discountAmount: state.discountAmount, // Use raw discount amount
+        discountAmount: state.discountAmount,
+        // Use raw discount amount
         discountType: state.discountType.value,
-        invoiceAmount: adjustedInvoiceAmount, // Use adjusted amount (like old code)
-        isQuotation: state.isQuotation, // Use state value
-        isSuspend: true, // Suspended sale always has isSuspend = true
+        invoiceAmount: adjustedInvoiceAmount,
+        // Use adjusted amount (like old code)
+        isQuotation: state.isQuotation,
+        // Use state value
+        isSuspend: true,
+        // Suspended sale always has isSuspend = true
         sellLines: sellLines,
       );
 
@@ -657,23 +754,24 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       result.fold(
         onSuccess: (_) {
           emit(state.copyWith(
-            status: PosStatus.success,
+            actionStatus: PosStatus.success,
             successMessage: LocaleKeys.saleSuspendedSuccessfully,
             cartItems: [],
-            clearCustomer: true,
+            selectedCustomer:
+                state.customers.isNotEmpty ? state.customers[0] : null,
             isSuspended: true,
           ));
         },
         onError: (failure) {
           emit(state.copyWith(
-            status: PosStatus.error,
+            actionStatus: PosStatus.error,
             errorMessage: failure.message,
           ));
         },
       );
     } catch (e) {
       emit(state.copyWith(
-        status: PosStatus.error,
+        actionStatus: PosStatus.error,
         errorMessage: e.toString(),
       ));
     }
@@ -683,6 +781,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosCancelSale event,
     Emitter<PosState> emit,
   ) {
+    emit(state.copyWith(clearMessages: true, actionStatus: PosStatus.idle));
     add(const PosClearCart());
   }
 
@@ -693,7 +792,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     if (state.selectedLocationId == null) return;
 
     emit(state.copyWith(
-      status: PosStatus.loadingProducts,
+      pageStatus: PosPageStatus.loadingProducts,
       clearMessages: true,
       currentPage: 1,
     ));
@@ -717,18 +816,16 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           state.selectedBrandId,
         );
         emit(state.copyWith(
-          status: PosStatus.success,
           products: products,
           filteredProducts: filtered,
           currentPage: 1,
           hasMore: products.length >= _perPage,
-          successMessage: LocaleKeys.syncCompletedSuccessfully,
+          pageStatus: PosPageStatus.idle,
         ));
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
-          errorMessage: failure.message,
+          pageStatus: PosPageStatus.idle,
         ));
       },
     );
@@ -744,7 +841,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       return;
     }
 
-    emit(state.copyWith(status: PosStatus.loadingMore));
+    emit(state.copyWith(
+        pageStatus: PosPageStatus.loadingMore, clearMessages: true));
 
     final nextPage = state.currentPage + 1;
     final result = await _productRepository.getProducts(
@@ -757,7 +855,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       onSuccess: (newProducts) {
         if (newProducts.isEmpty) {
           emit(state.copyWith(
-            status: PosStatus.idle,
+            pageStatus: PosPageStatus.idle,
             hasMore: false,
           ));
           return;
@@ -772,7 +870,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         );
 
         emit(state.copyWith(
-          status: PosStatus.idle,
+          pageStatus: PosPageStatus.idle,
           products: allProducts,
           filteredProducts: filtered,
           currentPage: nextPage,
@@ -781,8 +879,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
-          errorMessage: failure.message,
+          pageStatus: PosPageStatus.idle,
         ));
       },
     );
@@ -850,8 +947,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     return products.where((product) {
       // Search filter
       if (query.isNotEmpty) {
-        final name = (product.displayName ?? product.productName ?? '')
-            .toLowerCase();
+        final name =
+            (product.displayName ?? product.productName ?? '').toLowerCase();
         final sku = (product.subSku ?? product.sku ?? '').toLowerCase();
         final searchLower = query.toLowerCase();
         if (!name.contains(searchLower) && !sku.contains(searchLower)) {
@@ -877,21 +974,23 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosLoadCustomers event,
     Emitter<PosState> emit,
   ) async {
-    emit(state.copyWith(status: PosStatus.loadingCustomers));
+    emit(state.copyWith(
+        pageStatus: PosPageStatus.loadingCustomers, clearMessages: true));
 
-    final result = await _contactRepository.getContacts(type: ContactType.customer.value);
+    final result =
+        await _contactRepository.getContacts(type: ContactType.customer.value);
 
     result.fold(
       onSuccess: (customers) {
         emit(state.copyWith(
-          status: PosStatus.idle,
+          pageStatus: PosPageStatus.idle,
           customers: customers,
+          selectedCustomer: customers.isNotEmpty ? customers[0] : null,
         ));
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
-          errorMessage: failure.message,
+          pageStatus: PosPageStatus.idle,
         ));
       },
     );
@@ -908,21 +1007,43 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosLoadSuspendedSells event,
     Emitter<PosState> emit,
   ) async {
-    emit(state.copyWith(status: PosStatus.loadingSuspendedSells));
+    emit(state.copyWith(pageStatus: PosPageStatus.loadingSuspendedSells));
 
     final result = await _getSuspendedSellsUseCase.call();
 
     result.fold(
       onSuccess: (sells) {
         emit(state.copyWith(
-          status: PosStatus.idle,
+          pageStatus: PosPageStatus.idle,
           suspendedSells: sells,
         ));
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
-          errorMessage: failure.message,
+          pageStatus: PosPageStatus.idle,
+        ));
+      },
+    );
+  }
+
+  Future<void> _onLoadHistorySells(
+    PosLoadHistorySells event,
+    Emitter<PosState> emit,
+  ) async {
+    emit(state.copyWith(pageStatus: PosPageStatus.loadingFinalSells));
+
+    final result = await _getFinalSellsUseCase.call();
+
+    result.fold(
+      onSuccess: (sells) {
+        emit(state.copyWith(
+          pageStatus: PosPageStatus.idle,
+          historySells: sells,
+        ));
+      },
+      onError: (failure) {
+        emit(state.copyWith(
+          pageStatus: PosPageStatus.idle,
         ));
       },
     );
@@ -932,12 +1053,15 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosLoadSuspendedSell event,
     Emitter<PosState> emit,
   ) async {
+    emit(state.copyWith(clearMessages: true));
+
     final sell = event.sell;
 
     // Load customer if available
     ContactEntity? customer;
     if (sell.contactId != null) {
-      final customerResult = await _contactRepository.getContactById(sell.contactId!);
+      final customerResult =
+          await _contactRepository.getContactById(sell.contactId!);
       customerResult.fold(
         onSuccess: (c) => customer = c,
         onError: (_) {},
@@ -959,7 +1083,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           for (final line in sell.sellLines) {
             // Find matching product
             final product = products.firstWhere(
-              (p) => (p.productId ?? p.id) == line.productId &&
+              (p) =>
+                  (p.productId ?? p.id) == line.productId &&
                   (p.variationId ?? 0) == line.variationId,
               orElse: () => products.first, // Fallback, should not happen
             );
@@ -971,7 +1096,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
               quantity: line.quantity!.toInt(),
               unitPrice: line.unitPrice!,
               discountAmount: line.discountAmount ?? 0,
-              discountType: DiscountTypeExtension.fromString(line.discountType) ?? DiscountType.fixed,
+              discountType:
+                  DiscountTypeExtension.fromString(line.discountType) ??
+                      DiscountType.fixed,
               taxId: line.taxRateId,
             ));
           }
@@ -982,7 +1109,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
     // Set discount and tax
     final discountAmount = sell.discountAmount ?? 0;
-    final discountType = DiscountTypeExtension.fromString(sell.discountType) ?? DiscountType.fixed;
+    final discountType = DiscountTypeExtension.fromString(sell.discountType) ??
+        DiscountType.fixed;
     final taxId = sell.taxRateId;
 
     // Get tax rate if taxId is available
@@ -1008,7 +1136,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       taxRate: taxRate,
       isSuspended: true,
       invoiceType: invoiceType,
-      successMessage: LocaleKeys.suspendedSaleLoaded,
     ));
   }
 
@@ -1016,6 +1143,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosDeleteSuspendedSell event,
     Emitter<PosState> emit,
   ) async {
+    emit(state.copyWith(actionStatus: PosStatus.submitting));
+
     final result = await _deleteSellUseCase.call(event.sellId);
 
     result.fold(
@@ -1023,17 +1152,107 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         // Reload suspended sells
         add(const PosLoadSuspendedSells());
         emit(state.copyWith(
-          status: PosStatus.success,
+          actionStatus: PosStatus.success,
           successMessage: LocaleKeys.suspendedSaleDeleted,
         ));
       },
       onError: (failure) {
         emit(state.copyWith(
-          status: PosStatus.error,
+          actionStatus: PosStatus.error,
           errorMessage: failure.message,
         ));
       },
     );
+  }
+
+  Future<void> _onScanBarcode(
+    PosScanBarcode event,
+    Emitter<PosState> emit,
+  ) async {
+    if (state.selectedLocationId == null) {
+      emit(state.copyWith(
+        actionStatus: PosStatus.error,
+        errorMessage: LocaleKeys.pleaseSelectBranch,
+      ));
+      return;
+    }
+
+    if (event.barcode.trim().isEmpty) {
+      return;
+    }
+
+    emit(state.copyWith(
+      clearMessages: true,
+      actionStatus: PosStatus.submitting,
+    ));
+
+    try {
+      // Find product by SKU (barcode)
+      final result = await _productRepository.findProductBySku(
+        locationId: state.selectedLocationId!,
+        sku: event.barcode.trim(),
+      );
+
+      result.fold(
+        onSuccess: (product) {
+          if (product == null) {
+            emit(state.copyWith(
+              actionStatus: PosStatus.error,
+              errorMessage: LocaleKeys.noProductsFound,
+            ));
+            return;
+          }
+
+          // Check if product has stock enabled and validate stock
+          if (product.enableStock == true) {
+            final qtyAvailable = product.qtyAvailable ?? 0;
+            if (qtyAvailable <= 0) {
+              emit(state.copyWith(
+                actionStatus: PosStatus.error,
+                errorMessage: LocaleKeys.outOfStock,
+              ));
+              return;
+            }
+
+            // Check if product is already in cart and if adding 1 would exceed stock
+            final productId = product.productId ?? product.id;
+            final variationId = product.variationId ?? 0;
+            final existingIndex = state.cartItems.indexWhere(
+              (item) =>
+                  item.productId == productId &&
+                  item.variationId == variationId,
+            );
+
+            if (existingIndex >= 0) {
+              final existingQuantity = state.cartItems[existingIndex].quantity;
+              if (existingQuantity >= qtyAvailable) {
+                emit(state.copyWith(
+                  actionStatus: PosStatus.error,
+                  errorMessage: '${LocaleKeys.stockAvailable}: $qtyAvailable',
+                ));
+                return;
+              }
+            }
+          }
+
+          // Add product to cart
+          add(PosAddToCart(product: product, quantity: 1));
+          emit(state.copyWith(
+            actionStatus: PosStatus.idle
+          ));
+        },
+        onError: (failure) {
+          emit(state.copyWith(
+            actionStatus: PosStatus.submitting,
+          ));
+        },
+      );
+    } catch (e) {
+      emit(state.copyWith(
+        actionStatus: PosStatus.error,
+        errorMessage: e.toString(),
+      ));
+    }
   }
 
   void _onClearPrintFlag(

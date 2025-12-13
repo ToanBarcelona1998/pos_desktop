@@ -183,6 +183,9 @@ abstract final class LocaleKeys {
   static const String card = 'card';
   static const String cheque = 'cheque';
   static const String bankTransfer = 'bank_transfer';
+  static const String eWallet = 'e_wallet';
+  static const String paymentType = 'payment_type';
+  static const String selectAccount = 'select_account';
   static const String multiPayment = 'multi_payment';
 
   // Purchase

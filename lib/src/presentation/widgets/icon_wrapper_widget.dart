@@ -4,8 +4,8 @@ import '../../core/constants/constants.dart';
 
 class IconWrapper extends StatelessWidget {
   final IconData icon;
-  final double iconSize;
-  final double wrapperSize;
+  final double ? iconSize;
+  final double ? wrapperSize;
   final Color iconColor;
   final Color backgroundColor;
   final double borderRadius;
@@ -16,19 +16,22 @@ class IconWrapper extends StatelessWidget {
   const IconWrapper({
     super.key,
     required this.icon,
-    double? iconSize,
-    double? wrapperSize,
+    this.iconSize,
+    this.wrapperSize,
     this.iconColor = Colors.blueAccent,
     this.backgroundColor = Colors.white,
     this.borderRadius = 8.0,
     this.boxShadow,
     this.onTap,
     this.tooltip,
-  })  : iconSize = iconSize ?? AppSizes.iconXs,
-        wrapperSize = wrapperSize ?? (iconSize ?? AppSizes.iconXs) + AppSizes.iconXs;
+  });
 
   @override
   Widget build(BuildContext context) {
+    final responseSize = ResponsiveSizes(context);
+
+    final iSize = iconSize ?? responseSize.iconXs;
+    final iWrapSize = wrapperSize ?? iSize * 2;
     final defaultBoxShadow = boxShadow ?? [
       BoxShadow(
         color: Colors.black.withAlpha((0.2 * 255).round()),
@@ -41,8 +44,8 @@ class IconWrapper extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(borderRadius),
       child: Container(
-        width: wrapperSize,
-        height: wrapperSize,
+        width: iWrapSize,
+        height: iWrapSize,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: backgroundColor,
@@ -51,7 +54,7 @@ class IconWrapper extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          size: iconSize,
+          size: iSize,
           color: iconColor,
         ),
       ),

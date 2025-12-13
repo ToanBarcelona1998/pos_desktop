@@ -9,22 +9,19 @@ import '../../../../core/constants/app_responsive.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/localization/app_localization.dart';
 import '../../../../core/localization/locale_keys.dart';
-import '../../../widgets/app_button.dart';
 import '../../../widgets/icon_wrapper_widget.dart';
 
-/// Bottom sheet for suspended sales
-class PosSuspendedSalesWidget extends StatelessWidget {
-  final List<SellEntity> suspendedSells;
+/// Bottom sheet for history sells (final status, view-only)
+class PosHistorySellsWidget extends StatelessWidget {
+  final List<SellEntity> historySells;
   final bool isLoading;
-  final ValueChanged<SellEntity>? onContinue;
-  final ValueChanged<int>? onDelete;
+  final String currencySymbol;
 
-  const PosSuspendedSalesWidget({
+  const PosHistorySellsWidget({
     super.key,
-    required this.suspendedSells,
+    required this.historySells,
     this.isLoading = false,
-    this.onContinue,
-    this.onDelete,
+    this.currencySymbol = '\$',
   });
 
   @override
@@ -33,71 +30,70 @@ class PosSuspendedSalesWidget extends StatelessWidget {
     final theme = Theme.of(context);
     final rSpacing = context.rSpacing;
     final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      padding: rSpacing.paddingMd,
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(16),
-        ),
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: AppRadius.borderRadiusMd,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.translate(LocaleKeys.suspendedSales),
-                  style: rTypography.titleLarge,
+      child: Container(
+        constraints: BoxConstraints(
+            maxWidth: rSizes.modalWidthXl,
+            minWidth: rSizes.modalWidthXl,
+            minHeight: rSizes.modalWidthMd
+        ),
+        padding: rSpacing.paddingMd,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.translate(LocaleKeys.previousPayments),
+                    style: rTypography.titleLarge,
+                  ),
                 ),
-              ),
-              IconWrapper(
-                icon: Icons.close,
-                iconColor: theme.colorScheme.primary,
-                onTap: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-          rSpacing.gapVerticalMd,
-          // List
-          Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : suspendedSells.isEmpty
-                    ? _EmptySuspendedSales(l10n: l10n)
-                    : ListView.builder(
-                        itemCount: suspendedSells.length,
-                        itemBuilder: (context, index) {
-                          final sell = suspendedSells[index];
-                          return _SuspendedSaleItem(
-                            sell: sell,
-                            onContinue: () {
-                              onContinue?.call(sell);
-                              Navigator.of(context).pop();
-                            },
-                            onDelete: () {
-                              onDelete?.call(sell.id);
-                            },
-                            theme: theme,
-                            l10n: l10n,
-                          );
-                        },
-                      ),
-          ),
-        ],
+                IconWrapper(
+                  icon: Icons.close,
+                  iconColor: theme.colorScheme.primary,
+                  onTap: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            rSpacing.gapVerticalMd,
+            // List
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : historySells.isEmpty
+                      ? _EmptyHistorySells(l10n: l10n)
+                      : ListView.builder(
+                          itemCount: historySells.length,
+                          itemBuilder: (context, index) {
+                            final sell = historySells[index];
+                            return _HistorySellItem(
+                              sell: sell,
+                              currencySymbol: currencySymbol,
+                              theme: theme,
+                              l10n: l10n,
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _EmptySuspendedSales extends StatelessWidget {
+class _EmptyHistorySells extends StatelessWidget {
   final AppLocalizations l10n;
 
-  const _EmptySuspendedSales({required this.l10n});
+  const _EmptyHistorySells({required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +106,7 @@ class _EmptySuspendedSales extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.pause_circle_outline,
+            Icons.history,
             size: rSizes.illustrationXs,
             color: Colors.grey[400],
           ),
@@ -125,17 +121,15 @@ class _EmptySuspendedSales extends StatelessWidget {
   }
 }
 
-class _SuspendedSaleItem extends StatelessWidget {
+class _HistorySellItem extends StatelessWidget {
   final SellEntity sell;
-  final VoidCallback onContinue;
-  final VoidCallback onDelete;
+  final String currencySymbol;
   final ThemeData theme;
   final AppLocalizations l10n;
 
-  const _SuspendedSaleItem({
+  const _HistorySellItem({
     required this.sell,
-    required this.onContinue,
-    required this.onDelete,
+    required this.currencySymbol,
     required this.theme,
     required this.l10n,
   });
@@ -150,8 +144,6 @@ class _SuspendedSaleItem extends StatelessWidget {
     final rSpacing = context.rSpacing;
     final rTypography = context.rTypography;
 
-    final t = AppThemes.light;
-    
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +180,7 @@ class _SuspendedSaleItem extends StatelessWidget {
                   borderRadius: AppRadius.borderRadiusSm,
                 ),
                 child: Text(
-                  '${Helper().formatCurrency(sell.invoiceAmount)}đ',
+                  '${Helper().formatCurrency(sell.invoiceAmount ?? 0)}$currencySymbol',
                   style: rTypography.labelLarge.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.bold,
@@ -204,35 +196,40 @@ class _SuspendedSaleItem extends StatelessWidget {
               style: rTypography.bodySmall,
             ),
           ],
-          rSpacing.gapVerticalSm,
-          Row(
-            children: [
-              Expanded(
-                child: AppButton(
-                  text: l10n.translate(LocaleKeys.continueSale),
-                  icon: Icons.play_arrow,
-                  onPressed: onContinue,
-                  backgroundColor: t.primaryColor,
+          if (sell.payments.isNotEmpty) ...[
+            rSpacing.gapVerticalXs,
+            Divider(height: 1),
+            rSpacing.gapVerticalXs,
+            Text(
+              l10n.translate(LocaleKeys.paymentDetails),
+              style: rTypography.bodySmall.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            ...sell.payments.map((payment) {
+              return Padding(
+                padding: EdgeInsets.only(top: rSpacing.xs),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      payment.method ?? '',
+                      style: rTypography.bodySmall,
+                    ),
+                    Text(
+                      '${Helper().formatCurrency(payment.amount ?? 0)}$currencySymbol',
+                      style: rTypography.bodySmall.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              rSpacing.gapHorizontalSm,
-              AppButton(
-                text: l10n.translate(LocaleKeys.delete),
-                icon: Icons.delete_outline,
-                onPressed: onDelete,
-                isOutlined: true,
-                backgroundColor: theme.colorScheme.error,
-                foregroundColor: theme.colorScheme.error,
-              ),
-            ],
-          ),
+              );
+            }),
+          ],
         ],
       ),
     );
   }
 }
-
-
-
-
 

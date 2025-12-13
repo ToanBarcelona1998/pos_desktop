@@ -357,6 +357,7 @@ void _registerServices() {
         productDataSource: sl.get<ProductRemoteDataSource>(),
         productLocalDataSource: sl.get<ProductLocalDataSource>(),
         contactLocalDataSource: sl.get<ContactLocalDataSource>(),
+        baseUrl: sl.get<AppConfig>().baseUrl,
       ));
 }
 
@@ -383,6 +384,9 @@ void _registerUseCases() {
   // Contact
   sl.registerLazy<GetContactsUseCase>(() => GetContactsUseCase(sl.get<ContactRepository>()));
   sl.registerLazy<SearchContactsUseCase>(() => SearchContactsUseCase(sl.get<ContactRepository>()));
+
+  // Payment
+  sl.registerLazy<GetPaymentAccountsByTypeUseCase>(() => GetPaymentAccountsByTypeUseCase(sl.get<PaymentRepository>()));
 
   // Expense
   sl.registerLazy<GetExpenseCategoriesUseCase>(() => GetExpenseCategoriesUseCase(sl.get<ExpenseRepository>()));
@@ -412,6 +416,7 @@ void _registerUseCases() {
   sl.registerLazy<GetSellsByIdsUseCase>(() => GetSellsByIdsUseCase(sl.get<SellRepository>()));
   sl.registerLazy<CreateSellUseCase>(() => CreateSellUseCase(sl.get<SellRepository>()));
   sl.registerLazy<GetSuspendedSellsUseCase>(() => GetSuspendedSellsUseCase(sl.get<SellRepository>()));
+  sl.registerLazy<GetFinalSellsUseCase>(() => GetFinalSellsUseCase(sl.get<SellRepository>()));
   sl.registerLazy<DeleteSellUseCase>(() => DeleteSellUseCase(
     sl.get<SellRepository>(),
   ));

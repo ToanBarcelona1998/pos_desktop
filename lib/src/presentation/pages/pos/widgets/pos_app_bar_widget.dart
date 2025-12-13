@@ -31,12 +31,14 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
 
     return AppBar(
       leading: const SizedBox(),
@@ -46,24 +48,30 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           // Location selector
           Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xxs,
+              horizontal: rSpacing.sm,
+              vertical: rSpacing.xxs,
             ),
-            child: Text(
-              locations.where((element) => element.id == selectedLocationId,).firstOrNull?.name ?? '',
-              style: AppTypography.titleMedium,
+            child: Row(
+              children: [
+                Text(
+                  '${l10n.translate(LocaleKeys.location)}:',
+                  style: rTypography.titleMedium
+                      .copyWith(fontWeight: FontWeight.bold),
+                ),
+                rSpacing.gapHorizontalMd,
+                _buildLocations(context),
+              ],
             ),
           ),
-          SizedBox(width: AppSpacing.md),
+          rSpacing.gapHorizontalMd,
           // Date/time display
           AppGradientButton(
             text: '',
             leading: Row(
               children: [
-                const Icon(Icons.calendar_today, color: Colors.white, size: 16),
-                const SizedBox(
-                  width: AppSpacing.xs,
-                ),
+                Icon(Icons.calendar_today,
+                    color: Colors.white, size: rSizes.iconXs),
+                rSpacing.gapHorizontalXs,
                 const LiveClockWidget()
               ],
             ),
@@ -77,34 +85,26 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           tooltip: l10n.translate(LocaleKeys.refresh),
           iconColor: Colors.purple,
         ),
-        const SizedBox(
-          width: AppSpacing.xs,
-        ),
+        rSpacing.gapHorizontalXs,
         IconWrapper(
           icon: Icons.pause_circle_outline,
           onTap: onSuspendedSales,
           tooltip: l10n.translate(LocaleKeys.suspendedSales),
           iconColor: Colors.grey,
         ),
-        const SizedBox(
-          width: AppSpacing.xs,
-        ),
+        rSpacing.gapHorizontalXs,
         IconWrapper(
           icon: Icons.fullscreen,
           onTap: onOpenFullScreen,
           iconColor: Colors.blueAccent,
         ),
-        const SizedBox(
-          width: AppSpacing.xs,
-        ),
+        rSpacing.gapHorizontalXs,
         IconWrapper(
           icon: Icons.close,
-          onTap: (){},
+          onTap: () {},
           iconColor: Colors.red,
         ),
-        const SizedBox(
-          width: AppSpacing.sm,
-        ),
+        rSpacing.gapHorizontalSm,
         BlocBuilder<AuthCubit, AuthState>(
           builder: (context, authState) {
             if (authState is Authenticated) {
@@ -118,13 +118,11 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                     tooltip: l10n.translate(LocaleKeys.syncData),
                     onTap: () {
                       context.read<PosOnlineBloc>().add(
-                        const PosOnlineSync(),
-                      );
+                            const PosOnlineSync(),
+                          );
                     },
                   ),
-                  const SizedBox(
-                    width: AppSpacing.sm,
-                  ),
+                  rSpacing.gapHorizontalSm,
                   // Logout button
                   IconWrapper(
                     iconColor: Colors.red,
@@ -132,13 +130,11 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                     tooltip: l10n.translate(LocaleKeys.logout),
                     onTap: () {
                       context.read<PosOnlineBloc>().add(
-                        const PosOnlineLogout(),
-                      );
+                            const PosOnlineLogout(),
+                          );
                     },
                   ),
-                  const SizedBox(
-                    width: AppSpacing.sm,
-                  ),
+                  rSpacing.gapHorizontalSm,
                 ],
               );
             }
@@ -146,6 +142,91 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildLocations(BuildContext context) {
+    // Multiple accounts - dropdown
+    final theme = Theme.of(context);
+
+    final rTypography = context.rTypography;
+    
+    if(locations.isEmpty){
+      return const SizedBox();
+    }
+
+    final initValue = locations
+        .where(
+          (element) => element.id == selectedLocationId,
+    )
+        .first;
+    
+    if(locations.length == 1){
+      return Text(
+        initValue.name,
+        style: rTypography.titleMedium,
+      );
+    }
+    
+    return IntrinsicWidth(
+      child: DropdownButtonFormField<LocationEntity>(
+        initialValue: initValue,
+        dropdownColor: Colors.white,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: AppRadius.borderRadiusSm,
+            borderSide: BorderSide(
+              color: theme.dividerColor,
+              width: 1,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: AppRadius.borderRadiusSm,
+            borderSide: BorderSide(
+              color: theme.dividerColor,
+              width: 1,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: AppRadius.borderRadiusSm,
+            borderSide: BorderSide(
+              color: theme.primaryColor,
+              width: 1,
+            ),
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: context.rSpacing.md,
+            vertical: context.rSpacing.sm,
+          ),
+        ),
+        style: context.rTypography.bodyMedium.copyWith(color: Colors.black),
+        selectedItemBuilder: (context) {
+          return locations.map((location) {
+            return Text(
+              location.name,
+              overflow: TextOverflow.ellipsis,
+              style: context.rTypography.bodyMedium,
+            );
+          }).toList();
+        },
+        items: locations.map((location) {
+          return DropdownMenuItem<LocationEntity>(
+            value: location,
+            child: Text(
+              location.name,
+              overflow: TextOverflow.ellipsis,
+              style: context.rTypography.bodyMedium.copyWith(color: Colors.black),
+            ),
+          );
+        }).toList(),
+        onChanged: (location) {
+          if(location != null){
+            onLocationChanged?.call(location.id); 
+          }
+        },
+      ),
     );
   }
 }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_sizes.dart';
-import '../../core/constants/app_spacing.dart';
-import '../../core/constants/app_typography.dart';
+import '../../core/constants/app_responsive.dart';
 import '../../core/constants/app_radius.dart';
 
 /// Loading indicator with app styling
@@ -21,10 +19,11 @@ class AppLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rSizes = context.rSizes;
 
     return SizedBox(
-      width: size ?? AppSizes.iconLg,
-      height: size ?? AppSizes.iconLg,
+      width: size ?? rSizes.iconLg,
+      height: size ?? rSizes.iconLg,
       child: CircularProgressIndicator(
         strokeWidth: strokeWidth,
         valueColor: AlwaysStoppedAnimation(color ?? theme.colorScheme.primary),
@@ -41,14 +40,17 @@ class AppLoadingCenter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const AppLoading(),
           if (message != null) ...[
-            SizedBox(height: AppSpacing.md),
-            Text(message!, style: AppTypography.bodyMedium),
+            rSpacing.gapVerticalMd,
+            Text(message!, style: rTypography.bodyMedium),
           ],
         ],
       ),
@@ -100,6 +102,9 @@ class AppLoadingDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
 
     return Dialog(
       backgroundColor: theme.dialogBackgroundColor,
@@ -107,16 +112,16 @@ class AppLoadingDialog extends StatelessWidget {
         borderRadius: AppRadius.borderRadiusMd,
       ),
       child: Padding(
-        padding: AppSpacing.paddingLg,
+        padding: rSpacing.paddingLg,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppLoading(size: AppSizes.iconXl),
+            AppLoading(size: rSizes.iconXl),
             if (message != null) ...[
-              SizedBox(height: AppSpacing.md),
+              rSpacing.gapVerticalMd,
               Text(
                 message!,
-                style: AppTypography.bodyMedium,
+                style: rTypography.bodyMedium,
                 textAlign: TextAlign.center,
               ),
             ],

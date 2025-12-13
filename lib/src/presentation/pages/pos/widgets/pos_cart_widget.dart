@@ -2,13 +2,11 @@ import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_final/helpers/other_helpers.dart';
-
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
+import 'package:pos_final/src/core/constants/app_responsive.dart';
+import 'package:pos_final/src/presentation/presentation.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/localization/app_localization.dart';
 import '../../../../core/localization/locale_keys.dart';
-import '../../../../core/theme/app_theme_base.dart';
 import '../pos_state.dart';
 
 /// POS cart widget
@@ -24,6 +22,8 @@ class PosCartWidget extends StatelessWidget {
   final void Function(int productId, int variationId, int quantity)?
       onQuantityChanged;
   final void Function(int productId, int variationId)? onRemoveItem;
+  final ValueChanged<String>? onProductSearch;
+  final ValueChanged<String>? onSuspendSellSearch;
 
   const PosCartWidget({
     super.key,
@@ -37,29 +37,67 @@ class PosCartWidget extends StatelessWidget {
     this.onCustomerSelect,
     this.onQuantityChanged,
     this.onRemoveItem,
+    this.onProductSearch,
+    this.onSuspendSellSearch,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
 
     return Card(
-      margin: EdgeInsets.all(AppSpacing.sm),
+      margin: EdgeInsets.all(rSpacing.sm),
       child: Column(
         children: [
-          // Customer selector
-          _CustomerSelectorSection(
-            customer: customer,
-            onSelect: onCustomerSelect,
-            l10n: l10n,
-            theme: theme,
+          // Customer selector and search fields
+          Padding(
+            padding: rSpacing.paddingSm,
+            child: Column(
+              children: [
+                // Customer selector
+                Row(
+                  children: [
+                    Expanded(
+                      child: _CustomerSelectorSection(
+                        customer: customer,
+                        onSelect: onCustomerSelect,
+                        l10n: l10n,
+                        theme: theme,
+                      ),
+                    ),
+                    rSpacing.gapHorizontalSm,
+                    // Product search (SKU/Product name)
+                    Expanded(
+                      child: _SearchField(
+                        hint: '${l10n.translate(LocaleKeys.sku)} / ${l10n.translate(LocaleKeys.product)}',
+                        icon: Icons.search,
+                        onChanged: onProductSearch,
+                        theme: theme,
+                      ),
+                    ),
+                    rSpacing.gapHorizontalSm,
+                    // Suspend sell search
+                    Expanded(
+                      child: _SearchField(
+                        hint: '${l10n.translate(LocaleKeys.suspendedSales)} (ID / ${l10n.translate(LocaleKeys.invoiceNo)})',
+                        icon: Icons.pause_circle_outline,
+                        onChanged: onSuspendSellSearch,
+                        theme: theme,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1, color: Colors.black.withAlpha((255 * 0.1).round())),
           // Cart items
           // Table header
           Container(
-            padding: AppSpacing.paddingSm,
+            padding: rSpacing.paddingSm,
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
@@ -72,20 +110,20 @@ class PosCartWidget extends StatelessWidget {
               children: [
                 // Product column
                 Expanded(
-                  flex: 4,
+                  flex: 3,
                   child: Text(
                     l10n.translate(LocaleKeys.product),
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: rTypography.bodyMedium.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
                 // Quantity column
                 Expanded(
-                  flex: 1,
+                  flex: 2,
                   child: Text(
                     l10n.translate(LocaleKeys.quantity),
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: rTypography.bodyMedium.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
@@ -96,7 +134,7 @@ class PosCartWidget extends StatelessWidget {
                   flex: 2,
                   child: Text(
                     l10n.translate(LocaleKeys.priceAfterTax),
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: rTypography.bodyMedium.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.right,
@@ -107,14 +145,14 @@ class PosCartWidget extends StatelessWidget {
                   flex: 2,
                   child: Text(
                     l10n.translate(LocaleKeys.paymentAmount),
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: rTypography.bodyMedium.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.right,
                   ),
                 ),
-                const SizedBox(
-                  width: AppSpacing.xxxl,
+                SizedBox(
+                  width: rSpacing.xxxl,
                 ),
               ],
             ),
@@ -130,7 +168,7 @@ class PosCartWidget extends StatelessWidget {
                     l10n: l10n,
                   ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1, color: Colors.black.withAlpha((255 * 0.1).round())),
           // Summary
           _CartSummary(
             subtotal: subtotal,
@@ -138,6 +176,7 @@ class PosCartWidget extends StatelessWidget {
             tax: tax,
             total: total,
             currencySymbol: currencySymbol,
+            totalItems: cartItems.length,
             l10n: l10n,
             theme: theme,
           ),
@@ -162,35 +201,112 @@ class _CustomerSelectorSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+
     return InkWell(
       onTap: onSelect,
+      borderRadius: AppRadius.borderRadiusSm,
       child: Container(
-        padding: AppSpacing.paddingMd,
+        padding: EdgeInsets.symmetric(
+          horizontal: rSpacing.sm,
+          vertical: rSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: theme.dividerColor,
+            width: 1,
+          ),
+          borderRadius: AppRadius.borderRadiusSm,
+        ),
         child: Row(
           children: [
-            Icon(Icons.person, color: theme.colorScheme.primary),
-            SizedBox(width: AppSpacing.sm),
+            Icon(
+              Icons.person,
+              color: theme.colorScheme.primary,
+              size: context.rSizes.iconSm,
+            ),
+            rSpacing.gapHorizontalSm,
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    customer?.name ?? l10n.translate(LocaleKeys.selectCustomer),
-                    style: AppTypography.titleMedium,
-                  ),
-                  if (customer?.mobile != null)
-                    Text(
-                      customer!.mobile!,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: theme.textTheme.bodySmall?.color,
-                      ),
-                    ),
-                ],
+              child: Text(
+                customer?.name ?? l10n.translate(LocaleKeys.selectCustomer),
+                style: rTypography.bodySmall.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            Icon(Icons.chevron_right, color: theme.primaryColor),
+            Icon(
+              Icons.chevron_right,
+              color: theme.primaryColor,
+              size: context.rSizes.iconSm,
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  final String hint;
+  final IconData icon;
+  final ValueChanged<String>? onChanged;
+  final ThemeData theme;
+
+  const _SearchField({
+    required this.hint,
+    required this.icon,
+    this.onChanged,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
+
+    return TextField(
+      onChanged: onChanged,
+      style: rTypography.bodySmall,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: rTypography.bodySmall.copyWith(
+          color: theme.hintColor,
+        ),
+        prefixIcon: Icon(
+          icon,
+          size: rSizes.iconSm,
+          color: theme.colorScheme.primary,
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: rSpacing.sm,
+          vertical: rSpacing.xs,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: AppRadius.borderRadiusSm,
+          borderSide: BorderSide(
+            color: theme.dividerColor,
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.borderRadiusSm,
+          borderSide: BorderSide(
+            color: theme.dividerColor,
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadius.borderRadiusSm,
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+            width: 1,
+          ),
+        ),
+        isDense: true,
       ),
     );
   }
@@ -203,19 +319,23 @@ class _EmptyCart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.shopping_cart_outlined,
-            size: 64,
+            size: rSizes.illustrationXs,
             color: Colors.grey[400],
           ),
-          SizedBox(height: AppSpacing.md),
+          rSpacing.gapVerticalMd,
           Text(
             l10n.translate(LocaleKeys.cartEmpty),
-            style: AppTypography.bodyLarge.copyWith(color: Colors.grey),
+            style: rTypography.bodyLarge.copyWith(color: Colors.grey),
           ),
         ],
       ),
@@ -247,7 +367,7 @@ class _CartItemsList extends StatelessWidget {
       padding: EdgeInsets.zero,
       itemCount: cartItems.length,
       separatorBuilder: (_, __) =>
-          Divider(height: 1, color: theme.dividerColor),
+          Divider(height: 1, color: Colors.black.withAlpha((255 * 0.1).round())),
       itemBuilder: (context, index) {
         final item = cartItems[index];
         final productId = item.productId;
@@ -261,6 +381,8 @@ class _CartItemsList extends StatelessWidget {
           priceAfterTax: item.unitPrice,
           pricePay: item.lineTotal,
           currencySymbol: currencySymbol,
+          qtyAvailable: item.product.qtyAvailable,
+          enableStock: item.product.enableStock ?? false,
           onQuantityChanged: (newQuantity) {
             onQuantityChanged?.call(productId, item.variationId, newQuantity);
           },
@@ -280,6 +402,8 @@ class _CartItemRow extends StatefulWidget {
   final double priceAfterTax;
   final double pricePay;
   final String currencySymbol;
+  final double? qtyAvailable;
+  final bool enableStock;
   final void Function(int) onQuantityChanged;
   final VoidCallback onDelete;
   final ThemeData theme;
@@ -290,6 +414,8 @@ class _CartItemRow extends StatefulWidget {
     required this.priceAfterTax,
     required this.pricePay,
     required this.currencySymbol,
+    this.qtyAvailable,
+    this.enableStock = false,
     required this.onQuantityChanged,
     required this.onDelete,
     required this.theme,
@@ -341,73 +467,162 @@ class _CartItemRowState extends State<_CartItemRow> {
 
     final parsed = int.tryParse(text);
     if (parsed == null || parsed < 1) {
-      _quantityController.text = '1';
-      widget.onQuantityChanged(1);
-    } else if (parsed != widget.quantity) {
+      _quantityController.text = widget.quantity.toString();
+      return;
+    }
+
+    // Validate stock if enabled
+    if (widget.enableStock && widget.qtyAvailable != null) {
+      final available = widget.qtyAvailable!;
+      if (available <= 0) {
+        // Reset to current quantity if out of stock
+        _quantityController.text = widget.quantity.toString();
+        return;
+      }
+      if (parsed > available) {
+        // Cap at available stock
+        _quantityController.text = available.toInt().toString();
+        widget.onQuantityChanged(available.toInt());
+        return;
+      }
+    }
+
+    if (parsed != widget.quantity) {
       widget.onQuantityChanged(parsed);
     }
   }
 
+  void _onMinusQuantity() {
+    final text = _quantityController.text.trim();
+    int parsed = int.tryParse(text) ?? widget.quantity;
+
+    if (parsed > 1) {
+      parsed--;
+      _quantityController.text = parsed.toString();
+      widget.onQuantityChanged(parsed);
+    }
+    // If already at 1, don't do anything (can't go below 1)
+  }
+
+  void _onPlusQuantity() {
+    final text = _quantityController.text.trim();
+    int parsed = int.tryParse(text) ?? widget.quantity;
+
+    // Validate stock if enabled
+    if (widget.enableStock && widget.qtyAvailable != null) {
+      final available = widget.qtyAvailable!;
+      if (available <= 0) {
+        // Out of stock, don't increment
+        return;
+      }
+      if (parsed >= available) {
+        // Already at max stock, don't increment
+        return;
+      }
+    }
+
+    parsed++;
+    _quantityController.text = parsed.toString();
+    widget.onQuantityChanged(parsed);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+    final rSizes = context.rSizes;
+
     return Container(
-      padding: AppSpacing.paddingSm,
+      padding: rSpacing.paddingSm,
       child: Row(
         children: [
           // Product column
           Expanded(
-            flex: 4,
+            flex: 3,
             child: Text(
               widget.productName,
-              style: AppTypography.bodyMedium.copyWith(
-                color: Colors.lightBlue
-              ),
+              style: rTypography.bodyMedium.copyWith(color: Colors.lightBlue),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           // Quantity column
           Expanded(
-            flex: 1,
-            child: TextField(
-              controller: _quantityController,
-              focusNode: _quantityFocusNode,
-              textAlign: TextAlign.center,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
+            flex: 2,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: widget.quantity > 1 ? _onMinusQuantity : null,
+                  padding: EdgeInsets.symmetric(horizontal: rSpacing.xxs),
+                  icon: Text(
+                    '-',
+                    style: rTypography.titleLarge.copyWith(
+                      color: widget.quantity > 1 ? Colors.red : Colors.grey,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _quantityController,
+                    focusNode: _quantityFocusNode,
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: rSpacing.xs,
+                        vertical: rSpacing.xxs,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: AppRadius.borderRadiusXs,
+                        borderSide: BorderSide(
+                          color: widget.theme.dividerColor,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: AppRadius.borderRadiusXs,
+                        borderSide: BorderSide(
+                          color: widget.theme.dividerColor,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: AppRadius.borderRadiusXs,
+                        borderSide: BorderSide(
+                          color: widget.theme.colorScheme.primary,
+                          width: 1,
+                        ),
+                      ),
+                      isDense: true,
+                    ),
+                    style: rTypography.bodyMedium,
+                    onSubmitted: (_) {
+                      _validateAndUpdateQuantity();
+                      _quantityFocusNode.unfocus();
+                    },
+                  ),
+                ),
+                Builder(
+                  builder: (context) {
+                    final canIncrement = !widget.enableStock ||
+                        widget.qtyAvailable == null ||
+                        widget.qtyAvailable! > 0 &&
+                            widget.quantity < widget.qtyAvailable!;
+                    return IconButton(
+                      onPressed: canIncrement ? _onPlusQuantity : null,
+                      padding: EdgeInsets.symmetric(horizontal: rSpacing.xxs),
+                      icon: Text(
+                        '+',
+                        style: rTypography.titleLarge.copyWith(
+                          color: canIncrement ? Colors.green : Colors.grey
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ],
-              decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xs,
-                  vertical: AppSpacing.xxs,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: AppRadius.borderRadiusSm,
-                  borderSide: BorderSide(
-                    color: widget.theme.dividerColor,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.borderRadiusSm,
-                  borderSide: BorderSide(
-                    color: widget.theme.dividerColor,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.borderRadiusSm,
-                  borderSide: BorderSide(
-                    color: widget.theme.colorScheme.primary,
-                    width: 2,
-                  ),
-                ),
-                isDense: true,
-              ),
-              style: AppTypography.bodyMedium,
-              onSubmitted: (_) {
-                _validateAndUpdateQuantity();
-                _quantityFocusNode.unfocus();
-              },
             ),
           ),
           // Price after tax column
@@ -415,7 +630,7 @@ class _CartItemRowState extends State<_CartItemRow> {
             flex: 2,
             child: Text(
               '${Helper().formatCurrency(widget.priceAfterTax)}${widget.currencySymbol}',
-              style: AppTypography.bodyMedium,
+              style: rTypography.bodyMedium,
               textAlign: TextAlign.right,
             ),
           ),
@@ -424,7 +639,7 @@ class _CartItemRowState extends State<_CartItemRow> {
             flex: 2,
             child: Text(
               '${Helper().formatCurrency(widget.pricePay)}${widget.currencySymbol}',
-              style: AppTypography.bodyMedium.copyWith(
+              style: rTypography.bodyMedium.copyWith(
                 fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.right,
@@ -432,16 +647,16 @@ class _CartItemRowState extends State<_CartItemRow> {
           ),
           // Delete button column
           SizedBox(
-            width: AppSpacing.xxxl,
+            width: rSpacing.xxxl,
             child: IconButton(
               icon: Icon(
-                Icons.delete_outline,
-                size: 20,
-                color: widget.theme.colorScheme.error,
+                Icons.delete,
+                size: rSizes.iconSm,
+                color: Colors.red,
               ),
               onPressed: widget.onDelete,
               constraints: const BoxConstraints(),
-              padding: EdgeInsets.all(AppSpacing.xxs),
+              padding: EdgeInsets.all(rSpacing.xxs),
             ),
           ),
         ],
@@ -455,6 +670,7 @@ class _CartSummary extends StatelessWidget {
   final double discount;
   final double tax;
   final double total;
+  final int totalItems;
   final String currencySymbol;
   final AppLocalizations l10n;
   final ThemeData theme;
@@ -465,24 +681,17 @@ class _CartSummary extends StatelessWidget {
     required this.tax,
     required this.total,
     required this.currencySymbol,
+    required this.totalItems,
     required this.l10n,
     required this.theme,
   });
 
   @override
   Widget build(BuildContext context) {
-    final appColor = AppThemes.light;
-    final gradient =
-        LinearGradient(
-          colors: [
-            appColor.primaryColor,
-            appColor.primaryColor.withAlpha((0.8 * 255).round()),
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        );
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;;
     return Container(
-      padding: AppSpacing.paddingMd,
+      padding: rSpacing.paddingMd,
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: const BorderRadius.vertical(
@@ -491,51 +700,58 @@ class _CartSummary extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _SummaryRow(
-            label: l10n.translate(LocaleKeys.subtotal),
-            value: '${Helper().formatCurrency(subtotal)}$currencySymbol',
-          ),
-          if (discount > 0)
-            _SummaryRow(
-              label: l10n.translate(LocaleKeys.discount),
-              value: '-${Helper().formatCurrency(discount)}$currencySymbol',
-              valueColor: Colors.red,
-            ),
-          if (tax > 0)
-            _SummaryRow(
-              label: l10n.translate(LocaleKeys.tax),
-              value: '${Helper().formatCurrency(tax)}$currencySymbol',
-            ),
-          SizedBox(height: AppSpacing.xs),
-          Container(
-            padding: EdgeInsets.symmetric(
-              vertical: AppSpacing.sm,
-              horizontal: AppSpacing.md,
-            ),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: AppRadius.borderRadiusSm,
-              gradient: gradient,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.translate(LocaleKeys.total),
-                  style: AppTypography.titleMedium.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+          // _SummaryRow(
+          //   label: l10n.translate(LocaleKeys.subtotal),
+          //   value: '${Helper().formatCurrency(subtotal)}$currencySymbol',
+          // ),
+          // if (discount > 0)
+          //   _SummaryRow(
+          //     label: l10n.translate(LocaleKeys.discount),
+          //     value: '-${Helper().formatCurrency(discount)}$currencySymbol',
+          //     valueColor: Colors.red,
+          //   ),
+          // if (tax > 0)
+          //   _SummaryRow(
+          //     label: l10n.translate(LocaleKeys.tax),
+          //     value: '${Helper().formatCurrency(tax)}$currencySymbol',
+          //   ),
+          // rSpacing.gapVerticalXs,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    '${l10n.translate(LocaleKeys.totalItems)}: ',
+                    style: rTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                Text(
-                  '${Helper().formatCurrency(total)}$currencySymbol',
-                  style: AppTypography.headlineSmall.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    '$totalItems',
+                    style: rTypography.headlineSmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+              Row(
+                children: [
+                  Text(
+                    '${l10n.translate(LocaleKeys.total)}: ',
+                    style: rTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '${Helper().formatCurrency(total)}$currencySymbol',
+                    style: rTypography.headlineSmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -556,15 +772,18 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rSpacing = context.rSpacing;
+    final rTypography = context.rTypography;
+
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+      padding: EdgeInsets.symmetric(vertical: rSpacing.xxs),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTypography.bodyMedium),
+          Text(label, style: rTypography.bodyMedium),
           Text(
             value,
-            style: AppTypography.bodyMedium.copyWith(
+            style: rTypography.bodyMedium.copyWith(
               fontWeight: FontWeight.w600,
               color: valueColor,
             ),

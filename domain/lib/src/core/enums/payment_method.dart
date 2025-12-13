@@ -12,6 +12,9 @@ enum PaymentMethod {
   /// Bank transfer payment
   bankTransfer,
 
+  /// E wallet payment
+  eWallet,
+
   /// Other payment method
   other,
 }
@@ -29,14 +32,15 @@ extension PaymentMethodExtension on PaymentMethod {
         return 'cheque';
       case PaymentMethod.bankTransfer:
         return 'bank_transfer';
+      case PaymentMethod.eWallet:
+        return 'e-wallet';
       case PaymentMethod.other:
         return 'other';
     }
   }
 
   /// Create enum from string value
-  static PaymentMethod? fromString(String? value) {
-    if (value == null) return null;
+  static PaymentMethod? fromString(String value) {
     switch (value.toLowerCase()) {
       case 'cash':
         return PaymentMethod.cash;
@@ -45,8 +49,9 @@ extension PaymentMethodExtension on PaymentMethod {
       case 'cheque':
         return PaymentMethod.cheque;
       case 'bank_transfer':
-      case 'banktransfer':
         return PaymentMethod.bankTransfer;
+      case 'e-wallet':
+        return PaymentMethod.eWallet;
       case 'other':
         return PaymentMethod.other;
       default:

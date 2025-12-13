@@ -1,16 +1,13 @@
 import 'package:domain/domain.dart';
 import 'package:pos_final/src/core/core.dart';
 
-/// POS page status enum
-enum PosStatus {
+/// POS page status enum - for page-level states (loading, pagination, etc.)
+enum PosPageStatus {
   /// Initial state
   initial,
   
   /// Loading initial data
   loading,
-  
-  /// Submitting sale
-  submitting,
   
   /// Loading products
   loadingProducts,
@@ -23,15 +20,27 @@ enum PosStatus {
   
   /// Loading suspended sells
   loadingSuspendedSells,
-  
-  /// Success state
-  success,
-  
-  /// Error state
-  error,
-  
+
+  ///
+  loadingFinalSells,
+
   /// Idle/ready state
   idle,
+}
+
+/// POS action status enum - for action-level states (submit, create, etc.)
+enum PosStatus {
+  /// No action in progress
+  idle,
+  
+  /// Action in progress (e.g., submitting sale)
+  submitting,
+  
+  /// Action succeeded
+  success,
+  
+  /// Action failed
+  error,
 }
 
 /// Cart item model
@@ -88,7 +97,8 @@ class CartItem {
 
 /// POS page state
 class PosState {
-  final PosStatus status;
+  final PosPageStatus pageStatus;
+  final PosStatus actionStatus;
 
   // Location
   final List<LocationEntity> locations;
@@ -125,6 +135,13 @@ class PosState {
   // Suspended Sells
   final List<SellEntity> suspendedSells;
 
+  // History Sells (Final status)
+  final List<SellEntity> historySells;
+
+  // Payment Accounts
+  final List<PaymentAccountEntity> eWalletAccounts;
+  final List<PaymentAccountEntity> bankTransferAccounts;
+
   // Currency
   final String currencySymbol;
 
@@ -135,7 +152,8 @@ class PosState {
   final bool shouldPrintInvoice; // Flag to trigger invoice printing
 
   const PosState({
-    this.status = PosStatus.idle,
+    this.pageStatus = PosPageStatus.idle,
+    this.actionStatus = PosStatus.idle,
     this.locations = const [],
     this.selectedLocationId,
     this.selectedCustomer,
@@ -159,6 +177,9 @@ class PosState {
     this.isQuotation = false,
     this.isSuspended = false,
     this.suspendedSells = const [],
+    this.historySells = const [],
+    this.eWalletAccounts = const [],
+    this.bankTransferAccounts = const [],
     this.currencySymbol = '\$',
     this.errorMessage,
     this.successMessage,
@@ -166,7 +187,10 @@ class PosState {
     this.shouldPrintInvoice = false,
   });
 
-  factory PosState.initial() => const PosState(status: PosStatus.initial);
+  factory PosState.initial() => const PosState(
+        pageStatus: PosPageStatus.initial,
+        actionStatus: PosStatus.idle,
+      );
 
   /// Calculate subtotal (before discount and tax)
   double get subtotal => cartItems.fold(0, (sum, item) => sum + item.lineTotal);
@@ -208,10 +232,11 @@ class PosState {
       selectedLocationId != null &&
       cartItems.isNotEmpty;
 
-  bool get isLoadingMore => status == PosStatus.loadingMore;
+  bool get isLoadingMore => pageStatus == PosPageStatus.loadingMore;
 
   PosState copyWith({
-    PosStatus? status,
+    PosPageStatus? pageStatus,
+    PosStatus? actionStatus,
     List<LocationEntity>? locations,
     int? selectedLocationId,
     ContactEntity? selectedCustomer,
@@ -235,6 +260,9 @@ class PosState {
     bool? isQuotation,
     bool? isSuspended,
     List<SellEntity>? suspendedSells,
+    List<SellEntity>? historySells,
+    List<PaymentAccountEntity>? eWalletAccounts,
+    List<PaymentAccountEntity>? bankTransferAccounts,
     String? currencySymbol,
     String? errorMessage,
     String? successMessage,
@@ -246,7 +274,8 @@ class PosState {
     bool clearMessages = false,
   }) {
     return PosState(
-      status: status ?? this.status,
+      pageStatus: pageStatus ?? this.pageStatus,
+      actionStatus: actionStatus ?? this.actionStatus,
       locations: locations ?? this.locations,
       selectedLocationId: selectedLocationId ?? this.selectedLocationId,
       selectedCustomer:
@@ -274,6 +303,9 @@ class PosState {
       isQuotation: isQuotation ?? this.isQuotation,
       isSuspended: isSuspended ?? this.isSuspended,
       suspendedSells: suspendedSells ?? this.suspendedSells,
+      historySells: historySells ?? this.historySells,
+      eWalletAccounts: eWalletAccounts ?? this.eWalletAccounts,
+      bankTransferAccounts: bankTransferAccounts ?? this.bankTransferAccounts,
       currencySymbol: currencySymbol ?? this.currencySymbol,
       errorMessage: clearMessages ? null : (errorMessage ?? this.errorMessage),
       successMessage:

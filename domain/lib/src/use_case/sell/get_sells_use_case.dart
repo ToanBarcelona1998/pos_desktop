@@ -26,3 +26,15 @@ class GetSellsByIdsUseCase implements UseCase<List<SellEntity>, List<int>> {
     return await _repository.getSellsByIds(ids);
   }
 }
+
+/// Use case for getting final sells
+class GetFinalSellsUseCase implements UseCaseNoParams<List<SellEntity>> {
+  final SellRepository _repository;
+
+  const GetFinalSellsUseCase(this._repository);
+
+  @override
+  Future<Result<List<SellEntity>>> call() async {
+    return await _repository.getFinalSells();
+  }
+}
