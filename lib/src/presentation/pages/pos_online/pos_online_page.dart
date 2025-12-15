@@ -103,7 +103,8 @@ class _PosOnlinePageState extends State<PosOnlinePage>
             getSuspendedSellsUseCase: sl.get<GetSuspendedSellsUseCase>(),
             deleteSellUseCase: sl.get<DeleteSellUseCase>(),
             businessRepository: sl.get<BusinessRepository>(),
-            getPaymentAccountsByTypeUseCase: sl.get<GetPaymentAccountsByTypeUseCase>(),
+            getPaymentAccountsByTypeUseCase:
+                sl.get<GetPaymentAccountsByTypeUseCase>(),
             getFinalSellsUseCase: sl.get<GetFinalSellsUseCase>(),
           ),
         ),
@@ -165,6 +166,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
             }
           },
           builder: (context, state) {
+            print(context.read<AuthCubit>().isAuthenticated);
             return Scaffold(
               body: SafeArea(
                 child: Stack(
@@ -332,20 +334,22 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   void update(bool newState) {
-    if (!newState && mounted && !_posOnlineBloc.state.showOfflinePos && context.authCubit.isAuthenticated && !_popupOfflineIsShowed) {
+    if (!newState &&
+        mounted &&
+        !_posOnlineBloc.state.showOfflinePos &&
+        context.authCubit.isAuthenticated &&
+        !_popupOfflineIsShowed) {
       _popupOfflineIsShowed = true;
       final l10n = AppLocalizations.of(context);
-      DialogProvider.showConfirmDialog(
-        context,
-        message: l10n.translate(LocaleKeys.networkConnectionIssue),
-        onConfirm: () {
-          _popupOfflineIsShowed = false;
-          _posOnlineBloc.add(const PosOnlineShowOffline());
-        },
-        onCancel: (){
-          _popupOfflineIsShowed = false;
-        }
-      );
+      DialogProvider.showConfirmDialog(context,
+          barrierDismissible: false,
+          message: l10n.translate(LocaleKeys.networkConnectionIssue),
+          onConfirm: () {
+        _popupOfflineIsShowed = false;
+        _posOnlineBloc.add(const PosOnlineShowOffline());
+      }, onCancel: () {
+        _popupOfflineIsShowed = false;
+      });
     }
   }
 }
