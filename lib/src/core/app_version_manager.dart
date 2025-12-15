@@ -25,6 +25,8 @@ class AppVersionManager {
         
         // Clear database
         await _clearDatabase();
+
+        await _clearWebView2DataFolder();
         
         // Save new version
         await prefs.setString(_versionKey, _appVersion);
@@ -107,6 +109,30 @@ class AppVersionManager {
       Logger.logI('Database files cleared successfully.');
     } catch (e) {
       Logger.logE('Error clearing database', e);
+    }
+  }
+
+  static Future<void> _clearWebView2DataFolder() async {
+    if(Platform.isWindows){
+      try {
+        final dir = await getApplicationSupportDirectory();
+
+        String userDataPath = "${dir.path}\\WebView2Data";
+
+        final userDataDir = Directory(userDataPath);
+
+        if (await userDataDir.exists()) {
+          Logger.logI('Found existing WebView2Data folder at: $userDataPath');
+          await userDataDir.delete(recursive: true);
+
+          Logger.logI('WebView2Data folder deleted successfully.');
+        } else {
+          Logger.logI('WebView2Data folder does not exist. No need to clear.');
+        }
+
+      } catch (e) {
+        Logger.logE('Error deleting WebView2Data folder', e);
+      }
     }
   }
 }

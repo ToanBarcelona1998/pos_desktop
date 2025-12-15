@@ -166,7 +166,6 @@ class _PosOnlinePageState extends State<PosOnlinePage>
             }
           },
           builder: (context, state) {
-            print(context.read<AuthCubit>().isAuthenticated);
             return Scaffold(
               body: SafeArea(
                 child: Stack(
