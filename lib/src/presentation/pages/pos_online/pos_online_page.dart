@@ -333,6 +333,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   @override
   void update(bool newState) {
     if (!newState && mounted && !_posOnlineBloc.state.showOfflinePos && context.authCubit.isAuthenticated && !_popupOfflineIsShowed) {
+      _popupOfflineIsShowed = true;
       final l10n = AppLocalizations.of(context);
       DialogProvider.showConfirmDialog(
         context,
