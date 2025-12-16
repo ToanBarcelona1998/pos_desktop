@@ -357,8 +357,7 @@ class _PosPageState extends State<PosPage> {
 
     // Load history sells if not loaded
 
-    if (state.historySells.isEmpty &&
-        state.pageStatus != PosPageStatus.loadingSuspendedSells) {
+    if (state.pageStatus != PosPageStatus.loadingFinalSells) {
       bloc.add(const PosLoadHistorySells());
     }
 

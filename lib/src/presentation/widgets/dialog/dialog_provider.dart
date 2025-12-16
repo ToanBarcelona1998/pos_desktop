@@ -25,9 +25,11 @@ sealed class DialogProvider {
     String? messageText,
     required List<BaseDialogAction> actions,
     double width = 400.0,
+    bool barrierDismissible = true,
   }) async {
     return showDialog<T>(
       context: context,
+      barrierDismissible: barrierDismissible,
       builder: (BuildContext context) {
         return BaseDialogWidget(
           titleWidget: titleWidget,
@@ -72,11 +74,13 @@ sealed class DialogProvider {
     Color? confirmColor,
     VoidCallback? onCancel,
     required VoidCallback onConfirm,
+    bool barrierDismissible = true,
   }) async {
     return showAppDialog<bool>(
       context,
       titleText: title ?? 'Xác nhận hành động',
       messageText: message,
+      barrierDismissible: barrierDismissible,
       actions: [
         BaseDialogAction(
           text: cancelText,

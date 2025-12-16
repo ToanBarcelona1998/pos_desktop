@@ -25,7 +25,7 @@ class ImageCacheHelper {
       // Get cache directory
       final Directory cacheDir = await getApplicationDocumentsDirectory();
       final Directory imageCacheDir = Directory(
-        path.join(cacheDir.path, 'payment_account_images', cacheSubdirectory),
+        path.join(cacheDir.path, 'offline_images', cacheSubdirectory),
       );
 
       // Create directory if it doesn't exist
@@ -35,8 +35,7 @@ class ImageCacheHelper {
 
       // Generate filename if not provided
       final String finalFileName = fileName ??
-          path.basename(Uri.parse(imageUrl).path) ??
-          '${DateTime.now().millisecondsSinceEpoch}.jpg';
+          path.basename(Uri.parse(imageUrl).path);
 
       final File localFile = File(path.join(imageCacheDir.path, finalFileName));
 
@@ -71,7 +70,7 @@ class ImageCacheHelper {
     try {
       final Directory cacheDir = await getApplicationDocumentsDirectory();
       final Directory imageCacheDir = Directory(
-        path.join(cacheDir.path, 'payment_account_images', cacheSubdirectory),
+        path.join(cacheDir.path, 'offline_images', cacheSubdirectory),
       );
 
       if (!await imageCacheDir.exists()) {
