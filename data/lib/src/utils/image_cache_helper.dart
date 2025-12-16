@@ -35,8 +35,7 @@ class ImageCacheHelper {
 
       // Generate filename if not provided
       final String finalFileName = fileName ??
-          path.basename(Uri.parse(imageUrl).path) ??
-          '${DateTime.now().millisecondsSinceEpoch}.jpg';
+          path.basename(Uri.parse(imageUrl).path);
 
       final File localFile = File(path.join(imageCacheDir.path, finalFileName));
 
