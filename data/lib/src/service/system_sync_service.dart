@@ -339,7 +339,7 @@ class SystemSyncService {
             final response = await _productDataSource.getProducts(
               locationId: location.id,
               page: page,
-              perPage: 100,
+              perPage: 1000,
             );
 
             // response.products is already List<ProductModel>
