@@ -16,11 +16,10 @@ class PrintService {
     required int sellId,
     int? taxId,
     required BuildContext context,
-    required String invoiceHtml,
     required String name,
   }) async {
     try {
-      Uint8List pdfBytes = await Printing.convertHtml(html: invoiceHtml);
+      Uint8List pdfBytes = await Printing.convertHtml(html: '');
 
       // Print the invoice
       await Printing.layoutPdf(

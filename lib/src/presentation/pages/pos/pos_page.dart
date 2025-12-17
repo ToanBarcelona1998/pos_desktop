@@ -10,7 +10,6 @@ import '../../../core/localization/locale_keys.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/toast/toast_manager.dart';
 import '../../widgets/dialog/dialog_provider.dart';
-import '../../services/invoice_service.dart';
 import 'pos_bloc.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
@@ -282,19 +281,12 @@ class _PosPageState extends State<PosPage> {
       confirmColor: Colors.blue,
       onConfirm: () async {
         try {
-          // Fetch invoice HTML using service
-          final invoiceService = InvoiceService();
-          final invoiceHtml = await invoiceService.fetchInvoiceHtml(sellId);
-
-          if (context.mounted && invoiceHtml != null) {
-            await PrintService.printInvoice(
-              sellId: sellId,
-              taxId: taxId,
-              context: context,
-              invoiceHtml: invoiceHtml,
-              name: l10n.translate(LocaleKeys.invoice),
-            );
-          }
+          await PrintService.printInvoice(
+            sellId: sellId,
+            taxId: taxId,
+            context: context,
+            name: l10n.translate(LocaleKeys.invoice),
+          );
         } catch (e) {
           if (context.mounted) {
             ToastManager.showError(
