@@ -20,9 +20,8 @@ extension DiscountTypeExtension on DiscountType {
   }
 
   /// Create enum from string value
-  static DiscountType? fromString(String? value) {
-    if (value == null) return null;
-    switch (value.toLowerCase()) {
+  static DiscountType fromString(String? value) {
+    switch (value?.toLowerCase()) {
       case 'fixed':
         return DiscountType.fixed;
       case 'percentage':

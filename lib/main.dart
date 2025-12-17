@@ -8,6 +8,7 @@ import 'package:pos_final/app_config/di.dart';
 import 'package:pos_final/app_config/env_config.dart';
 import 'package:pos_final/src/application.dart';
 import 'package:pos_final/src/core/localization/app_localization.dart';
+import 'package:pos_final/src/core/services/print_service.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -25,6 +26,8 @@ Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
+
+  await PrintService.init();
   // Check app version and clear cache/database if needed
   await AppVersionManager.checkAndHandleVersionUpdate();
 

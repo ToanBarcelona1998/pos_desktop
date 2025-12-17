@@ -68,11 +68,14 @@ class _PosPageState extends State<PosPage> {
 
           // Show print dialog
           // [TODO] Can't show print now with html
-          // _showPrintInvoiceDialog(
-          //   context,
-          //   state.createdSellId!,
-          //   state.taxId,
-          // );
+          _showPrintInvoiceDialog(
+            context,
+            state.products,
+            state.currencySymbol,
+            state.createdSellId!,
+            state.selectedLocationId!,
+            state.taxId,
+          );
         }
       },
       builder: (context, state) {
@@ -268,7 +271,10 @@ class _PosPageState extends State<PosPage> {
   /// Show print invoice dialog
   void _showPrintInvoiceDialog(
     BuildContext context,
+    List<ProductEntity> products,
+    String unit,
     int sellId,
+    int locationId,
     int? taxId,
   ) {
     final l10n = AppLocalizations.of(context);
@@ -282,12 +288,16 @@ class _PosPageState extends State<PosPage> {
       onConfirm: () async {
         try {
           await PrintService.printInvoice(
-            sellId: sellId,
-            taxId: taxId,
-            context: context,
-            name: l10n.translate(LocaleKeys.invoice),
-          );
+              sellId: sellId,
+              taxId: taxId,
+              context: context,
+              name: l10n.translate(LocaleKeys.invoice),
+              locationId: locationId,
+              products: products,
+              unit: unit,
+              l10n: l10n);
         } catch (e) {
+          print('run here 0 ${e.toString()}');
           if (context.mounted) {
             ToastManager.showError(
               context,

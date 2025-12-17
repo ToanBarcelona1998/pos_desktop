@@ -626,5 +626,23 @@
   "subtotal": "Subtotal",
   "product": "Product",
   "price_after_tax": "Price after tax",
-  "delete": "Delete"
+  "delete": "Delete",
+
+  "bill_title": "Hoá đơn bán hàng",
+  "bill_contact": "Liên hệ",
+  "bill_id": "Mã hoá đơn,",
+  "bill_customer": "Khách hàng",
+  "bill_cashier": "Tên nhân viên",
+  "bill_date": "Ngày",
+  "bill_product": "Sản phẩm",
+  "bill_sl": "SL",
+  "bill_price": "Đơn giá",
+  "bill_temp_price": "Tạm tính",
+  "bill_quality": "Số lượng",
+  "bill_total": "Tổng thanh toán",
+  "bill_payment": "Phương thức thanh toán",
+  "bill_cash": "Tiền mặt",
+  "bill_transfer": "Chuyển khoản",
+  "bill_e_wallet": "Ví điện tử",
+  "bill_end": "Cảm ơn Quý khách đã mua hàng tại"
 }

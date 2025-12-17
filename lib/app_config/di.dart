@@ -395,6 +395,7 @@ void _registerUseCases() {
   // Contact
   sl.registerLazy<GetContactsUseCase>(() => GetContactsUseCase(sl.get<ContactRepository>()));
   sl.registerLazy<SearchContactsUseCase>(() => SearchContactsUseCase(sl.get<ContactRepository>()));
+  sl.registerLazy<GetContactByIdUseCase>(() => GetContactByIdUseCase(sl.get<ContactRepository>()));
 
   // Payment
   sl.registerLazy<GetPaymentAccountsByTypeUseCase>(() => GetPaymentAccountsByTypeUseCase(sl.get<PaymentRepository>()));
