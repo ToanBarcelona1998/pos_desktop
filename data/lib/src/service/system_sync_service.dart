@@ -338,7 +338,8 @@ class SystemSyncService {
           // Download and cache business logo if exists
           final businessData = layoutBillData['business'] as Map<String, dynamic>?;
           if (businessData != null) {
-            final logo = businessData['logo']?.toString();
+            final invoiceLayout = layoutBillData['invoice_layout'];
+            final logo = invoiceLayout['logo']?.toString();
             if (logo != null && logo.isNotEmpty) {
               try {
                 String imageUrl = logo;

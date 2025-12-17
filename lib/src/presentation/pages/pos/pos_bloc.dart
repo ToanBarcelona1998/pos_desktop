@@ -781,7 +781,11 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosCancelSale event,
     Emitter<PosState> emit,
   ) {
-    emit(state.copyWith(clearMessages: true, actionStatus: PosStatus.idle));
+    emit(state.copyWith(
+      clearMessages: true,
+      shouldPrintInvoice: false,
+      createdSellId: null,
+    ));
     add(const PosClearCart());
   }
 
@@ -1237,9 +1241,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
           // Add product to cart
           add(PosAddToCart(product: product, quantity: 1));
-          emit(state.copyWith(
-            actionStatus: PosStatus.idle
-          ));
+          emit(state.copyWith(actionStatus: PosStatus.idle));
         },
         onError: (failure) {
           emit(state.copyWith(

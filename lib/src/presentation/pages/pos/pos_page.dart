@@ -1,6 +1,7 @@
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pos_final/src/application.dart';
 
 import 'package:pos_final/src/core/services/print_service.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
@@ -49,6 +50,7 @@ class _PosPageState extends State<PosPage> {
           previous.shouldPrintInvoice != current.shouldPrintInvoice ||
           previous.createdSellId != current.createdSellId,
       listener: (context, state) {
+        print(state.shouldPrintInvoice);
         if (state.actionStatus == PosStatus.error &&
             state.errorMessage != null) {
           final translatedMessage = l10n.translate(state.errorMessage!);
@@ -72,6 +74,7 @@ class _PosPageState extends State<PosPage> {
             context,
             state.products,
             state.currencySymbol,
+            context.authCubit.currentUser?.fullName ?? '',
             state.createdSellId!,
             state.selectedLocationId!,
             state.taxId,
@@ -273,6 +276,7 @@ class _PosPageState extends State<PosPage> {
     BuildContext context,
     List<ProductEntity> products,
     String unit,
+    String cashier,
     int sellId,
     int locationId,
     int? taxId,
@@ -288,16 +292,17 @@ class _PosPageState extends State<PosPage> {
       onConfirm: () async {
         try {
           await PrintService.printInvoice(
-              sellId: sellId,
-              taxId: taxId,
-              context: context,
-              name: l10n.translate(LocaleKeys.invoice),
-              locationId: locationId,
-              products: products,
-              unit: unit,
-              l10n: l10n);
+            sellId: sellId,
+            taxId: taxId,
+            context: context,
+            name: l10n.translate(LocaleKeys.invoice),
+            locationId: locationId,
+            products: products,
+            unit: unit,
+            l10n: l10n,
+            cashier: cashier,
+          );
         } catch (e) {
-          print('run here 0 ${e.toString()}');
           if (context.mounted) {
             ToastManager.showError(
               context,
