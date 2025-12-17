@@ -10,6 +10,7 @@ import '../data_source/remote/brand_remote_data_source.dart';
 import '../data_source/remote/business_remote_data_source.dart';
 import '../data_source/remote/category_remote_data_source.dart';
 import '../data_source/remote/contact_remote_data_source.dart';
+import '../data_source/remote/layout_bill_remote_data_source.dart';
 import '../data_source/remote/location_remote_data_source.dart';
 import '../data_source/remote/payment_remote_data_source.dart';
 import '../data_source/remote/permission_remote_data_source.dart';
@@ -25,6 +26,7 @@ class SystemSyncService {
   final BrandRemoteDataSource _brandDataSource;
   final CategoryRemoteDataSource _categoryDataSource;
   final LocationRemoteDataSource _locationDataSource;
+  final LayoutBillRemoteDataSource _layoutBillDataSource;
   final BusinessRemoteDataSource _businessDataSource;
   final PermissionRemoteDataSource _permissionDataSource;
   final SubscriptionRemoteDataSource _subscriptionDataSource;
@@ -41,6 +43,7 @@ class SystemSyncService {
     required BrandRemoteDataSource brandDataSource,
     required CategoryRemoteDataSource categoryDataSource,
     required LocationRemoteDataSource locationDataSource,
+    required LayoutBillRemoteDataSource layoutBillDataSource,
     required BusinessRemoteDataSource businessDataSource,
     required PermissionRemoteDataSource permissionDataSource,
     required SubscriptionRemoteDataSource subscriptionDataSource,
@@ -55,6 +58,7 @@ class SystemSyncService {
         _brandDataSource = brandDataSource,
         _categoryDataSource = categoryDataSource,
         _locationDataSource = locationDataSource,
+        _layoutBillDataSource = layoutBillDataSource,
         _businessDataSource = businessDataSource,
         _permissionDataSource = permissionDataSource,
         _subscriptionDataSource = subscriptionDataSource,
@@ -82,6 +86,9 @@ class SystemSyncService {
         _syncPaymentAccounts(),
         _syncTaxes(),
       ], eagerError: false);
+
+      // Sync layout bill after locations are synced (requires location_id)
+      await _syncLayoutBill();
 
       // Sync contacts after system data
       await _syncContacts();
@@ -301,6 +308,87 @@ class SystemSyncService {
     }
   }
 
+  /// Sync layout bill for each location
+  Future<void> _syncLayoutBill() async {
+    try {
+      // Get all locations first
+      final locationsData = await _localDataSource.get('location');
+      if (locationsData == null) {
+        Logger.logI('No locations found - skipping layout bill sync');
+        return;
+      }
+
+      final List<dynamic> locationsList = locationsData is String 
+          ? jsonDecode(locationsData) 
+          : locationsData;
+
+      if (locationsList.isEmpty) {
+        Logger.logI('No locations found - skipping layout bill sync');
+        return;
+      }
+
+      int syncedCount = 0;
+
+      // Sync layout bill for each location
+      for (final locationJson in locationsList) {
+        try {
+          final locationId = locationJson['id'] as int;
+          final layoutBillData = await _layoutBillDataSource.getLayoutBill(locationId);
+
+          // Download and cache business logo if exists
+          final businessData = layoutBillData['business'] as Map<String, dynamic>?;
+          if (businessData != null) {
+            final logo = businessData['logo']?.toString();
+            if (logo != null && logo.isNotEmpty) {
+              try {
+                String imageUrl = logo;
+                // If logo is not a full URL, it's already a full URL from the API
+                // but we check just in case
+                if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+                  imageUrl = '$_baseUrl$logo';
+                }
+
+                final cachedPath = await ImageCacheHelper.downloadAndCacheImage(
+                  imageUrl: imageUrl,
+                  cacheSubdirectory: 'layout_bill',
+                  fileName: '${locationId}_business_logo.png',
+                );
+
+                if (cachedPath != null) {
+                  businessData['cached_logo_path'] = cachedPath;
+                } else {
+                  businessData['cached_logo_path'] = null;
+                }
+              } catch (e) {
+                Logger.logE('Error downloading business logo for location $locationId', e);
+                businessData['cached_logo_path'] = null;
+              }
+            } else {
+              businessData['cached_logo_path'] = null;
+            }
+          }
+
+          // Save layout bill data to local storage with locationId as keyId
+          await _localDataSource.insert(
+            'layout_bill',
+            jsonEncode(layoutBillData),
+            locationId,
+          );
+
+          syncedCount++;
+        } catch (e) {
+          Logger.logE('Error syncing layout bill for location', e);
+          // Continue with next location
+        }
+      }
+
+      Logger.logI('Layout bills synced: $syncedCount');
+    } catch (e) {
+      Logger.logE('Error syncing layout bills: $e');
+      // Silently fail
+    }
+  }
+
   /// Sync contacts
   Future<void> _syncContacts() async {
     try {
@@ -404,6 +492,7 @@ class SystemSyncService {
       await _productLocalDataSource.clearCache();
       await _contactLocalDataSource.clearCache();
       await ImageCacheHelper.clearCache(cacheSubdirectory: 'payment_accounts');
+      await ImageCacheHelper.clearCache(cacheSubdirectory: 'layout_bill');
       Logger.logI('System cache cleared');
     } catch (e) {
       Logger.logE('Error clearing cache', e);

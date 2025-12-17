@@ -10,6 +10,7 @@ export 'contact_repository.dart';
 export 'expense_repository.dart';
 export 'field_force_repository.dart';
 export 'follow_up_repository.dart';
+export 'layout_bill_repository.dart';
 export 'location_repository.dart';
 export 'notification_repository.dart';
 export 'payment_repository.dart';

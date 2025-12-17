@@ -21,6 +21,7 @@ export 'remote/contact_remote_data_source.dart';
 export 'remote/expense_remote_data_source.dart';
 export 'remote/field_force_remote_data_source.dart';
 export 'remote/follow_up_remote_data_source.dart';
+export 'remote/layout_bill_remote_data_source.dart';
 export 'remote/location_remote_data_source.dart';
 export 'remote/notification_remote_data_source.dart';
 export 'remote/payment_remote_data_source.dart';
