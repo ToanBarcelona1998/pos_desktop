@@ -10,7 +10,6 @@ import 'package:pos_final/src/core/core.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:window_manager/window_manager.dart';
 
 import '../../../app_config/di.dart';
 
@@ -114,12 +113,17 @@ class PrintService {
         //   ),
         // );
 
-        await windowManager.show();
-        await windowManager.focus();
-        await windowManager.setAlwaysOnTop(true);
+        final printers = await Printing.listPrinters();
+
+        final printer = printers.firstWhere(
+              (p) => p.isDefault,
+          orElse: () => printers.first,
+        );
+
 
         await Future.microtask(
-          () => Printing.layoutPdf(
+          () => Printing.directPrintPdf(
+            printer: printer,
             onLayout: (format) {
               return pdfBytes;
             },
@@ -131,8 +135,6 @@ class PrintService {
       // Print the invoice
     } catch (e) {
       throw Exception('Failed to print invoice: $e');
-    } finally {
-      await windowManager.setAlwaysOnTop(false);
     }
   }
 
