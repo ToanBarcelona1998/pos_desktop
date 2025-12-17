@@ -10,6 +10,7 @@ import 'package:pos_final/src/core/core.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:window_manager/window_manager.dart';
 
 import '../../../app_config/di.dart';
 
@@ -103,27 +104,35 @@ class PrintService {
           cashier: cashier,
         );
 
-        showDialog(
-          context: context,
-          builder: (ctx) => Dialog(
-            child: PdfPreview(
-              initialPageFormat: pos80,
-              build: (format) => pdfBytes,
-            ),
+        // showDialog(
+        //   context: context,
+        //   builder: (ctx) => Dialog(
+        //     child: PdfPreview(
+        //       initialPageFormat: pos80,
+        //       build: (format) => pdfBytes,
+        //     ),
+        //   ),
+        // );
+
+        await windowManager.show();
+        await windowManager.focus();
+        await windowManager.setAlwaysOnTop(true);
+
+        await Future.microtask(
+          () => Printing.layoutPdf(
+            onLayout: (format) {
+              return pdfBytes;
+            },
+            name: name,
           ),
         );
-
-        // await Printing.layoutPdf(
-        //   onLayout: (format) {
-        //     return pdfBytes;
-        //   },
-        //   name: name,
-        // );
       }
 
       // Print the invoice
     } catch (e) {
       throw Exception('Failed to print invoice: $e');
+    } finally {
+      await windowManager.setAlwaysOnTop(false);
     }
   }
 
