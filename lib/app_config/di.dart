@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:data/data.dart';
 import 'package:domain/domain.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app_config.dart';
@@ -81,6 +82,12 @@ Future<void> initDependencies({Environment env = Environment.development}) async
         userDataFolder: userData,
       ),
     );
+
+    final devicePlugin = DeviceInfoPlugin();
+
+    final WindowsDeviceInfo windowsDeviceInfo = await devicePlugin.windowsInfo;
+
+    sl.registerLazy<WindowsDeviceInfo>(() => windowsDeviceInfo);
 
     sl.registerLazy<WebViewEnvironment>(() => webviewEnvironment);
   }

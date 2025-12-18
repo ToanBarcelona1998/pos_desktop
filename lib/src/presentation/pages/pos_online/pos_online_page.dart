@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:domain/domain.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -49,6 +50,9 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   final WebViewEnvironment? _webViewEnvironment =
       sl.getOrNull<WebViewEnvironment>();
 
+  final WindowsDeviceInfo? _windowsDeviceInfo =
+      sl.getOrNull<WindowsDeviceInfo>();
+
   Map<String, String> get _requiredHeaders => {
         'X-Oman-Application': _appConfig.webHeader,
       };
@@ -62,6 +66,14 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   final String _logoutScript = '''
   if (window.handleAppRequest) {
     window.handleAppRequest('logout');
+  }
+  ''';
+
+  String _postHardWareId(String hardwareId) => '''
+  if (window.handleAppRequest) {
+    window.handleAppRequest('postHardwareID', ${jsonEncode({
+            'hardwareId': hardwareId
+          })});
   }
   ''';
 
@@ -214,6 +226,14 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                           handlerName: 'authCompleted',
                           callback: (args) async {
                             try {
+                              if(_windowsDeviceInfo != null){
+                                final String deviceId = _windowsDeviceInfo!.deviceId.replaceAll('{', '')
+                                    .replaceAll('}', '');
+                                controller.evaluateJavascript(
+                                  source:
+                                  _postHardWareId(deviceId),
+                                );
+                              }
                               String accessToken = args[0][0];
                               String userInfoJson = args[0][1];
 
