@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_windows
   connectivity_plus
+  desktop_multi_window
   desktop_window
   file_saver
   file_selector_windows

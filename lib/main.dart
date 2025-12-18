@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -27,11 +28,19 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
+  // final windowController = await WindowController.fromCurrentEngine();
+
   await PrintService.init();
   // Check app version and clear cache/database if needed
   await AppVersionManager.checkAndHandleVersionUpdate();
 
   await initDependencies(env: EnvConfig.environment);
+
+  // final arguments = windowController.arguments;
+
+  // if(arguments == ''){
+  //
+  // }
 
   runApp(const Application());
 }
