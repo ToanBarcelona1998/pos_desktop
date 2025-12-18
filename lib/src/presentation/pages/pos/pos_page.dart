@@ -45,7 +45,11 @@ class _PosPageState extends State<PosPage> {
     _subscription = onWindowsChanged.listen((_) async {
       if(_customerWindowController != null){
         try{
-          WindowController.fromWindowId(_customerWindowController!.windowId);
+          final windows = await WindowController.getAll();
+
+          if(!windows.map((e) => e.windowId).contains(_customerWindowController!.windowId)){
+            _customerWindowController = null;
+          }
         }catch(e){
           _customerWindowController = null;
         }
