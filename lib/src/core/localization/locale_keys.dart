@@ -98,6 +98,8 @@ abstract final class LocaleKeys {
   // Cart & Checkout
   static const String cart = 'cart';
   static const String cartEmpty = 'cart_empty';
+  static const String waitingForItems = 'waiting_for_items';
+  static const String customerDisplay = 'customer_display';
   static const String addToCart = 'add_item_to_cart';
   static const String addedToCart = 'added_to_cart';
   static const String checkout = 'checkout';

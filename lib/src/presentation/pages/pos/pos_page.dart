@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_final/src/application.dart';
 
+import 'package:pos_final/src/core/services/cart_sync_service.dart';
 import 'package:pos_final/src/core/services/print_service.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:pos_final/src/presentation/pages/pos/widgets/bar_code_listener_widget.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/localization/locale_keys.dart';
@@ -32,10 +34,63 @@ class PosPage extends StatefulWidget {
 }
 
 class _PosPageState extends State<PosPage> {
+  WindowController? _customerWindowController;
+
   @override
   void initState() {
     super.initState();
     context.read<PosBloc>().add(const PosInitialize());
+  }
+
+  @override
+  void dispose() {
+    _customerWindowController = null;
+    CartSyncService().setCustomerWindow(null);
+    super.dispose();
+  }
+
+  Future<void> _openCustomerWindow() async {
+    try {
+      // If window already exists, just focus it
+      if (_customerWindowController != null) {
+        // Try to check if window is still valid
+        try {
+          await _customerWindowController!.invokeMethod('window_center');
+          return;
+        } catch (e) {
+          // Window closed, create new one
+          _customerWindowController = null;
+        }
+      }
+
+      // Create new customer window
+      final windowArgs = WindowArguments(
+        type: WindowType.offlineCustomer,
+        params: {},
+      );
+      _customerWindowController = await WindowManagerUtils.createNewWindow(windowArgs);
+      
+      // Set the window controller in CartSyncService
+      CartSyncService().setCustomerWindow(_customerWindowController);
+      
+      // Broadcast current cart state immediately
+      final state = context.read<PosBloc>().state;
+      final cartSyncData = CartSyncService.convertToSyncData(
+        cartItems: state.cartItems,
+        subtotal: state.subtotal,
+        discount: state.invoiceDiscount,
+        tax: state.taxAmount,
+        total: state.total,
+        currencySymbol: state.currencySymbol,
+        customer: state.selectedCustomer,
+      );
+      CartSyncService().broadcastCartUpdate(cartSyncData);
+    } catch (e) {
+      // Handle error - maybe show a toast
+      if (mounted) {
+        ToastManager.showError(context, 'Failed to open customer window');
+      }
+    }
   }
 
   @override
@@ -108,6 +163,7 @@ class _PosPageState extends State<PosPage> {
                 context.read<PosBloc>().add(const PosRefreshProducts());
               },
               onSuspendedSales: () => showSuspendedSalesDialog(context),
+              onOpenCustomerWindow: _openCustomerWindow,
             ),
             body: Row(
               children: [

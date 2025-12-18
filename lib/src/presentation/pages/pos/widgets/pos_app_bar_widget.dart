@@ -19,6 +19,7 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onRefresh;
   final VoidCallback? onSuspendedSales;
   final VoidCallback? onOpenFullScreen;
+  final VoidCallback? onOpenCustomerWindow;
 
   const PosAppBarWidget({
     super.key,
@@ -28,6 +29,7 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     this.onRefresh,
     this.onSuspendedSales,
     this.onOpenFullScreen,
+    this.onOpenCustomerWindow,
   });
 
   @override
@@ -97,6 +99,13 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           icon: Icons.fullscreen,
           onTap: onOpenFullScreen,
           iconColor: Colors.blueAccent,
+        ),
+        rSpacing.gapHorizontalXs,
+        IconWrapper(
+          icon: Icons.tv,
+          onTap: onOpenCustomerWindow,
+          tooltip: l10n.translate(LocaleKeys.customerDisplay),
+          iconColor: Colors.green,
         ),
         rSpacing.gapHorizontalXs,
         IconWrapper(

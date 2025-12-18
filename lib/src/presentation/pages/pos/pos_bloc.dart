@@ -2,6 +2,7 @@ import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/core.dart';
+import '../../../core/services/cart_sync_service.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
 
@@ -227,10 +228,12 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     PosSelectCustomer event,
     Emitter<PosState> emit,
   ) {
-    emit(state.copyWith(
+    final newState = state.copyWith(
       selectedCustomer: event.customer,
       clearCustomer: event.customer == null,
-    ));
+    );
+    emit(newState);
+    _broadcastCartUpdate(newState);
   }
 
   void _onAddToCart(
@@ -282,7 +285,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       ));
     }
 
-    emit(state.copyWith(cartItems: updatedCart, clearMessages: true));
+    final newState = state.copyWith(cartItems: updatedCart, clearMessages: true);
+    emit(newState);
+    _broadcastCartUpdate(newState);
   }
 
   void _onUpdateCartItemQuantity(
@@ -330,10 +335,12 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       updatedCart[index] = cartItem.copyWith(
         quantity: event.quantity,
       );
-      emit(state.copyWith(
+      final newState = state.copyWith(
         cartItems: updatedCart,
         clearMessages: true,
-      ));
+      );
+      emit(newState);
+      _broadcastCartUpdate(newState);
     }
   }
 
@@ -345,14 +352,16 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         .where((item) => !(item.productId == event.productId &&
             item.variationId == event.variationId))
         .toList();
-    emit(state.copyWith(cartItems: updatedCart, actionStatus: PosStatus.idle));
+    final newState = state.copyWith(cartItems: updatedCart, actionStatus: PosStatus.idle);
+    emit(newState);
+    _broadcastCartUpdate(newState);
   }
 
   void _onClearCart(
     PosClearCart event,
     Emitter<PosState> emit,
   ) {
-    emit(state.copyWith(
+    final newState = state.copyWith(
       actionStatus: PosStatus.idle,
       cartItems: [],
       discountAmount: 0,
@@ -363,27 +372,33 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       invoiceType: InvoiceType.final_,
       isQuotation: false,
       isSuspended: false,
-    ));
+    );
+    emit(newState);
+    _broadcastCartUpdate(newState);
   }
 
   void _onApplyDiscount(
     PosApplyDiscount event,
     Emitter<PosState> emit,
   ) {
-    emit(state.copyWith(
+    final newState = state.copyWith(
       discountAmount: event.amount,
       discountType: event.type,
-    ));
+    );
+    emit(newState);
+    _broadcastCartUpdate(newState);
   }
 
   void _onSetTax(
     PosSetTax event,
     Emitter<PosState> emit,
   ) {
-    emit(state.copyWith(
+    final newState = state.copyWith(
       taxId: event.taxId,
       taxRate: event.taxRate,
-    ));
+    );
+    emit(newState);
+    _broadcastCartUpdate(newState);
   }
 
   Future<void> _onSubmitSale(
@@ -1267,5 +1282,19 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   String _generateInvoiceNo() {
     final now = DateTime.now();
     return '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.millisecondsSinceEpoch}';
+  }
+
+  /// Broadcast cart update to customer window
+  void _broadcastCartUpdate(PosState state) {
+    final cartSyncData = CartSyncService.convertToSyncData(
+      cartItems: state.cartItems,
+      subtotal: state.subtotal,
+      discount: state.invoiceDiscount,
+      tax: state.taxAmount,
+      total: state.total,
+      currencySymbol: state.currencySymbol,
+      customer: state.selectedCustomer,
+    );
+    CartSyncService().broadcastCartUpdate(cartSyncData);
   }
 }
