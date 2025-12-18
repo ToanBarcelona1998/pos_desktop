@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pos_final/helpers/other_helpers.dart';
 import 'package:pos_final/src/core/constants/app_responsive.dart';
 import 'package:pos_final/src/core/constants/app_radius.dart';
+import 'package:pos_final/src/core/core.dart';
 import 'package:pos_final/src/core/localization/app_localization.dart';
 import 'package:pos_final/src/core/localization/locale_keys.dart';
 import 'package:pos_final/src/core/services/cart_sync_service.dart';
@@ -16,7 +17,6 @@ class OfflineCustomerPage extends StatefulWidget {
 
 class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
   CartSyncData? _cartData;
-  bool _isLoading = true;
 
   @override
   void initState() {
@@ -29,7 +29,6 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
       if (mounted) {
         setState(() {
           _cartData = cartData;
-          _isLoading = false;
         });
       }
     });
@@ -37,46 +36,31 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final rSpacing = context.rSpacing;
-    final rTypography = context.rTypography;
-    final rSizes = context.rSizes;
+    return Builder(builder: (context) {
+      final l10n = AppLocalizations.of(context);
+      final theme = Theme.of(context);
+      final rSpacing = context.rSpacing;
+      final rTypography = context.rTypography;
+      final rSizes = context.rSizes;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: Text(
-          l10n.translate(LocaleKeys.cart),
-          style: rTypography.titleLarge.copyWith(
-            fontWeight: FontWeight.bold,
+      final scheme = AppThemes.light;
+
+      return Scaffold(
+        backgroundColor: const Color(0xFFF5F5F5),
+        appBar: AppBar(
+          title: Text(
+            l10n.translate(LocaleKeys.cart),
+            style: rTypography.titleMedium.copyWith(color: Colors.white),
           ),
+          centerTitle: true,
+          backgroundColor: scheme.primaryColor,
+          elevation: 0,
         ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: _isLoading && _cartData == null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    color: theme.colorScheme.primary,
-                  ),
-                  rSpacing.gapVerticalMd,
-                  Text(
-                    l10n.translate(LocaleKeys.waitingForItems),
-                    style: rTypography.bodyLarge,
-                  ),
-                ],
-              ),
-            )
-          : _cartData == null || _cartData!.items.isEmpty
-              ? _buildEmptyCart(l10n, rSpacing, rTypography, rSizes)
-              : _buildCartContent(l10n, theme, rSpacing, rTypography, rSizes),
-    );
+        body: _cartData == null || _cartData!.items.isEmpty
+            ? _buildEmptyCart(l10n, rSpacing, rTypography, rSizes, scheme)
+            : _buildCartContent(l10n, theme, rSpacing, rTypography, rSizes),
+      );
+    });
   }
 
   Widget _buildEmptyCart(
@@ -84,6 +68,7 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
     ResponsiveSpacing rSpacing,
     ResponsiveTypography rTypography,
     ResponsiveSizes rSizes,
+    ThemeData schema,
   ) {
     return Center(
       child: Column(
@@ -91,21 +76,15 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
         children: [
           Icon(
             Icons.shopping_cart_outlined,
-            size: rSizes.illustrationLg,
-            color: Colors.grey[400],
+            size: rSizes.illustrationSm,
+            color: Colors.grey[500],
           ),
           rSpacing.gapVerticalMd,
           Text(
             l10n.translate(LocaleKeys.cartEmpty),
-            style: rTypography.headlineSmall.copyWith(
-              color: Colors.grey[600],
-            ),
-          ),
-          rSpacing.gapVerticalSm,
-          Text(
-            l10n.translate(LocaleKeys.waitingForItems),
             style: rTypography.bodyMedium.copyWith(
-              color: Colors.grey[500],
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -190,14 +169,16 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
               if (_cartData!.subtotal > 0)
                 _SummaryRow(
                   label: l10n.translate(LocaleKeys.subtotal),
-                  value: '${Helper().formatCurrency(_cartData!.subtotal)}${_cartData!.currencySymbol}',
+                  value:
+                      '${Helper().formatCurrency(_cartData!.subtotal)}${_cartData!.currencySymbol}',
                   rTypography: rTypography,
                 ),
               // Discount
               if (_cartData!.discount > 0)
                 _SummaryRow(
                   label: l10n.translate(LocaleKeys.discount),
-                  value: '-${Helper().formatCurrency(_cartData!.discount)}${_cartData!.currencySymbol}',
+                  value:
+                      '-${Helper().formatCurrency(_cartData!.discount)}${_cartData!.currencySymbol}',
                   valueColor: Colors.red,
                   rTypography: rTypography,
                 ),
@@ -205,7 +186,8 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
               if (_cartData!.tax > 0)
                 _SummaryRow(
                   label: l10n.translate(LocaleKeys.tax),
-                  value: '${Helper().formatCurrency(_cartData!.tax)}${_cartData!.currencySymbol}',
+                  value:
+                      '${Helper().formatCurrency(_cartData!.tax)}${_cartData!.currencySymbol}',
                   rTypography: rTypography,
                 ),
               rSpacing.gapVerticalSm,

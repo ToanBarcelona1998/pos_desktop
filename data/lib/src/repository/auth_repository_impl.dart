@@ -59,6 +59,12 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<UserEntity>> getCurrentUser() async {
     try {
+      final cachedUser = await _localDataSource.getCachedUser();
+
+      if(cachedUser != null){
+        return Success(_userMapper.toEntity(cachedUser));
+      }
+
       final tokenModel = await _localDataSource.getToken();
       if (tokenModel == null) {
         return const Error(AuthFailure(message: 'No token found'));

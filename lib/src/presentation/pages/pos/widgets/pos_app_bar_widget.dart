@@ -102,16 +102,16 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
         ),
         rSpacing.gapHorizontalXs,
         IconWrapper(
-          icon: Icons.tv,
-          onTap: onOpenCustomerWindow,
-          tooltip: l10n.translate(LocaleKeys.customerDisplay),
-          iconColor: Colors.green,
-        ),
-        rSpacing.gapHorizontalXs,
-        IconWrapper(
           icon: Icons.close,
           onTap: () {},
           iconColor: Colors.red,
+        ),
+        rSpacing.gapHorizontalXs,
+        IconWrapper(
+          icon: Icons.tv,
+          onTap: onOpenCustomerWindow,
+          tooltip: l10n.translate(LocaleKeys.customerDisplay),
+          iconColor: Colors.blue,
         ),
         rSpacing.gapHorizontalSm,
         BlocBuilder<AuthCubit, AuthState>(

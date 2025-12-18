@@ -49,13 +49,13 @@ class _PosPageState extends State<PosPage> {
     super.dispose();
   }
 
-  Future<void> _openCustomerWindow() async {
+  Future<void> _openCustomerWindow(BuildContext context) async {
     try {
       // If window already exists, just focus it
       if (_customerWindowController != null) {
         // Try to check if window is still valid
         try {
-          await _customerWindowController!.invokeMethod('window_center');
+          await _customerWindowController!.center();
           return;
         } catch (e) {
           // Window closed, create new one
@@ -74,22 +74,23 @@ class _PosPageState extends State<PosPage> {
       CartSyncService().setCustomerWindow(_customerWindowController);
       
       // Broadcast current cart state immediately
-      final state = context.read<PosBloc>().state;
-      final cartSyncData = CartSyncService.convertToSyncData(
-        cartItems: state.cartItems,
-        subtotal: state.subtotal,
-        discount: state.invoiceDiscount,
-        tax: state.taxAmount,
-        total: state.total,
-        currencySymbol: state.currencySymbol,
-        customer: state.selectedCustomer,
-      );
-      CartSyncService().broadcastCartUpdate(cartSyncData);
+
+      if(context.mounted){
+        final state = context.read<PosBloc>().state;
+        final cartSyncData = CartSyncService.convertToSyncData(
+          cartItems: state.cartItems,
+          subtotal: state.subtotal,
+          discount: state.invoiceDiscount,
+          tax: state.taxAmount,
+          total: state.total,
+          currencySymbol: state.currencySymbol,
+          customer: state.selectedCustomer,
+        );
+        CartSyncService().broadcastCartUpdate(cartSyncData);
+      }
     } catch (e) {
       // Handle error - maybe show a toast
-      if (mounted) {
-        ToastManager.showError(context, 'Failed to open customer window');
-      }
+      Logger.logE('Failed to open customer window');
     }
   }
 
@@ -105,7 +106,6 @@ class _PosPageState extends State<PosPage> {
           previous.shouldPrintInvoice != current.shouldPrintInvoice ||
           previous.createdSellId != current.createdSellId,
       listener: (context, state) {
-        print(state.shouldPrintInvoice);
         if (state.actionStatus == PosStatus.error &&
             state.errorMessage != null) {
           final translatedMessage = l10n.translate(state.errorMessage!);
@@ -163,7 +163,7 @@ class _PosPageState extends State<PosPage> {
                 context.read<PosBloc>().add(const PosRefreshProducts());
               },
               onSuspendedSales: () => showSuspendedSalesDialog(context),
-              onOpenCustomerWindow: _openCustomerWindow,
+              onOpenCustomerWindow: () => _openCustomerWindow(context),
             ),
             body: Row(
               children: [

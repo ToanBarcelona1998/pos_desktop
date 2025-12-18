@@ -94,27 +94,6 @@ class ApplicationMaterialApp extends StatelessWidget {
   }
 }
 
-/// Convenience widget for building with theme
-class ThemeBuilder extends StatelessWidget {
-  final Widget Function(
-          BuildContext context, ThemeData theme, CustomAppTheme customTheme)
-      builder;
-
-  const ThemeBuilder({
-    super.key,
-    required this.builder,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AppThemeCubit, AppThemeState>(
-      builder: (context, state) {
-        final customTheme = context.read<AppThemeCubit>().customTheme;
-        return builder(context, state.themeData, customTheme);
-      },
-    );
-  }
-}
 
 /// Extension for easy access to global cubits
 extension ApplicationContext on BuildContext {

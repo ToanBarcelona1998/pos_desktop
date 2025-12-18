@@ -41,7 +41,7 @@ class AuthCubit extends Cubit<AuthState> {
             
             // Sync system data in background (for offline mode)
             _syncSystemData();
-            
+
             emit(Authenticated(user: user, token: token));
           },
           onError: (failure) async {
@@ -78,7 +78,7 @@ class AuthCubit extends Cubit<AuthState> {
         await userResult.fold(
           onSuccess: (user) async {
             // Initialize database for this user
-            await _initializeDatabase(user.id!);
+            await _initializeDatabase(user.id);
             
             // Sync system data in background
             _syncSystemData();
@@ -160,11 +160,13 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   /// Sync system data in background (non-blocking)
-  void _syncSystemData() {
+  void _syncSystemData() async {
     // Run in background without blocking
-    _syncService.syncAll().catchError((e) {
+    try{
+      await _syncService.syncAll();
+    }catch(e){
       Logger.logE('System sync error', e);
-    });
+    }
   }
 
   /// Logs out the current user
