@@ -40,7 +40,7 @@ extension PaymentMethodExtension on PaymentMethod {
   }
 
   /// Create enum from string value
-  static PaymentMethod? fromString(String value) {
+  static PaymentMethod fromString(String value) {
     switch (value.toLowerCase()) {
       case 'cash':
         return PaymentMethod.cash;

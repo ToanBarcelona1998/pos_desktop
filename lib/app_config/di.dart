@@ -182,6 +182,11 @@ void _registerRemoteDataSources(AppConfig config) {
         endpoint: '${config.apiUrl}/business-location',
       ));
 
+  sl.registerLazy<LayoutBillRemoteDataSource>(() => LayoutBillRemoteDataSourceImpl(
+        apiClient: sl.get<ApiClient>(),
+        layoutBillEndpoint: '${config.apiUrl}/getLayoutBill',
+      ));
+
   sl.registerLazy<BusinessRemoteDataSource>(() => BusinessRemoteDataSourceImpl(
         apiClient: sl.get<ApiClient>(),
         endpoint: '${config.apiUrl}/business-details',
@@ -291,6 +296,11 @@ void _registerRepositories() {
         localDataSource: sl.get<SystemLocalDataSource>(),
       ));
 
+  sl.registerLazy<LayoutBillRepository>(() => LayoutBillRepositoryImpl(
+        remoteDataSource: sl.get<LayoutBillRemoteDataSource>(),
+        localDataSource: sl.get<SystemLocalDataSource>(),
+      ));
+
   sl.registerLazy<BusinessRepository>(() => BusinessRepositoryImpl(
         remoteDataSource: sl.get<BusinessRemoteDataSource>(),
         localDataSource: sl.get<SystemLocalDataSource>(),
@@ -348,6 +358,7 @@ void _registerServices() {
         brandDataSource: sl.get<BrandRemoteDataSource>(),
         categoryDataSource: sl.get<CategoryRemoteDataSource>(),
         locationDataSource: sl.get<LocationRemoteDataSource>(),
+        layoutBillDataSource: sl.get<LayoutBillRemoteDataSource>(),
         businessDataSource: sl.get<BusinessRemoteDataSource>(),
         permissionDataSource: sl.get<PermissionRemoteDataSource>(),
         subscriptionDataSource: sl.get<SubscriptionRemoteDataSource>(),
@@ -384,6 +395,7 @@ void _registerUseCases() {
   // Contact
   sl.registerLazy<GetContactsUseCase>(() => GetContactsUseCase(sl.get<ContactRepository>()));
   sl.registerLazy<SearchContactsUseCase>(() => SearchContactsUseCase(sl.get<ContactRepository>()));
+  sl.registerLazy<GetContactByIdUseCase>(() => GetContactByIdUseCase(sl.get<ContactRepository>()));
 
   // Payment
   sl.registerLazy<GetPaymentAccountsByTypeUseCase>(() => GetPaymentAccountsByTypeUseCase(sl.get<PaymentRepository>()));
@@ -394,6 +406,9 @@ void _registerUseCases() {
 
   // Location
   sl.registerLazy<GetLocationsUseCase>(() => GetLocationsUseCase(sl.get<LocationRepository>()));
+
+  // Layout Bill
+  sl.registerLazy<GetLayoutBillUseCase>(() => GetLayoutBillUseCase(sl.get<LayoutBillRepository>()));
 
   // Notification
   sl.registerLazy<GetNotificationsUseCase>(() => GetNotificationsUseCase(sl.get<NotificationRepository>()));

@@ -122,7 +122,7 @@ class PosBottomBarWidget extends StatelessWidget {
                       color: Colors.red,
                       icon: Icons.cancel,
                       isLoading: isSubmitting,
-                      onTap: canSubmit ? onCashPayment : null,
+                      onTap: canSubmit ? onCancel : null,
                     ),
                   ),
                 ],

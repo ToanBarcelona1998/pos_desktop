@@ -76,6 +76,7 @@ dependencies:
   fl_chart: ^1.0.0
 
   flutter_inappwebview: ^6.1.5
+  desktop_multi_window: ^0.3.0
 
 
 dev_dependencies:

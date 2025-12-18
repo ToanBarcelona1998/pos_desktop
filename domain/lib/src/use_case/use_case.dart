@@ -22,10 +22,14 @@ export 'category/sync_categories_use_case.dart';
 
 // Contact use cases
 export 'contact/get_contacts_use_case.dart';
+export 'contact/get_contact_by_id_use_case.dart';
 
 // Expense use cases
 export 'expense/create_expense_use_case.dart';
 export 'expense/get_expense_categories_use_case.dart';
+
+// Layout bill use cases
+export 'layout_bill/get_layout_bill_use_case.dart';
 
 // Location use cases
 export 'location/get_locations_use_case.dart';

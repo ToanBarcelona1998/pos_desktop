@@ -10,6 +10,7 @@ export 'contact_entity.dart';
 export 'expense_entity.dart';
 export 'field_force_entity.dart';
 export 'follow_up_entity.dart';
+export 'layout_bill_entity.dart';
 export 'location_entity.dart';
 export 'notification_entity.dart';
 export 'payment_entity.dart';

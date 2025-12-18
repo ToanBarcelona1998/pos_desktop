@@ -1,6 +1,7 @@
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pos_final/src/application.dart';
 
 import 'package:pos_final/src/core/services/print_service.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
@@ -10,7 +11,6 @@ import '../../../core/localization/locale_keys.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/toast/toast_manager.dart';
 import '../../widgets/dialog/dialog_provider.dart';
-import '../../services/invoice_service.dart';
 import 'pos_bloc.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
@@ -50,6 +50,7 @@ class _PosPageState extends State<PosPage> {
           previous.shouldPrintInvoice != current.shouldPrintInvoice ||
           previous.createdSellId != current.createdSellId,
       listener: (context, state) {
+        print(state.shouldPrintInvoice);
         if (state.actionStatus == PosStatus.error &&
             state.errorMessage != null) {
           final translatedMessage = l10n.translate(state.errorMessage!);
@@ -69,11 +70,15 @@ class _PosPageState extends State<PosPage> {
 
           // Show print dialog
           // [TODO] Can't show print now with html
-          // _showPrintInvoiceDialog(
-          //   context,
-          //   state.createdSellId!,
-          //   state.taxId,
-          // );
+          _showPrintInvoiceDialog(
+            context,
+            state.products,
+            state.currencySymbol,
+            context.authCubit.currentUser?.fullName ?? '',
+            state.createdSellId!,
+            state.selectedLocationId!,
+            state.taxId,
+          );
         }
       },
       builder: (context, state) {
@@ -269,7 +274,11 @@ class _PosPageState extends State<PosPage> {
   /// Show print invoice dialog
   void _showPrintInvoiceDialog(
     BuildContext context,
+    List<ProductEntity> products,
+    String unit,
+    String cashier,
     int sellId,
+    int locationId,
     int? taxId,
   ) {
     final l10n = AppLocalizations.of(context);
@@ -282,19 +291,17 @@ class _PosPageState extends State<PosPage> {
       confirmColor: Colors.blue,
       onConfirm: () async {
         try {
-          // Fetch invoice HTML using service
-          final invoiceService = InvoiceService();
-          final invoiceHtml = await invoiceService.fetchInvoiceHtml(sellId);
-
-          if (context.mounted && invoiceHtml != null) {
-            await PrintService.printInvoice(
-              sellId: sellId,
-              taxId: taxId,
-              context: context,
-              invoiceHtml: invoiceHtml,
-              name: l10n.translate(LocaleKeys.invoice),
-            );
-          }
+          await PrintService.printInvoice(
+            sellId: sellId,
+            taxId: taxId,
+            context: context,
+            name: l10n.translate(LocaleKeys.invoice),
+            locationId: locationId,
+            products: products,
+            unit: unit,
+            l10n: l10n,
+            cashier: cashier,
+          );
         } catch (e) {
           if (context.mounted) {
             ToastManager.showError(

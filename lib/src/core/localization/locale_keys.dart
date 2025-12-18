@@ -417,6 +417,25 @@ abstract final class LocaleKeys {
   static const String subtotal = 'subtotal';
 
   static const String previousPayments = 'previous_payments';
+
+  // Billing
+  static const String billTitle = 'bill_title';
+  static const String billContact = 'bill_contact';
+  static const String billId = 'bill_id';
+  static const String billCustomer = 'bill_customer';
+  static const String billCashier = 'bill_cashier';
+  static const String billDate = 'bill_date';
+  static const String billProduct = 'bill_product';
+  static const String billSL = 'bill_sl';
+  static const String billPrice = 'bill_price';
+  static const String billTempPrice = 'bill_temp_price';
+  static const String billQuality = 'bill_quality';
+  static const String billTotal = 'bill_total';
+  static const String billPayment = 'bill_payment';
+  static const String billCash = 'bill_cash';
+  static const String billTransfer = 'bill_transfer';
+  static const String billEWallet = 'bill_e_wallet';
+  static const String billEnd = 'bill_end';
 }
 
 
