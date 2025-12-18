@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -35,16 +37,32 @@ class PosPage extends StatefulWidget {
 
 class _PosPageState extends State<PosPage> {
   WindowController? _customerWindowController;
+  StreamSubscription ?_subscription;
 
   @override
   void initState() {
     super.initState();
+    _subscription = onWindowsChanged.listen((_) async {
+      if(_customerWindowController != null){
+        try{
+          WindowController.fromWindowId(_customerWindowController!.windowId);
+        }catch(e){
+          _customerWindowController = null;
+        }
+      }
+
+    });
     context.read<PosBloc>().add(const PosInitialize());
   }
 
   @override
   void dispose() {
+    if(_customerWindowController != null){
+      _customerWindowController?.close();
+    }
     _customerWindowController = null;
+    _subscription?.cancel();
+    _subscription = null;
     super.dispose();
   }
 
