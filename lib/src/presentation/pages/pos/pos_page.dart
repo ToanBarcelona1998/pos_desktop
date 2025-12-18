@@ -4,12 +4,12 @@ import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_final/src/application.dart';
+import 'package:pos_final/src/core/services/barcode_scan_service.dart';
 
 import 'package:pos_final/src/core/services/offline_customer_service.dart';
 import 'package:pos_final/src/core/services/print_service.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:pos_final/src/presentation/pages/pos/widgets/bar_code_listener_widget.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../widgets/app_loading.dart';
@@ -39,18 +39,44 @@ class _PosPageState extends State<PosPage> {
   WindowController? _customerWindowController;
   StreamSubscription ?_subscription;
 
+  late final BarcodeScannerService scanner;
+  late final WindowActiveObserver windowObserver;
+
   @override
   void initState() {
     super.initState();
+    scanner = BarcodeScannerService(
+      onBarcodeScanned: (barcode) {
+        context.read<PosBloc>().add(PosScanBarcode(barcode));
+      },
+    )..start();
+    windowObserver = WindowActiveObserver()..init();
+
+    windowObserver.isActive.addListener(() {
+      scanner.setEnabled(windowObserver.isActive.value);
+    });
+
     _subscription = onWindowsChanged.listen((_) async {
       if(_customerWindowController != null){
+        bool setNullCustomerWindow = false;
         try{
+          setNullCustomerWindow = true;
+
           final windows = await WindowController.getAll();
 
           if(!windows.map((e) => e.windowId).contains(_customerWindowController!.windowId)){
-            _customerWindowController = null;
+            try{
+              await _customerWindowController!.close();
+            }catch(e){
+              //
+            }
+            await Future.delayed(const Duration(milliseconds: 300));
           }
         }catch(e){
+          setNullCustomerWindow = true;
+        }
+
+        if(setNullCustomerWindow){
           _customerWindowController = null;
         }
       }
@@ -61,10 +87,13 @@ class _PosPageState extends State<PosPage> {
 
   @override
   void dispose() {
-    if(_customerWindowController != null){
+    scanner.stop();
+    windowObserver.dispose();
+    try {
       _customerWindowController?.close();
-    }
+    } catch (_) {}
     _customerWindowController = null;
+
     _subscription?.cancel();
     _subscription = null;
     super.dispose();
@@ -72,8 +101,11 @@ class _PosPageState extends State<PosPage> {
 
   Future<void> _openCustomerWindow(BuildContext context) async {
     try {
-      // If window already exists, just focus it
-      if (_customerWindowController != null) return;
+      if (_customerWindowController != null) {
+        await _customerWindowController!.focus();
+        return;
+      }
+
 
       // Create new customer window
       final windowArgs = WindowArguments(
@@ -96,7 +128,10 @@ class _PosPageState extends State<PosPage> {
           currencySymbol: state.currencySymbol,
           customer: state.selectedCustomer,
         );
-        OfflineCustomerService().broadcastCartUpdate(cartSyncData);
+
+        await Future.delayed(const Duration(milliseconds: 700), (){
+          OfflineCustomerService().broadcastCartUpdate(cartSyncData);
+        });
       }
     } catch (e) {
       // Handle error - maybe show a toast
@@ -154,136 +189,131 @@ class _PosPageState extends State<PosPage> {
           );
         }
 
-        return RawBarCodeListenerWidget(
-          onBarcodeScanned: (barcode) {
-            context.read<PosBloc>().add(PosScanBarcode(barcode));
-          },
-          child: Scaffold(
-            backgroundColor: const Color(0xffdcdee3),
-            appBar: PosAppBarWidget(
-              locations: state.locations,
-              selectedLocationId: state.selectedLocationId,
-              onOpenFullScreen: () {
-                WindowManagerUtils.openFullScreen();
-              },
-              onLocationChanged: (locationId) {
-                context.read<PosBloc>().add(PosSelectLocation(locationId));
-              },
-              onRefresh: () {
-                context.read<PosBloc>().add(const PosRefreshProducts());
-              },
-              onSuspendedSales: () => showSuspendedSalesDialog(context),
-              onOpenCustomerWindow: () => _openCustomerWindow(context),
-            ),
-            body: Row(
-              children: [
-                // Cart section (left)
-                Expanded(
-                  flex: 3,
-                  child: PosCartWidget(
-                    customer: state.selectedCustomer,
-                    cartItems: state.cartItems,
-                    currencySymbol: state.currencySymbol,
-                    subtotal: state.subtotal,
-                    discount: state.invoiceDiscount,
-                    tax: state.taxAmount,
-                    total: state.total,
-                    onCustomerSelect: () => _showCustomerSelector(context),
-                    onQuantityChanged: (productId, variationId, quantity) {
-                      context.read<PosBloc>().add(PosUpdateCartItemQuantity(
-                            productId: productId,
-                            variationId: variationId,
-                            quantity: quantity,
-                          ));
-                    },
-                    onRemoveItem: (productId, variationId) {
-                      context.read<PosBloc>().add(PosRemoveFromCart(
-                            productId: productId,
-                            variationId: variationId,
-                          ));
-                    },
-                    onProductSearch: (query) {
-                      context.read<PosBloc>().add(PosSearchProducts(query));
-                    },
-                    onSuspendSellSearch: (query) {
-                      _searchSuspendedSell(context, query);
-                    },
-                  ),
+        return Scaffold(
+          backgroundColor: const Color(0xffdcdee3),
+          appBar: PosAppBarWidget(
+            locations: state.locations,
+            selectedLocationId: state.selectedLocationId,
+            onOpenFullScreen: () {
+              WindowManagerUtils.openFullScreen();
+            },
+            onLocationChanged: (locationId) {
+              context.read<PosBloc>().add(PosSelectLocation(locationId));
+            },
+            onRefresh: () {
+              context.read<PosBloc>().add(const PosRefreshProducts());
+            },
+            onSuspendedSales: () => showSuspendedSalesDialog(context),
+            onOpenCustomerWindow: () => _openCustomerWindow(context),
+          ),
+          body: Row(
+            children: [
+              // Cart section (left)
+              Expanded(
+                flex: 3,
+                child: PosCartWidget(
+                  customer: state.selectedCustomer,
+                  cartItems: state.cartItems,
+                  currencySymbol: state.currencySymbol,
+                  subtotal: state.subtotal,
+                  discount: state.invoiceDiscount,
+                  tax: state.taxAmount,
+                  total: state.total,
+                  onCustomerSelect: () => _showCustomerSelector(context),
+                  onQuantityChanged: (productId, variationId, quantity) {
+                    context.read<PosBloc>().add(PosUpdateCartItemQuantity(
+                          productId: productId,
+                          variationId: variationId,
+                          quantity: quantity,
+                        ));
+                  },
+                  onRemoveItem: (productId, variationId) {
+                    context.read<PosBloc>().add(PosRemoveFromCart(
+                          productId: productId,
+                          variationId: variationId,
+                        ));
+                  },
+                  onProductSearch: (query) {
+                    context.read<PosBloc>().add(PosSearchProducts(query));
+                  },
+                  onSuspendSellSearch: (query) {
+                    _searchSuspendedSell(context, query);
+                  },
                 ),
-                // Product grid section (right)
-                Expanded(
-                  flex: 2,
-                  child: PosProductGridWidget(
-                    products: state.filteredProducts,
-                    categories: state.categories,
-                    brands: state.brands,
-                    selectedCategoryId: state.selectedCategoryId,
-                    selectedBrandId: state.selectedBrandId,
-                    searchQuery: state.searchQuery,
-                    isLoading:
-                        state.pageStatus == PosPageStatus.loadingProducts,
-                    isLoadingMore:
-                        state.pageStatus == PosPageStatus.loadingMore,
-                    hasMore: state.hasMore,
-                    cartItems: state.cartItems,
-                    onProductTap: (product) {
-                      context
-                          .read<PosBloc>()
-                          .add(PosAddToCart(product: product));
-                    },
-                    onSearch: (query) {
-                      context.read<PosBloc>().add(PosSearchProducts(query));
-                    },
-                    onCategoryFilter: (categoryId) {
-                      context
-                          .read<PosBloc>()
-                          .add(PosFilterByCategory(categoryId));
-                    },
-                    onBrandFilter: (brandId) {
-                      context.read<PosBloc>().add(PosFilterByBrand(brandId));
-                    },
-                    onLoadMore: () {
-                      context.read<PosBloc>().add(const PosLoadMoreProducts());
-                    },
-                    onRefresh: () {
-                      context.read<PosBloc>().add(const PosRefreshProducts());
-                    },
-                  ),
+              ),
+              // Product grid section (right)
+              Expanded(
+                flex: 2,
+                child: PosProductGridWidget(
+                  products: state.filteredProducts,
+                  categories: state.categories,
+                  brands: state.brands,
+                  selectedCategoryId: state.selectedCategoryId,
+                  selectedBrandId: state.selectedBrandId,
+                  searchQuery: state.searchQuery,
+                  isLoading:
+                      state.pageStatus == PosPageStatus.loadingProducts,
+                  isLoadingMore:
+                      state.pageStatus == PosPageStatus.loadingMore,
+                  hasMore: state.hasMore,
+                  cartItems: state.cartItems,
+                  onProductTap: (product) {
+                    context
+                        .read<PosBloc>()
+                        .add(PosAddToCart(product: product));
+                  },
+                  onSearch: (query) {
+                    context.read<PosBloc>().add(PosSearchProducts(query));
+                  },
+                  onCategoryFilter: (categoryId) {
+                    context
+                        .read<PosBloc>()
+                        .add(PosFilterByCategory(categoryId));
+                  },
+                  onBrandFilter: (brandId) {
+                    context.read<PosBloc>().add(PosFilterByBrand(brandId));
+                  },
+                  onLoadMore: () {
+                    context.read<PosBloc>().add(const PosLoadMoreProducts());
+                  },
+                  onRefresh: () {
+                    context.read<PosBloc>().add(const PosRefreshProducts());
+                  },
                 ),
-              ],
-            ),
-            bottomNavigationBar: PosBottomBarWidget(
-              total: state.total,
-              currencySymbol: state.currencySymbol,
-              isSubmitting: state.actionStatus == PosStatus.submitting,
-              canSubmit: state.canSubmit,
-              onCashPayment: () {
-                context
-                    .read<PosBloc>()
-                    .add(PosSubmitSale(paymentMethod: PaymentMethod.cash));
-              },
-              onPaymentMethods: () {
-                _showPaymentDialog(context);
-              },
-              onCreditPayment: () {
-                context.read<PosBloc>().add(const PosSubmitCreditSale());
-              },
-              onDraft: () {
-                context.read<PosBloc>().add(const PosCreateDraft());
-              },
-              onQuotation: () {
-                context.read<PosBloc>().add(const PosCreateQuotation());
-              },
-              onSuspend: () {
-                context.read<PosBloc>().add(const PosSuspendSale());
-              },
-              onCancel: () {
-                context.read<PosBloc>().add(const PosCancelSale());
-              },
-              onPreviousPayments: () {
-                _showHistorySells(context);
-              },
-            ),
+              ),
+            ],
+          ),
+          bottomNavigationBar: PosBottomBarWidget(
+            total: state.total,
+            currencySymbol: state.currencySymbol,
+            isSubmitting: state.actionStatus == PosStatus.submitting,
+            canSubmit: state.canSubmit,
+            onCashPayment: () {
+              context
+                  .read<PosBloc>()
+                  .add(PosSubmitSale(paymentMethod: PaymentMethod.cash));
+            },
+            onPaymentMethods: () {
+              _showPaymentDialog(context);
+            },
+            onCreditPayment: () {
+              context.read<PosBloc>().add(const PosSubmitCreditSale());
+            },
+            onDraft: () {
+              context.read<PosBloc>().add(const PosCreateDraft());
+            },
+            onQuotation: () {
+              context.read<PosBloc>().add(const PosCreateQuotation());
+            },
+            onSuspend: () {
+              context.read<PosBloc>().add(const PosSuspendSale());
+            },
+            onCancel: () {
+              context.read<PosBloc>().add(const PosCancelSale());
+            },
+            onPreviousPayments: () {
+              _showHistorySells(context);
+            },
           ),
         );
       },

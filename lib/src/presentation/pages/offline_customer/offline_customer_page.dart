@@ -4,6 +4,7 @@ import 'package:pos_final/helpers/other_helpers.dart';
 import 'package:pos_final/src/core/core.dart';
 import 'package:pos_final/src/core/services/offline_customer_service.dart';
 import 'package:pos_final/src/presentation/presentation.dart';
+import 'package:window_manager/window_manager.dart';
 
 class OfflineCustomerPage extends StatefulWidget {
   const OfflineCustomerPage({super.key});
@@ -12,13 +13,15 @@ class OfflineCustomerPage extends StatefulWidget {
   State<OfflineCustomerPage> createState() => _OfflineCustomerPageState();
 }
 
-class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
+class _OfflineCustomerPageState extends State<OfflineCustomerPage> with WindowListener{
   CartSyncData? _cartData;
 
   @override
   void initState() {
     super.initState();
     _setupMessageHandler();
+    windowManager.setPreventClose(true);
+    windowManager.addListener(this);
   }
 
   void _setupMessageHandler() {
@@ -29,6 +32,24 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    try {
+      OfflineCustomerService()
+          .offlineCustomerMethodChannel
+          .setMethodCallHandler(null);
+    } catch (_) {}
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  @override
+  void onWindowClose() async{
+    await windowManager.setPreventClose(false);
+    await windowManager.close();
+    super.onWindowClose();
   }
 
   @override
