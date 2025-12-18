@@ -1,11 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:pos_final/helpers/other_helpers.dart';
-import 'package:pos_final/src/core/constants/app_responsive.dart';
-import 'package:pos_final/src/core/constants/app_radius.dart';
 import 'package:pos_final/src/core/core.dart';
-import 'package:pos_final/src/core/localization/app_localization.dart';
-import 'package:pos_final/src/core/localization/locale_keys.dart';
-import 'package:pos_final/src/core/services/cart_sync_service.dart';
+import 'package:pos_final/src/core/services/offline_customer_service.dart';
 import 'package:pos_final/src/presentation/presentation.dart';
 
 class OfflineCustomerPage extends StatefulWidget {
@@ -25,7 +22,7 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
   }
 
   void _setupMessageHandler() {
-    CartSyncService().registerCustomerWindowHandler((cartData) {
+    OfflineCustomerService().registerCustomerWindowHandler((cartData) {
       if (mounted) {
         setState(() {
           _cartData = cartData;
@@ -108,12 +105,11 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
           Container(
             width: double.infinity,
             padding: rSpacing.paddingMd,
-            color: theme.colorScheme.primaryContainer,
             child: Row(
               children: [
                 Icon(
                   Icons.person,
-                  color: theme.colorScheme.onPrimaryContainer,
+                  color: theme.primaryColor,
                   size: rSizes.iconMd,
                 ),
                 rSpacing.gapHorizontalSm,
@@ -121,7 +117,7 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
                   _cartData!.customerName!,
                   style: rTypography.bodyLarge.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onPrimaryContainer,
+                    color: theme.primaryColor,
                   ),
                 ),
               ],
@@ -164,32 +160,50 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
             ],
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${l10n.translate(LocaleKeys.totalItems)}:',
+                    style: rTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '${_cartData!.totalItems}',
+                    style: rTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
               // Subtotal
-              if (_cartData!.subtotal > 0)
-                _SummaryRow(
-                  label: l10n.translate(LocaleKeys.subtotal),
-                  value:
-                      '${Helper().formatCurrency(_cartData!.subtotal)}${_cartData!.currencySymbol}',
-                  rTypography: rTypography,
-                ),
-              // Discount
-              if (_cartData!.discount > 0)
-                _SummaryRow(
-                  label: l10n.translate(LocaleKeys.discount),
-                  value:
-                      '-${Helper().formatCurrency(_cartData!.discount)}${_cartData!.currencySymbol}',
-                  valueColor: Colors.red,
-                  rTypography: rTypography,
-                ),
-              // Tax
-              if (_cartData!.tax > 0)
-                _SummaryRow(
-                  label: l10n.translate(LocaleKeys.tax),
-                  value:
-                      '${Helper().formatCurrency(_cartData!.tax)}${_cartData!.currencySymbol}',
-                  rTypography: rTypography,
-                ),
+              // if (_cartData!.subtotal > 0)
+              //   _SummaryRow(
+              //     label: l10n.translate(LocaleKeys.subtotal),
+              //     value:
+              //         '${Helper().formatCurrency(_cartData!.subtotal)}${_cartData!.currencySymbol}',
+              //     rTypography: rTypography,
+              //   ),
+              // // Discount
+              // if (_cartData!.discount > 0)
+              //   _SummaryRow(
+              //     label: l10n.translate(LocaleKeys.discount),
+              //     value:
+              //         '-${Helper().formatCurrency(_cartData!.discount)}${_cartData!.currencySymbol}',
+              //     valueColor: Colors.red,
+              //     rTypography: rTypography,
+              //   ),
+              // // Tax
+              // if (_cartData!.tax > 0)
+              //   _SummaryRow(
+              //     label: l10n.translate(LocaleKeys.tax),
+              //     value:
+              //         '${Helper().formatCurrency(_cartData!.tax)}${_cartData!.currencySymbol}',
+              //     rTypography: rTypography,
+              //   ),
               rSpacing.gapVerticalSm,
               Divider(height: 1, color: Colors.grey[300]),
               rSpacing.gapVerticalSm,
@@ -213,12 +227,6 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> {
                 ],
               ),
               rSpacing.gapVerticalXs,
-              Text(
-                '${l10n.translate(LocaleKeys.totalItems)}: ${_cartData!.totalItems}',
-                style: rTypography.bodySmall.copyWith(
-                  color: Colors.grey[600],
-                ),
-              ),
             ],
           ),
         ),
@@ -257,12 +265,12 @@ class _CartItemCard extends StatelessWidget {
           if (item.productImageUrl != null && item.productImageUrl!.isNotEmpty)
             ClipRRect(
               borderRadius: AppRadius.borderRadiusSm,
-              child: Image.network(
-                item.productImageUrl!,
-                width: rSizes.illustrationSm,
-                height: rSizes.illustrationSm,
+              child: CachedNetworkImage(
+                imageUrl: item.productImageUrl!,
+                width: rSizes.illustrationXs,
+                height: rSizes.illustrationXs,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
+                errorWidget: (_, __, ___) => _buildPlaceholderImage(),
               ),
             )
           else
@@ -278,6 +286,7 @@ class _CartItemCard extends StatelessWidget {
                   item.displayName ?? item.productName,
                   style: rTypography.titleMedium.copyWith(
                     fontWeight: FontWeight.w600,
+                    color: Colors.lightBlue,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -287,9 +296,7 @@ class _CartItemCard extends StatelessWidget {
                   children: [
                     Text(
                       '${l10n.translate(LocaleKeys.quantity)}: ',
-                      style: rTypography.bodySmall.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      style: rTypography.bodySmall,
                     ),
                     Text(
                       '${item.quantity}',
@@ -300,9 +307,7 @@ class _CartItemCard extends StatelessWidget {
                     rSpacing.gapHorizontalMd,
                     Text(
                       '${l10n.translate(LocaleKeys.priceAfterTax)}: ',
-                      style: rTypography.bodySmall.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                      style: rTypography.bodySmall,
                     ),
                     Text(
                       '${Helper().formatCurrency(item.unitPrice)}$currencySymbol',
@@ -343,8 +348,8 @@ class _CartItemCard extends StatelessWidget {
 
   Widget _buildPlaceholderImage() {
     return Container(
-      width: rSizes.illustrationSm,
-      height: rSizes.illustrationSm,
+      width: rSizes.illustrationXs,
+      height: rSizes.illustrationXs,
       decoration: BoxDecoration(
         color: Colors.grey[200],
         borderRadius: AppRadius.borderRadiusSm,

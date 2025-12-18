@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:pos_final/src/application.dart';
 import 'core/localization/app_localization.dart';
 import 'package:pos_final/src/presentation/pages/offline_customer/offline_customer.dart';
 
@@ -42,6 +45,9 @@ class _OfflineCustomerApplication extends StatelessWidget {
             return MaterialApp(
               theme: themeState.themeData,
               locale: languageState.locale,
+              scrollBehavior: Platform.isMacOS || Platform.isWindows || Platform.isLinux
+                  ? DesktopScrollBehavior()
+                  : null,
               supportedLocales: AppLanguages.supportedLocales,
               debugShowCheckedModeBanner: false,
               localizationsDelegates: const [

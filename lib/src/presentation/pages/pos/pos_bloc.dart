@@ -2,7 +2,7 @@ import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/core.dart';
-import '../../../core/services/cart_sync_service.dart';
+import '../../../core/services/offline_customer_service.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
 
@@ -1286,7 +1286,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
   /// Broadcast cart update to customer window
   void _broadcastCartUpdate(PosState state) {
-    final cartSyncData = CartSyncService.convertToSyncData(
+    final cartSyncData = OfflineCustomerService.convertToSyncData(
       cartItems: state.cartItems,
       subtotal: state.subtotal,
       discount: state.invoiceDiscount,
@@ -1295,6 +1295,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       currencySymbol: state.currencySymbol,
       customer: state.selectedCustomer,
     );
-    CartSyncService().broadcastCartUpdate(cartSyncData);
+    OfflineCustomerService().broadcastCartUpdate(cartSyncData);
   }
 }

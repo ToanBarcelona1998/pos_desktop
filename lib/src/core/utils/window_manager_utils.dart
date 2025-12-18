@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 
 extension WindowControllerExtension on WindowController {
@@ -12,6 +13,8 @@ extension WindowControllerExtension on WindowController {
           return await windowManager.center();
         case 'window_close':
           return await windowManager.close();
+        case 'focus':
+          return await windowManager.focus();
         default:
           return;
       }
@@ -20,6 +23,10 @@ extension WindowControllerExtension on WindowController {
 
   Future<void> center() {
     return invokeMethod('window_center');
+  }
+
+  Future<void> focus() {
+    return invokeMethod('focus');
   }
 
   Future<void> close() {
@@ -117,6 +124,8 @@ sealed class WindowManagerUtils {
     );
 
     await controller.center();
+
+    await controller.focus();
 
     return controller;
   }

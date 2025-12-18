@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_final/src/application.dart';
 
-import 'package:pos_final/src/core/services/cart_sync_service.dart';
+import 'package:pos_final/src/core/services/offline_customer_service.dart';
 import 'package:pos_final/src/core/services/print_service.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
@@ -45,39 +45,27 @@ class _PosPageState extends State<PosPage> {
   @override
   void dispose() {
     _customerWindowController = null;
-    CartSyncService().setCustomerWindow(null);
     super.dispose();
   }
 
   Future<void> _openCustomerWindow(BuildContext context) async {
     try {
       // If window already exists, just focus it
-      if (_customerWindowController != null) {
-        // Try to check if window is still valid
-        try {
-          await _customerWindowController!.center();
-          return;
-        } catch (e) {
-          // Window closed, create new one
-          _customerWindowController = null;
-        }
-      }
+      if (_customerWindowController != null) return;
 
       // Create new customer window
       final windowArgs = WindowArguments(
         type: WindowType.offlineCustomer,
-        params: {},
+        params: {
+
+        },
       );
       _customerWindowController = await WindowManagerUtils.createNewWindow(windowArgs);
-      
-      // Set the window controller in CartSyncService
-      CartSyncService().setCustomerWindow(_customerWindowController);
-      
       // Broadcast current cart state immediately
 
       if(context.mounted){
         final state = context.read<PosBloc>().state;
-        final cartSyncData = CartSyncService.convertToSyncData(
+        final cartSyncData = OfflineCustomerService.convertToSyncData(
           cartItems: state.cartItems,
           subtotal: state.subtotal,
           discount: state.invoiceDiscount,
@@ -86,7 +74,7 @@ class _PosPageState extends State<PosPage> {
           currencySymbol: state.currencySymbol,
           customer: state.selectedCustomer,
         );
-        CartSyncService().broadcastCartUpdate(cartSyncData);
+        OfflineCustomerService().broadcastCartUpdate(cartSyncData);
       }
     } catch (e) {
       // Handle error - maybe show a toast

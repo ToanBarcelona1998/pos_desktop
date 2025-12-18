@@ -50,7 +50,6 @@ class _RawBarCodeListenerWidgetState extends State<RawBarCodeListenerWidget> {
   void initState() {
     super.initState();
     _focusNode.requestFocus();
-
     FocusManager.instance.addListener(_addFocusListener);
   }
 

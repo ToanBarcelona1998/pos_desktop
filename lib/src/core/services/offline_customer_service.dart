@@ -98,7 +98,7 @@ class CartSyncData {
   factory CartSyncData.fromJson(Map<String, dynamic> json) {
     return CartSyncData(
       items: (json['items'] as List)
-          .map((item) => CartSyncItem.fromJson(item as Map<String, dynamic>))
+          .map((item) => CartSyncItem.fromJson(Map<String,dynamic>.from(item)))
           .toList(),
       subtotal: (json['subtotal'] as num).toDouble(),
       discount: (json['discount'] as num).toDouble(),
@@ -112,36 +112,29 @@ class CartSyncData {
 }
 
 /// Service to sync cart data between POS window and customer window
-class CartSyncService {
-  static WindowController? _customerWindowController;
-  static final CartSyncService _instance = CartSyncService._internal();
-  factory CartSyncService() => _instance;
-  CartSyncService._internal();
+class OfflineCustomerService {
+  static final OfflineCustomerService _instance =
+      OfflineCustomerService._internal();
 
-  /// Set the customer window controller (called from POS window)
-  void setCustomerWindow(WindowController? controller) {
-    _customerWindowController = controller;
-  }
+  factory OfflineCustomerService() => _instance;
 
-  /// Get the customer window controller
-  WindowController? get customerWindow => _customerWindowController;
+  OfflineCustomerService._internal();
+
+  WindowMethodChannel offlineCustomerMethodChannel = WindowMethodChannel(
+    'com.oman.offline_customer_channel',
+    mode: ChannelMode.unidirectional,
+  );
 
   /// Broadcast cart update to customer window (called from POS window)
   Future<void> broadcastCartUpdate(CartSyncData cartData) async {
-    if (_customerWindowController == null) {
-      Logger.logI('Customer window not open, skipping cart update');
-      return;
-    }
-
     try {
-      await _customerWindowController!.invokeMethod('update_cart', {
+      await offlineCustomerMethodChannel.invokeMethod('update_cart', {
         'data': cartData.toJson(),
       });
       Logger.logI('Cart update broadcast to customer window');
     } catch (e) {
-      Logger.logE('Failed to broadcast cart update', e);
+      Logger.logE('Failed to broadcast cart update ${e.toString()}', e);
       // Window might be closed, clear reference
-      _customerWindowController = null;
     }
   }
 
@@ -150,15 +143,15 @@ class CartSyncService {
     Function(CartSyncData) onCartUpdate,
   ) async {
     try {
-      final controller = await WindowController.fromCurrentEngine();
-      await controller.setWindowMethodHandler((call) async {
+      offlineCustomerMethodChannel.setMethodCallHandler((call) async {
         if (call.method == 'update_cart') {
           try {
-            final data = call.arguments as Map<String, dynamic>;
-            final cartData = CartSyncData.fromJson(data['data'] as Map<String, dynamic>);
+            final data = Map<String,dynamic>.from(call.arguments);
+            final cartData =
+                CartSyncData.fromJson(Map<String,dynamic>.from(data['data']));
             onCartUpdate(cartData);
           } catch (e) {
-            Logger.logE('Failed to parse cart update', e);
+            Logger.logE('Failed to parse cart update ${e.toString()}', e);
           }
         }
       });
@@ -179,10 +172,9 @@ class CartSyncService {
     ContactEntity? customer,
   }) {
     final items = cartItems.map((item) {
-      final productName = item.product.displayName ??
-          item.product.productName ??
-          'Product';
-      
+      final productName =
+          item.product.displayName ?? item.product.productName ?? 'Product';
+
       return CartSyncItem(
         productId: item.productId,
         variationId: item.variationId,
@@ -211,4 +203,3 @@ class CartSyncService {
     );
   }
 }
-

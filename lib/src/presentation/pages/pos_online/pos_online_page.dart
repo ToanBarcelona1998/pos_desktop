@@ -333,10 +333,6 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   void update(bool newState) {
-    print('newState $newState');
-    print('!_posOnlineBloc.state.showOfflinePos ${!_posOnlineBloc.state.showOfflinePos}');
-    print('context.authCubit.isAuthenticated ${context.authCubit.isAuthenticated}');
-    print('_popupOfflineIsShowed $_popupOfflineIsShowed');
     if (!newState &&
         mounted &&
         !_posOnlineBloc.state.showOfflinePos &&
