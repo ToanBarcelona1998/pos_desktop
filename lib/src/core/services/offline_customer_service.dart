@@ -139,7 +139,7 @@ class OfflineCustomerService {
   }
 
   /// Register message handler for customer window (called from customer window)
-  Future<void> registerCustomerWindowHandler(
+  Future<void> registerHandle(
     Function(CartSyncData) onCartUpdate,
   ) async {
     try {
@@ -159,6 +159,10 @@ class OfflineCustomerService {
     } catch (e) {
       Logger.logE('Failed to register customer window handler', e);
     }
+  }
+
+  void unRegisterHandle(){
+    offlineCustomerMethodChannel.setMethodCallHandler(null);
   }
 
   /// Convert POS cart items to sync data

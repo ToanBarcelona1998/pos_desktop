@@ -60,11 +60,11 @@ class _PosPageState extends State<PosPage> {
       if(_customerWindowController != null){
         bool setNullCustomerWindow = false;
         try{
-          setNullCustomerWindow = true;
 
           final windows = await WindowController.getAll();
 
           if(!windows.map((e) => e.windowId).contains(_customerWindowController!.windowId)){
+            setNullCustomerWindow = true;
             try{
               await _customerWindowController!.close();
             }catch(e){
@@ -105,8 +105,6 @@ class _PosPageState extends State<PosPage> {
         await _customerWindowController!.focus();
         return;
       }
-
-
       // Create new customer window
       final windowArgs = WindowArguments(
         type: WindowType.offlineCustomer,
@@ -117,22 +115,22 @@ class _PosPageState extends State<PosPage> {
       _customerWindowController = await WindowManagerUtils.createNewWindow(windowArgs);
       // Broadcast current cart state immediately
 
-      if(context.mounted){
-        final state = context.read<PosBloc>().state;
-        final cartSyncData = OfflineCustomerService.convertToSyncData(
-          cartItems: state.cartItems,
-          subtotal: state.subtotal,
-          discount: state.invoiceDiscount,
-          tax: state.taxAmount,
-          total: state.total,
-          currencySymbol: state.currencySymbol,
-          customer: state.selectedCustomer,
-        );
-
-        await Future.delayed(const Duration(milliseconds: 700), (){
+      await Future.delayed(const Duration(milliseconds: 2), (){
+        if(context.mounted){
+          final state = context.read<PosBloc>().state;
+          final cartSyncData = OfflineCustomerService.convertToSyncData(
+            cartItems: state.cartItems,
+            subtotal: state.subtotal,
+            discount: state.invoiceDiscount,
+            tax: state.taxAmount,
+            total: state.total,
+            currencySymbol: state.currencySymbol,
+            customer: state.selectedCustomer,
+          );
           OfflineCustomerService().broadcastCartUpdate(cartSyncData);
-        });
-      }
+        }
+      });
+
     } catch (e) {
       // Handle error - maybe show a toast
       Logger.logE('Failed to open customer window');

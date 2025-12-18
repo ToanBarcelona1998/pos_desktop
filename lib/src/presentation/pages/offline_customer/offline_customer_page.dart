@@ -25,7 +25,7 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> with WindowLi
   }
 
   void _setupMessageHandler() {
-    OfflineCustomerService().registerCustomerWindowHandler((cartData) {
+    OfflineCustomerService().registerHandle((cartData) {
       if (mounted) {
         setState(() {
           _cartData = cartData;
@@ -36,11 +36,8 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> with WindowLi
 
   @override
   void dispose() {
-    try {
-      OfflineCustomerService()
-          .offlineCustomerMethodChannel
-          .setMethodCallHandler(null);
-    } catch (_) {}
+    OfflineCustomerService()
+        .unRegisterHandle();
     windowManager.removeListener(this);
     super.dispose();
   }
