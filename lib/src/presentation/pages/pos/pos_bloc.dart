@@ -71,6 +71,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     on<PosLoadHistorySells>(_onLoadHistorySells);
     on<PosClearPrintFlag>(_onClearPrintFlag);
     on<PosScanBarcode>(_onScanBarcode);
+    on<PosChangeCustomerWindowStatus>(_onChangeCustomerWindowStatus);
   }
 
   static const int _perPage = 50;
@@ -1284,17 +1285,25 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     return '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.millisecondsSinceEpoch}';
   }
 
+  void _onChangeCustomerWindowStatus(PosChangeCustomerWindowStatus event,Emitter<PosState> emit,){
+    emit(state.copyWith(
+      isCustomerWindowOpening: event.status
+    ));
+  }
+
   /// Broadcast cart update to customer window
   void _broadcastCartUpdate(PosState state) {
-    final cartSyncData = OfflineCustomerService.convertToSyncData(
-      cartItems: state.cartItems,
-      subtotal: state.subtotal,
-      discount: state.invoiceDiscount,
-      tax: state.taxAmount,
-      total: state.total,
-      currencySymbol: state.currencySymbol,
-      customer: state.selectedCustomer,
-    );
-    OfflineCustomerService().broadcastCartUpdate(cartSyncData);
+    if(state.isCustomerWindowOpening){
+      final cartSyncData = OfflineCustomerService.convertToSyncData(
+        cartItems: state.cartItems,
+        subtotal: state.subtotal,
+        discount: state.invoiceDiscount,
+        tax: state.taxAmount,
+        total: state.total,
+        currencySymbol: state.currencySymbol,
+        customer: state.selectedCustomer,
+      );
+      OfflineCustomerService().broadcastCartUpdate(cartSyncData);
+    }
   }
 }

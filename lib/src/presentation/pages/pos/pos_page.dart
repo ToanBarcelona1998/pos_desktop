@@ -78,6 +78,10 @@ class _PosPageState extends State<PosPage> {
 
         if(setNullCustomerWindow){
           _customerWindowController = null;
+
+          if(context.mounted){
+            context.read<PosBloc>().add(PosChangeCustomerWindowStatus(false));
+          }
         }
       }
 
@@ -113,6 +117,11 @@ class _PosPageState extends State<PosPage> {
         },
       );
       _customerWindowController = await WindowManagerUtils.createNewWindow(windowArgs);
+
+      if(context.mounted){
+        context.read<PosBloc>().add(PosChangeCustomerWindowStatus(true));
+      }
+
       // Broadcast current cart state immediately
 
       await Future.delayed(const Duration(milliseconds: 2), (){

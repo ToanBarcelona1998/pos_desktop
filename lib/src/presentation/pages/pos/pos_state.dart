@@ -151,6 +151,8 @@ class PosState {
   final int? createdSellId; // ID of the last created sell (for printing)
   final bool shouldPrintInvoice; // Flag to trigger invoice printing
 
+  final bool isCustomerWindowOpening;
+
   const PosState({
     this.pageStatus = PosPageStatus.idle,
     this.actionStatus = PosStatus.idle,
@@ -185,6 +187,7 @@ class PosState {
     this.successMessage,
     this.createdSellId,
     this.shouldPrintInvoice = false,
+    this.isCustomerWindowOpening = false,
   });
 
   factory PosState.initial() => const PosState(
@@ -272,6 +275,7 @@ class PosState {
     bool clearCategoryId = false,
     bool clearBrandId = false,
     bool clearMessages = false,
+    bool ? isCustomerWindowOpening,
   }) {
     return PosState(
       pageStatus: pageStatus ?? this.pageStatus,
@@ -312,6 +316,7 @@ class PosState {
           clearMessages ? null : (successMessage ?? this.successMessage),
       createdSellId: createdSellId ?? this.createdSellId,
       shouldPrintInvoice: shouldPrintInvoice ?? this.shouldPrintInvoice,
+      isCustomerWindowOpening: isCustomerWindowOpening ?? this.isCustomerWindowOpening
     );
   }
 }

@@ -187,5 +187,10 @@ class PosScanBarcode extends PosEvent {
   const PosScanBarcode(this.barcode);
 }
 
+class PosChangeCustomerWindowStatus extends PosEvent {
+  final bool status;
+  const PosChangeCustomerWindowStatus(this.status);
+}
+
 
 
