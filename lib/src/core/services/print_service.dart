@@ -602,9 +602,13 @@ class PrintService {
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
         pw.BarcodeWidget(
-          barcode: pw.Barcode.code128(),
+          barcode: pw.Barcode.code128(
+            useCode128A: false,
+            useCode128B: false,
+            useCode128C: true,
+          ),
           data: data,
-          width: 40,
+          width: 70,
           height: 20,
           drawText: false,
         ),
