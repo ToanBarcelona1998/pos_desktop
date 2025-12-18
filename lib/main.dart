@@ -22,6 +22,8 @@ Future<void> main() async {
 
   final windowController = await WindowController.fromCurrentEngine();
 
+  await windowController.customMethods();
+
   await PrintService.init();
   // Check app version and clear cache/database if needed
   await AppVersionManager.checkAndHandleVersionUpdate();

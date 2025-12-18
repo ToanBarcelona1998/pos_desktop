@@ -123,6 +123,8 @@ sealed class WindowManagerUtils {
       ),
     );
 
+    await controller.customMethods();
+
     await controller.center();
 
     await controller.focus();
