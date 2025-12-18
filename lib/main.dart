@@ -1,24 +1,16 @@
-import 'dart:io';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pos_final/app_config/di.dart';
 import 'package:pos_final/app_config/env_config.dart';
 import 'package:pos_final/src/application.dart';
-import 'package:pos_final/src/core/localization/app_localization.dart';
 import 'package:pos_final/src/core/services/print_service.dart';
-import 'package:provider/provider.dart';
+import 'package:pos_final/src/core/utils/window_manager_utils.dart';
+import 'package:pos_final/src/offline_customer_application.dart';
+import 'package:pos_final/src/online_customer_application.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'bloc_observer.dart';
-import 'config.dart';
-import 'helpers/app_theme.dart';
-import 'helpers/routes.dart';
-import 'locale/my_localizations.dart';
-import 'pages/notifications/view_model_manger/notifications_cubit.dart';
 
 import 'package:pos_final/src/core/app_version_manager.dart';
 
@@ -28,7 +20,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
-  // final windowController = await WindowController.fromCurrentEngine();
+  final windowController = await WindowController.fromCurrentEngine();
 
   await PrintService.init();
   // Check app version and clear cache/database if needed
@@ -36,11 +28,17 @@ Future<void> main() async {
 
   await initDependencies(env: EnvConfig.environment);
 
-  // final arguments = windowController.arguments;
+  WindowArguments windowArguments = WindowManagerUtils.parseWindowArguments(windowController.arguments);
 
-  // if(arguments == ''){
-  //
-  // }
-
-  runApp(const Application());
+  switch(windowArguments.type){
+    case WindowType.none:
+      runApp(const Application());
+      break;
+    case WindowType.onlineCustomer:
+      runApp(const OnlineCustomerApplication());
+      break;
+    case WindowType.offlineCustomer:
+      runApp(const OfflineCustomerApplication());
+      break;
+  }
 }
