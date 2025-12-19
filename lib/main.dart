@@ -24,8 +24,6 @@ Future<void> main() async {
 
   await windowController.customMethods();
 
-  await windowController.focus();
-
   await PrintService.init();
   // Check app version and clear cache/database if needed
   await AppVersionManager.checkAndHandleVersionUpdate();
@@ -34,15 +32,36 @@ Future<void> main() async {
 
   final WindowArguments windowArguments = WindowManagerUtils.parseWindowArguments(windowController.arguments);
 
+  WindowOptions windowOptions = const WindowOptions(
+    size: Size(1200, 600),
+    center: true,
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.normal,
+    windowButtonVisibility: true,
+  );
+
   switch(windowArguments.type){
     case WindowType.none:
+      windowManager.waitUntilReadyToShow(windowOptions, () async {
+        await windowManager.show();
+        await windowManager.focus();
+      });
       runApp(const Application());
       break;
     case WindowType.onlineCustomer:
+      windowManager.waitUntilReadyToShow(windowOptions, () async {
+        await windowManager.show();
+        await windowManager.focus();
+      });
       final String href = windowArguments.params['href'];
       runApp(OnlineCustomerApplication(href: href));
       break;
     case WindowType.offlineCustomer:
+      windowManager.waitUntilReadyToShow(windowOptions, () async {
+        await windowManager.show();
+        await windowManager.focus();
+      });
       runApp(const OfflineCustomerApplication());
       break;
   }
