@@ -10,9 +10,9 @@ class WindowActiveObserver with WidgetsBindingObserver {
     // This ensures scanner is enabled by default
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final currentState = WidgetsBinding.instance.lifecycleState;
-      isActive.value = currentState == null || 
-                       currentState == AppLifecycleState.resumed ||
-                       currentState == AppLifecycleState.inactive;
+      isActive.value = currentState == null ||
+          currentState == AppLifecycleState.resumed ||
+          currentState == AppLifecycleState.inactive;
     });
   }
 
@@ -24,11 +24,10 @@ class WindowActiveObserver with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // On desktop, consider both resumed and inactive as "active" for barcode scanning
     // Inactive means window is still visible but not focused (which is fine for scanning)
-    isActive.value = state == AppLifecycleState.resumed || 
-                     state == AppLifecycleState.inactive;
+    isActive.value = state == AppLifecycleState.resumed ||
+        state == AppLifecycleState.inactive;
   }
 }
-
 
 class BarcodeScannerService {
   BarcodeScannerService({
@@ -64,18 +63,14 @@ class BarcodeScannerService {
       final widget = focusNode.context?.widget;
       // More robust check: if focus is on any text input, don't intercept
       // Check for TextField, TextFormField, or any widget with EditableText
-      if (widget != null) {
-        final widgetType = widget.runtimeType.toString();
-        if (widgetType.contains('TextField') || 
-            widgetType.contains('TextFormField') ||
-            widgetType.contains('EditableText')) {
-          return false; // Let the text field handle it
-        }
+      if (widget != null &&
+          widget is Focus &&
+          widget.debugLabel == 'EditableText') {
+        _buffer = '';
+        return false;
       }
     }
 
-    final char = event.character;
-    if (char == null || char.isEmpty) return false;
 
     if (event.logicalKey == LogicalKeyboardKey.enter) {
       if (_buffer.isNotEmpty) {
@@ -83,9 +78,10 @@ class BarcodeScannerService {
       }
       _buffer = '';
       return true; // handled
+    } else if (event.logicalKey.keyLabel.length == 1 &&
+        event.logicalKey != LogicalKeyboardKey.space) {
+      _buffer += event.logicalKey.keyLabel;
     }
-
-    _buffer += char;
     return true; // handled
   }
 }
