@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart' hide WindowType;
 import 'package:pos_final/app_config/app_config.dart';
 import 'package:pos_final/app_config/di.dart';
 import 'package:pos_final/src/application.dart';
@@ -14,6 +14,7 @@ import 'package:pos_final/src/application/application.dart';
 import 'package:pos_final/src/core/core.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_observer.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_subject.dart';
+import 'package:pos_final/src/core/utils/window_manager_utils.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/dialog_provider.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/base_dialog_widget.dart';
 import 'package:data/data.dart';
@@ -226,12 +227,13 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                           handlerName: 'authCompleted',
                           callback: (args) async {
                             try {
-                              if(_windowsDeviceInfo != null){
-                                final String deviceId = _windowsDeviceInfo!.deviceId.replaceAll('{', '')
+                              if (_windowsDeviceInfo != null) {
+                                final String deviceId = _windowsDeviceInfo!
+                                    .deviceId
+                                    .replaceAll('{', '')
                                     .replaceAll('}', '');
                                 controller.evaluateJavascript(
-                                  source:
-                                  _postHardWareId(deviceId),
+                                  source: _postHardWareId(deviceId),
                                 );
                               }
                               String accessToken = args[0][0];
@@ -279,6 +281,25 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                               }
                             }
                             return 'Receive';
+                          },
+                        );
+
+                        controller.addJavaScriptHandler(
+                          handlerName: 'customerDisplayOpened',
+                          callback: (arguments) {
+                            try {
+                              String href = arguments[0][0];
+                              WindowManagerUtils.createNewWindow(
+                                  WindowArguments(
+                                type: WindowType.onlineCustomer,
+                                params: {
+                                  'href' : href
+                                },
+                              ));
+                            } catch (e) {
+                              Logger.logE('customerDisplayOpened error', e);
+                            }
+                            return 'success';
                           },
                         );
                       },

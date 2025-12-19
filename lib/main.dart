@@ -24,8 +24,6 @@ Future<void> main() async {
 
   await windowController.customMethods();
 
-  await windowController.center();
-
   await windowController.focus();
 
   await PrintService.init();
@@ -34,14 +32,15 @@ Future<void> main() async {
 
   await initDependencies(env: EnvConfig.environment);
 
-  WindowArguments windowArguments = WindowManagerUtils.parseWindowArguments(windowController.arguments);
+  final WindowArguments windowArguments = WindowManagerUtils.parseWindowArguments(windowController.arguments);
 
   switch(windowArguments.type){
     case WindowType.none:
       runApp(const Application());
       break;
     case WindowType.onlineCustomer:
-      runApp(const OnlineCustomerApplication());
+      final String href = windowArguments.params['href'];
+      runApp(OnlineCustomerApplication(href: href));
       break;
     case WindowType.offlineCustomer:
       runApp(const OfflineCustomerApplication());
