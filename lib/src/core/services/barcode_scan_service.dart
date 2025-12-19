@@ -49,7 +49,8 @@ class BarcodeScannerService {
 
     final focusWidget =
         FocusManager.instance.primaryFocus?.context?.widget;
-    if (focusWidget is EditableText) {
+
+    if (focusWidget is Focus && focusWidget.debugLabel == 'EditableText') {
       return false;
     }
 
