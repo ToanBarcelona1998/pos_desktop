@@ -6,6 +6,14 @@ class WindowActiveObserver with WidgetsBindingObserver {
 
   void init() {
     WidgetsBinding.instance.addObserver(this);
+    // On desktop, check initial state - assume active if app is running
+    // This ensures scanner is enabled by default
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentState = WidgetsBinding.instance.lifecycleState;
+      isActive.value = currentState == null || 
+                       currentState == AppLifecycleState.resumed ||
+                       currentState == AppLifecycleState.inactive;
+    });
   }
 
   void dispose() {
@@ -14,7 +22,10 @@ class WindowActiveObserver with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    isActive.value = state == AppLifecycleState.resumed;
+    // On desktop, consider both resumed and inactive as "active" for barcode scanning
+    // Inactive means window is still visible but not focused (which is fine for scanning)
+    isActive.value = state == AppLifecycleState.resumed || 
+                     state == AppLifecycleState.inactive;
   }
 }
 
@@ -47,11 +58,20 @@ class BarcodeScannerService {
     if (!_enabled) return false;
     if (event is! KeyDownEvent) return false;
 
-    final focusWidget =
-        FocusManager.instance.primaryFocus?.context?.widget;
-
-    if (focusWidget is Focus && focusWidget.debugLabel == 'EditableText') {
-      return false;
+    // Check if focus is on a text input field
+    final focusNode = FocusManager.instance.primaryFocus;
+    if (focusNode != null) {
+      final widget = focusNode.context?.widget;
+      // More robust check: if focus is on any text input, don't intercept
+      // Check for TextField, TextFormField, or any widget with EditableText
+      if (widget != null) {
+        final widgetType = widget.runtimeType.toString();
+        if (widgetType.contains('TextField') || 
+            widgetType.contains('TextFormField') ||
+            widgetType.contains('EditableText')) {
+          return false; // Let the text field handle it
+        }
+      }
     }
 
     final char = event.character;

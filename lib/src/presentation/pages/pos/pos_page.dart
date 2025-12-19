@@ -50,8 +50,14 @@ class _PosPageState extends State<PosPage> {
       onBarcodeScanned: (barcode) {
         context.read<PosBloc>().add(PosScanBarcode(barcode));
       },
-    )..start();
+    );
     windowObserver = WindowActiveObserver()..init();
+
+    // Set initial enabled state based on current window active state
+    scanner.setEnabled(windowObserver.isActive.value);
+    
+    // Start scanner after ensuring it's enabled
+    scanner.start();
 
     windowObserver.isActive.addListener(() {
       scanner.setEnabled(windowObserver.isActive.value);
