@@ -407,6 +407,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
       _popupOfflineIsShowed = true;
       final l10n = AppLocalizations.of(context);
       DialogProvider.showConfirmDialog(context,
+          confirmColor: AppThemes.light.primaryColor,
           barrierDismissible: false,
           message: l10n.translate(LocaleKeys.networkConnectionIssue),
           onConfirm: () {

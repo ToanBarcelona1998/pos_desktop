@@ -4,6 +4,7 @@ import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_final/src/application.dart';
+import 'package:pos_final/src/core/core.dart';
 import 'package:pos_final/src/core/services/barcode_scan_service.dart';
 
 import 'package:pos_final/src/core/services/offline_customer_service.dart';
@@ -392,7 +393,7 @@ class _PosPageState extends State<PosPage> {
       message: l10n.translate(LocaleKeys.printInvoiceConfirmation),
       confirmText: l10n.translate(LocaleKeys.yes),
       cancelText: l10n.translate(LocaleKeys.no),
-      confirmColor: Colors.blue,
+      confirmColor: AppThemes.light.primaryColor,
       onConfirm: () async {
         try {
           await PrintService.printInvoice(
