@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:domain/domain.dart';
 import 'package:flutter/foundation.dart';
@@ -30,6 +31,8 @@ class PosOnlinePage extends StatefulWidget {
 
 class _PosOnlinePageState extends State<PosOnlinePage>
     implements NetworkStatusObserver {
+  WindowController? _customerWindowController;
+
   InAppWebViewController? webViewController;
   InAppWebViewSettings settings = InAppWebViewSettings(
     isInspectable: false,
@@ -93,6 +96,10 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   void dispose() {
+    try {
+      _customerWindowController?.close();
+    } catch (_) {}
+    _customerWindowController = null;
     _networkStatusSubject.detach(this);
     _networkStatusSubject.close();
     webViewController?.dispose();
@@ -286,16 +293,21 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
                         controller.addJavaScriptHandler(
                           handlerName: 'customerDisplayOpened',
-                          callback: (arguments) {
+                          callback: (arguments) async{
                             try {
-                              String href = arguments[0][0];
-                              WindowManagerUtils.createNewWindow(
-                                  WindowArguments(
-                                type: WindowType.onlineCustomer,
-                                params: {
-                                  'href' : href
-                                },
-                              ));
+                              if(_customerWindowController == null){
+                                String href = arguments[0][0];
+                                _customerWindowController = await WindowManagerUtils.createNewWindow(
+                                    WindowArguments(
+                                      type: WindowType.onlineCustomer,
+                                      params: {
+                                        'href' : href
+                                      },
+                                    ));
+                              }else{
+                                _customerWindowController!.show();
+                                _customerWindowController!.focus();
+                              }
                             } catch (e) {
                               Logger.logE('customerDisplayOpened error', e);
                             }

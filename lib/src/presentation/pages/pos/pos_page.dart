@@ -106,6 +106,7 @@ class _PosPageState extends State<PosPage> {
   Future<void> _openCustomerWindow(BuildContext context) async {
     try {
       if (_customerWindowController != null) {
+        await _customerWindowController!.show();
         await _customerWindowController!.focus();
         return;
       }

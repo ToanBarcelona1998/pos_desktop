@@ -15,6 +15,8 @@ extension WindowControllerExtension on WindowController {
           return await windowManager.close();
         case 'focus':
           return await windowManager.focus();
+        case 'show':
+          return await windowManager.show();
         default:
           return;
       }
@@ -31,6 +33,10 @@ extension WindowControllerExtension on WindowController {
 
   Future<void> close() {
     return invokeMethod('window_close');
+  }
+
+  Future<void> show() {
+    return invokeMethod('show');
   }
 }
 

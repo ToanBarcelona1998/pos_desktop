@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pos_final/app_config/app_config.dart';
 import 'package:pos_final/app_config/di.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:window_manager/window_manager.dart';
 
 class OnlineCustomerPage extends StatefulWidget {
   final String href;
@@ -12,7 +13,7 @@ class OnlineCustomerPage extends StatefulWidget {
   State<OnlineCustomerPage> createState() => _OnlineCustomerPageState();
 }
 
-class _OnlineCustomerPageState extends State<OnlineCustomerPage> {
+class _OnlineCustomerPageState extends State<OnlineCustomerPage> with WindowListener{
   InAppWebViewController? webViewController;
   InAppWebViewSettings settings = InAppWebViewSettings(
     isInspectable: false,
@@ -30,8 +31,21 @@ class _OnlineCustomerPageState extends State<OnlineCustomerPage> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    windowManager.setPreventClose(true);
+    windowManager.addListener(this);
+  }
+
+  @override
+  void onWindowClose() async {
+    await windowManager.hide();
+  }
+
+  @override
   void dispose() {
     webViewController?.dispose();
+    windowManager.removeListener(this);
     super.dispose();
   }
 

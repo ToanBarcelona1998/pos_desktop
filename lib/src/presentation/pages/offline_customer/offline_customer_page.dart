@@ -44,9 +44,7 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> with WindowLi
 
   @override
   void onWindowClose() async{
-    await windowManager.setPreventClose(false);
-    await windowManager.close();
-    super.onWindowClose();
+    await windowManager.hide();
   }
 
   @override
