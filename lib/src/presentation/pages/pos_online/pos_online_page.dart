@@ -49,6 +49,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   bool _isFirstLoad = true;
   bool _syncDialogShowing = false;
   bool _popupOfflineIsShowed = false;
+  bool _offlineWebviewShown = false;
 
   final AppConfig _appConfig = sl.get<AppConfig>();
   final WebViewEnvironment? _webViewEnvironment =
@@ -293,18 +294,17 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
                         controller.addJavaScriptHandler(
                           handlerName: 'customerDisplayOpened',
-                          callback: (arguments) async{
+                          callback: (arguments) async {
                             try {
-                              if(_customerWindowController == null){
+                              if (_customerWindowController == null) {
                                 String href = arguments[0][0];
-                                _customerWindowController = await WindowManagerUtils.createNewWindow(
-                                    WindowArguments(
-                                      type: WindowType.onlineCustomer,
-                                      params: {
-                                        'href' : href
-                                      },
-                                    ));
-                              }else{
+                                _customerWindowController =
+                                    await WindowManagerUtils.createNewWindow(
+                                        WindowArguments(
+                                  type: WindowType.onlineCustomer,
+                                  params: {'href': href},
+                                ));
+                              } else {
                                 _customerWindowController!.show();
                                 _customerWindowController!.focus();
                               }
@@ -314,6 +314,19 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                             return 'success';
                           },
                         );
+                      },
+                      onReceivedError: (controller, request, error) {
+                        if (_offlineWebviewShown) return;
+                        final code = error.type.toNativeValue();
+                        if (code == 11) {
+                          _offlineWebviewShown = true;
+                          controller.loadData(
+                            data: offlineHtml,
+                            mimeType: 'text/html',
+                            encoding: 'utf-8',
+                            baseUrl: WebUri('about:blank'),
+                          );
+                        }
                       },
                     ),
                     // POS Offline Screen (stacked on top when network disconnects)
@@ -402,6 +415,16 @@ class _PosOnlinePageState extends State<PosOnlinePage>
       }, onCancel: () {
         _popupOfflineIsShowed = false;
       });
+    }
+
+    if (_offlineWebviewShown) {
+      _offlineWebviewShown = false;
+      webViewController?.loadUrl(
+        urlRequest: URLRequest(
+          url: WebUri(_appConfig.webUrl),
+          headers: _requiredHeaders,
+        ),
+      );
     }
   }
 }
