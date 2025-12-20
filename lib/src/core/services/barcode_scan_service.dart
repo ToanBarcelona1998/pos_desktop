@@ -55,8 +55,6 @@ class BarcodeScannerService {
 
   bool _handleKeyEvent(KeyEvent event) {
     if (!_enabled) return false;
-    if (event is! KeyDownEvent) return false;
-
     // Check if focus is on a text input field
     final focusNode = FocusManager.instance.primaryFocus;
     if (focusNode != null) {
@@ -71,17 +69,20 @@ class BarcodeScannerService {
       }
     }
 
-
-    if (event.logicalKey == LogicalKeyboardKey.enter) {
-      if (_buffer.isNotEmpty) {
-        onBarcodeScanned(_buffer);
+    if(event is KeyDownEvent){
+      if (event.logicalKey == LogicalKeyboardKey.enter) {
+        if (_buffer.isNotEmpty) {
+          onBarcodeScanned(_buffer);
+        }
+        _buffer = '';
+        return true; // handled
+      } else if (event.logicalKey.keyLabel.length == 1 &&
+          event.logicalKey != LogicalKeyboardKey.space) {
+        _buffer += event.logicalKey.keyLabel;
       }
-      _buffer = '';
       return true; // handled
-    } else if (event.logicalKey.keyLabel.length == 1 &&
-        event.logicalKey != LogicalKeyboardKey.space) {
-      _buffer += event.logicalKey.keyLabel;
     }
-    return true; // handled
+
+    return false;
   }
 }
