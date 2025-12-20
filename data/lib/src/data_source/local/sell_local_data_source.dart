@@ -38,7 +38,7 @@ abstract class SellLocalDataSource {
   /// Gets quotations
   Future<List<Map<String, dynamic>>> getQuotations();
 
-  /// Gets final sells (status = 'final')
+  /// Gets final sells (status = 'final' or 'pending)
   Future<List<Map<String, dynamic>>> getFinalSells();
 
   /// Deletes a sell
@@ -351,8 +351,8 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
     final db = await _dbHelper.database;
     final sells = await db.query(
       'sell',
-      where: 'status = ? AND is_suspend = ? AND is_quotation = ?',
-      whereArgs: ['final', 0, 0],
+      where: 'status IN (?, ?) AND is_suspend = ? AND is_quotation = ?',
+      whereArgs: ['final', 'pending', 0, 0],
       orderBy: 'transaction_date DESC',
     );
 

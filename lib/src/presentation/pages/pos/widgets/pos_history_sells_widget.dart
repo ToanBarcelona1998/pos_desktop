@@ -41,8 +41,7 @@ class PosHistorySellsWidget extends StatelessWidget {
         constraints: BoxConstraints(
             maxWidth: rSizes.modalWidthXl,
             minWidth: rSizes.modalWidthXl,
-            minHeight: rSizes.modalWidthMd
-        ),
+            minHeight: rSizes.modalWidthMd),
         padding: rSpacing.paddingMd,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,7 +99,7 @@ class _EmptyHistorySells extends StatelessWidget {
     final rSpacing = context.rSpacing;
     final rTypography = context.rTypography;
     final rSizes = context.rSizes;
-    
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -176,7 +175,8 @@ class _HistorySellItem extends StatelessWidget {
                   vertical: rSpacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
+                  color:
+                      theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
                   borderRadius: AppRadius.borderRadiusSm,
                 ),
                 child: Text(
@@ -192,7 +192,7 @@ class _HistorySellItem extends StatelessWidget {
           if (sell.sellLines.isNotEmpty) ...[
             rSpacing.gapVerticalXs,
             Text(
-              '${sell.sellLines.length} ${l10n.translate(LocaleKeys.items)}',
+              '${sell.sellLines.length} ${l10n.translate(LocaleKeys.products)}',
               style: rTypography.bodySmall,
             ),
           ],
@@ -213,11 +213,11 @@ class _HistorySellItem extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      payment.method ?? '',
+                      _getPaymentMethodLabel(payment.method ?? '', l10n),
                       style: rTypography.bodySmall,
                     ),
                     Text(
-                      '${Helper().formatCurrency(payment.amount ?? 0)}$currencySymbol',
+                      '${Helper().formatCurrency(sell.invoiceAmount ?? 0)}$currencySymbol',
                       style: rTypography.bodySmall.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
@@ -231,5 +231,20 @@ class _HistorySellItem extends StatelessWidget {
       ),
     );
   }
-}
 
+  String _getPaymentMethodLabel(String method, AppLocalizations l10n) {
+    switch (method.toLowerCase()) {
+      case 'cash':
+        return l10n.translate(LocaleKeys.cash);
+      case 'e-wallet':
+      case 'ewallet':
+        return l10n.translate(LocaleKeys.eWallet);
+      case 'bank_transfer':
+      case 'banktransfer':
+        return l10n.translate(LocaleKeys.bankTransfer);
+      default:
+        // For other methods (card, cheque, etc.), return the method name as-is
+        return method;
+    }
+  }
+}
