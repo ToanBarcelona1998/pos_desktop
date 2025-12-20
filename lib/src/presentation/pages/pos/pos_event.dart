@@ -192,5 +192,15 @@ class PosChangeCustomerWindowStatus extends PosEvent {
   const PosChangeCustomerWindowStatus(this.status);
 }
 
+/// Select payment method and account (for customer display)
+class PosSelectPayment extends PosEvent {
+  final PaymentMethod ?paymentMethod;
+  final PaymentAccountEntity? paymentAccount;
+  const PosSelectPayment({
+    this.paymentMethod,
+    this.paymentAccount,
+  });
+}
+
 
 

@@ -143,6 +143,8 @@ class _PosPageState extends State<PosPage> {
             total: state.total,
             currencySymbol: state.currencySymbol,
             customer: state.selectedCustomer,
+            paymentMethod: state.selectedPaymentMethod,
+            paymentAccount: state.selectedPaymentAccount,
           );
           OfflineCustomerService().broadcastCartUpdate(cartSyncData);
         }
@@ -536,6 +538,7 @@ class _PosPageState extends State<PosPage> {
     final bloc = context.read<PosBloc>();
     DialogProvider.showCustomDialog(
       context,
+      barrierDismissible: false,
       child: BlocProvider.value(
         value: bloc,
         child: BlocBuilder<PosBloc, PosState>(

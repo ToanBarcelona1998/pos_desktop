@@ -100,12 +100,12 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           onTap: onOpenFullScreen,
           iconColor: Colors.blueAccent,
         ),
-        rSpacing.gapHorizontalXs,
-        IconWrapper(
-          icon: Icons.close,
-          onTap: () {},
-          iconColor: Colors.red,
-        ),
+        // rSpacing.gapHorizontalXs,
+        // IconWrapper(
+        //   icon: Icons.close,
+        //   onTap: () {},
+        //   iconColor: Colors.red,
+        // ),
         rSpacing.gapHorizontalXs,
         IconWrapper(
           icon: Icons.tv,

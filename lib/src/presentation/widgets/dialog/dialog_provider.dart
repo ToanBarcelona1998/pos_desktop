@@ -6,9 +6,11 @@ sealed class DialogProvider {
   static Future<T?> showCustomDialog<T>(
     BuildContext context, {
     required Widget child,
+    bool barrierDismissible = true,
   }) {
     return showDialog<T>(
       context: context,
+      barrierDismissible: barrierDismissible,
       builder: (BuildContext context) {
         return child;
       },

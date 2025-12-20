@@ -141,6 +141,8 @@ class PosState {
   // Payment Accounts
   final List<PaymentAccountEntity> eWalletAccounts;
   final List<PaymentAccountEntity> bankTransferAccounts;
+  final PaymentMethod? selectedPaymentMethod;
+  final PaymentAccountEntity? selectedPaymentAccount;
 
   // Currency
   final String currencySymbol;
@@ -182,6 +184,8 @@ class PosState {
     this.historySells = const [],
     this.eWalletAccounts = const [],
     this.bankTransferAccounts = const [],
+    this.selectedPaymentMethod,
+    this.selectedPaymentAccount,
     this.currencySymbol = '\$',
     this.errorMessage,
     this.successMessage,
@@ -266,6 +270,9 @@ class PosState {
     List<SellEntity>? historySells,
     List<PaymentAccountEntity>? eWalletAccounts,
     List<PaymentAccountEntity>? bankTransferAccounts,
+    PaymentMethod? selectedPaymentMethod,
+    PaymentAccountEntity? selectedPaymentAccount,
+    bool clearPayment = false,
     String? currencySymbol,
     String? errorMessage,
     String? successMessage,
@@ -310,6 +317,8 @@ class PosState {
       historySells: historySells ?? this.historySells,
       eWalletAccounts: eWalletAccounts ?? this.eWalletAccounts,
       bankTransferAccounts: bankTransferAccounts ?? this.bankTransferAccounts,
+      selectedPaymentMethod: clearPayment ? null : (selectedPaymentMethod ?? this.selectedPaymentMethod),
+      selectedPaymentAccount: clearPayment ? null : (selectedPaymentAccount ?? this.selectedPaymentAccount),
       currencySymbol: currencySymbol ?? this.currencySymbol,
       errorMessage: clearMessages ? null : (errorMessage ?? this.errorMessage),
       successMessage:

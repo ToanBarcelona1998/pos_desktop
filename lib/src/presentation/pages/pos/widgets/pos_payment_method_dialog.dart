@@ -42,6 +42,15 @@ class _PosPaymentMethodDialogState extends State<PosPaymentMethodDialog> {
       selectedPaymentType = PaymentMethod.bankTransfer;
       selectedAccount = widget.bankTransferAccounts.first;
     }
+
+    if(selectedAccount != null && selectedPaymentType != null){
+      context.read<PosBloc>().add(
+        PosSelectPayment(
+          paymentMethod: selectedPaymentType!,
+          paymentAccount: selectedAccount,
+        ),
+      );
+    }
   }
 
   @override
@@ -112,6 +121,15 @@ class _PosPaymentMethodDialogState extends State<PosPaymentMethodDialog> {
                             selectedAccount = widget.bankTransferAccounts.first;
                           }
                         });
+                        // Broadcast payment selection immediately
+                        if (selectedAccount != null) {
+                          context.read<PosBloc>().add(
+                                PosSelectPayment(
+                                  paymentMethod: selectedPaymentType!,
+                                  paymentAccount: selectedAccount,
+                                ),
+                              );
+                        }
                       },
                       groupValue: selectedPaymentType,
                       child: Row(
@@ -209,7 +227,15 @@ class _PosPaymentMethodDialogState extends State<PosPaymentMethodDialog> {
                 Expanded(
                   child: AppTextButton(
                     text: l10n.translate(LocaleKeys.cancel),
-                    onPressed: () => AppNavigator.pop(),
+                    onPressed: () {
+                      context.read<PosBloc>().add(
+                        PosSelectPayment(
+                          paymentMethod: null,
+                          paymentAccount: null,
+                        ),
+                      );
+                      AppNavigator.pop();
+                    },
                   ),
                 ),
                 rSpacing.gapHorizontalSm,
@@ -308,11 +334,20 @@ class _PosPaymentMethodDialogState extends State<PosPaymentMethodDialog> {
           ),
         );
       }).toList(),
-      onChanged: (account) {
-        setState(() {
-          selectedAccount = account;
-        });
-      },
+                      onChanged: (account) {
+                        setState(() {
+                          selectedAccount = account;
+                        });
+                        // Broadcast payment selection immediately
+                        if (selectedPaymentType != null && account != null) {
+                          context.read<PosBloc>().add(
+                                PosSelectPayment(
+                                  paymentMethod: selectedPaymentType!,
+                                  paymentAccount: account,
+                                ),
+                              );
+                        }
+                      },
     );
   }
 }

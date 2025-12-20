@@ -364,6 +364,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   /// Show logout dialog with unsynced sells
   void _showLogoutDialog(BuildContext context, int unsyncedCount) {
     final l10n = AppLocalizations.of(context);
+    final theme = AppThemes.light;
     DialogProvider.showAppDialog(
       context,
       titleText: l10n.translate(LocaleKeys.pendingSynchronization),
@@ -374,7 +375,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
         BaseDialogAction(
           text: l10n.translate(LocaleKeys.sync),
           isPrimary: true,
-          color: Colors.blue,
+          color: theme.primaryColor,
           onPressed: () {
             Navigator.pop(context);
             context.read<PosOnlineBloc>().add(

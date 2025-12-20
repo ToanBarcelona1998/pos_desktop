@@ -70,6 +70,9 @@ class CartSyncData {
   final int totalItems;
   final String currencySymbol;
   final String? customerName;
+  final String? paymentMethod; // 'cash', 'eWallet', 'bankTransfer', etc.
+  final String? paymentAccountName;
+  final String? paymentAccountImagePath; // Cached image path
 
   CartSyncData({
     required this.items,
@@ -80,6 +83,9 @@ class CartSyncData {
     required this.totalItems,
     required this.currencySymbol,
     this.customerName,
+    this.paymentMethod,
+    this.paymentAccountName,
+    this.paymentAccountImagePath,
   });
 
   Map<String, dynamic> toJson() {
@@ -92,6 +98,9 @@ class CartSyncData {
       'totalItems': totalItems,
       'currencySymbol': currencySymbol,
       'customerName': customerName,
+      'paymentMethod': paymentMethod,
+      'paymentAccountName': paymentAccountName,
+      'paymentAccountImagePath': paymentAccountImagePath,
     };
   }
 
@@ -107,6 +116,9 @@ class CartSyncData {
       totalItems: json['totalItems'] as int,
       currencySymbol: json['currencySymbol'] as String,
       customerName: json['customerName'] as String?,
+      paymentMethod: json['paymentMethod'] as String?,
+      paymentAccountName: json['paymentAccountName'] as String?,
+      paymentAccountImagePath: json['paymentAccountImagePath'] as String?,
     );
   }
 }
@@ -174,6 +186,8 @@ class OfflineCustomerService {
     required double total,
     required String currencySymbol,
     ContactEntity? customer,
+    PaymentMethod? paymentMethod,
+    PaymentAccountEntity? paymentAccount,
   }) {
     final items = cartItems.map((item) {
       final productName =
@@ -204,6 +218,9 @@ class OfflineCustomerService {
       totalItems: cartItems.length,
       currencySymbol: currencySymbol,
       customerName: customer?.name,
+      paymentMethod: paymentMethod?.value,
+      paymentAccountName: paymentAccount?.name,
+      paymentAccountImagePath: paymentAccount?.cachedImagePath,
     );
   }
 }

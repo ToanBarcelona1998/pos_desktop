@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:pos_final/helpers/other_helpers.dart';
@@ -13,7 +15,8 @@ class OfflineCustomerPage extends StatefulWidget {
   State<OfflineCustomerPage> createState() => _OfflineCustomerPageState();
 }
 
-class _OfflineCustomerPageState extends State<OfflineCustomerPage> with WindowListener{
+class _OfflineCustomerPageState extends State<OfflineCustomerPage>
+    with WindowListener {
   CartSyncData? _cartData;
 
   @override
@@ -36,14 +39,13 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> with WindowLi
 
   @override
   void dispose() {
-    OfflineCustomerService()
-        .unRegisterHandle();
+    OfflineCustomerService().unRegisterHandle();
     windowManager.removeListener(this);
     super.dispose();
   }
 
   @override
-  void onWindowClose() async{
+  void onWindowClose() async {
     await windowManager.hide();
   }
 
@@ -114,140 +116,207 @@ class _OfflineCustomerPageState extends State<OfflineCustomerPage> with WindowLi
   ) {
     if (_cartData == null) return const SizedBox.shrink();
 
-    return Column(
+    return Row(
       children: [
-        // Customer info (if available)
-        if (_cartData!.customerName != null)
-          Container(
-            width: double.infinity,
-            padding: rSpacing.paddingMd,
-            child: Row(
-              children: [
-                Icon(
-                  Icons.person,
-                  color: theme.primaryColor,
-                  size: rSizes.iconMd,
-                ),
-                rSpacing.gapHorizontalSm,
-                Text(
-                  _cartData!.customerName!,
-                  style: rTypography.bodyLarge.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.primaryColor,
+        // Left side: Cart items
+        Expanded(
+          flex: 3,
+          child: Column(
+            children: [
+              // Customer info (if available)
+              if (_cartData!.customerName != null)
+                Container(
+                  width: double.infinity,
+                  padding: rSpacing.paddingMd,
+                  color: Colors.white,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.person,
+                        color: theme.primaryColor,
+                        size: rSizes.iconMd,
+                      ),
+                      rSpacing.gapHorizontalSm,
+                      Text(
+                        _cartData!.customerName!,
+                        style: rTypography.bodyLarge.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.primaryColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
 
-        // Cart items list
-        Expanded(
-          child: ListView.separated(
-            padding: rSpacing.paddingMd,
-            itemCount: _cartData!.items.length,
-            separatorBuilder: (_, __) => rSpacing.gapVerticalSm,
-            itemBuilder: (context, index) {
-              final item = _cartData!.items[index];
-              return _CartItemCard(
-                item: item,
-                currencySymbol: _cartData!.currencySymbol,
-                l10n: l10n,
-                theme: theme,
-                rSpacing: rSpacing,
-                rTypography: rTypography,
-                rSizes: rSizes,
-              );
-            },
-          ),
-        ),
+              // Cart items list
+              Expanded(
+                child: ListView.separated(
+                  padding: rSpacing.paddingMd,
+                  itemCount: _cartData!.items.length,
+                  separatorBuilder: (_, __) => rSpacing.gapVerticalSm,
+                  itemBuilder: (context, index) {
+                    final item = _cartData!.items[index];
+                    return _CartItemCard(
+                      item: item,
+                      currencySymbol: _cartData!.currencySymbol,
+                      l10n: l10n,
+                      theme: theme,
+                      rSpacing: rSpacing,
+                      rTypography: rTypography,
+                      rSizes: rSizes,
+                    );
+                  },
+                ),
+              ),
 
-        // Summary section
-        Container(
-          width: double.infinity,
-          padding: rSpacing.paddingLg,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, -2),
+              // Summary section
+              Container(
+                width: double.infinity,
+                padding: rSpacing.paddingLg,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${l10n.translate(LocaleKeys.totalItems)}:',
+                          style: rTypography.titleMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${_cartData!.totalItems}',
+                          style: rTypography.titleMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    rSpacing.gapVerticalSm,
+                    Divider(height: 1, color: Colors.grey[300]),
+                    rSpacing.gapVerticalSm,
+                    // Total
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          l10n.translate(LocaleKeys.total),
+                          style: rTypography.headlineSmall.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${Helper().formatCurrency(_cartData!.total)}${_cartData!.currencySymbol}',
+                          style: rTypography.headlineMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    rSpacing.gapVerticalXs,
+                  ],
+                ),
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ),
+        rSpacing.gapHorizontalMd,
+        // Right side: Payment info
+        Expanded(
+          flex: 2,
+          child: _buildPaymentInfo(l10n, theme, rSpacing, rTypography, rSizes),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentInfo(
+    AppLocalizations l10n,
+    ThemeData theme,
+    ResponsiveSpacing rSpacing,
+    ResponsiveTypography rTypography,
+    ResponsiveSizes rSizes,
+  ) {
+    if (_cartData == null) return const SizedBox.shrink();
+
+    final hasPayment = _cartData!.paymentMethod != null;
+
+    return AppCard(
+      padding: rSpacing.paddingMd,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.translate(LocaleKeys.paymentMethod),
+            style: rTypography.headlineMedium.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          if(hasPayment)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  rSpacing.gapVerticalLg,
                   Text(
-                    '${l10n.translate(LocaleKeys.totalItems)}:',
-                    style: rTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.bold,
+                    _getPaymentMethodLabel(
+                      _cartData!.paymentMethod!,
+                      l10n,
                     ),
-                  ),
-                  Text(
-                    '${_cartData!.totalItems}',
-                    style: rTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              // Subtotal
-              // if (_cartData!.subtotal > 0)
-              //   _SummaryRow(
-              //     label: l10n.translate(LocaleKeys.subtotal),
-              //     value:
-              //         '${Helper().formatCurrency(_cartData!.subtotal)}${_cartData!.currencySymbol}',
-              //     rTypography: rTypography,
-              //   ),
-              // // Discount
-              // if (_cartData!.discount > 0)
-              //   _SummaryRow(
-              //     label: l10n.translate(LocaleKeys.discount),
-              //     value:
-              //         '-${Helper().formatCurrency(_cartData!.discount)}${_cartData!.currencySymbol}',
-              //     valueColor: Colors.red,
-              //     rTypography: rTypography,
-              //   ),
-              // // Tax
-              // if (_cartData!.tax > 0)
-              //   _SummaryRow(
-              //     label: l10n.translate(LocaleKeys.tax),
-              //     value:
-              //         '${Helper().formatCurrency(_cartData!.tax)}${_cartData!.currencySymbol}',
-              //     rTypography: rTypography,
-              //   ),
-              rSpacing.gapVerticalSm,
-              Divider(height: 1, color: Colors.grey[300]),
-              rSpacing.gapVerticalSm,
-              // Total
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    l10n.translate(LocaleKeys.total),
-                    style: rTypography.headlineSmall.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    '${Helper().formatCurrency(_cartData!.total)}${_cartData!.currencySymbol}',
-                    style: rTypography.headlineMedium.copyWith(
+                    style: rTypography.titleLarge.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.primary,
                     ),
                   ),
+                  rSpacing.gapVerticalXs,
+                  if (_cartData!.paymentAccountImagePath != null)
+                    Expanded(
+                      child: Center(
+                        child: ClipRRect(
+                          borderRadius: AppRadius.borderRadiusMd,
+                          child: Image.file(
+                            File(_cartData!.paymentAccountImagePath!),
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                    )
                 ],
               ),
-              rSpacing.gapVerticalXs,
-            ],
-          ),
-        ),
-      ],
+            )
+        ],
+      ),
     );
+  }
+
+  String _getPaymentMethodLabel(String method, AppLocalizations l10n) {
+    switch (method.toLowerCase()) {
+      case 'cash':
+        return l10n.translate(LocaleKeys.cash);
+      case 'e-wallet':
+      case 'ewallet':
+        return l10n.translate(LocaleKeys.eWallet);
+      case 'bank_transfer':
+      case 'banktransfer':
+        return l10n.translate(LocaleKeys.bankTransfer);
+      default:
+        // For other methods (card, cheque, etc.), return the method name as-is
+        return method;
+    }
   }
 }
 

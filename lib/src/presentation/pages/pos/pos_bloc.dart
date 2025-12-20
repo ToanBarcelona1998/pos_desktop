@@ -72,6 +72,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     on<PosClearPrintFlag>(_onClearPrintFlag);
     on<PosScanBarcode>(_onScanBarcode);
     on<PosChangeCustomerWindowStatus>(_onChangeCustomerWindowStatus);
+    on<PosSelectPayment>(_onSelectPayment);
   }
 
   static const int _perPage = 50;
@@ -373,6 +374,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       invoiceType: InvoiceType.final_,
       isQuotation: false,
       isSuspended: false,
+      clearPayment: true,
     );
     emit(newState);
     _broadcastCartUpdate(newState);
@@ -495,15 +497,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           // Only print if not suspended and printInvoice is true
           final shouldPrint = event.printInvoice && !state.isSuspended;
 
-          emit(state.copyWith(
+          final newState = state.copyWith(
             actionStatus: PosStatus.success,
-            successMessage: isCredit
-                ? LocaleKeys.creditSaleCreatedSuccessfully
-                : (state.isQuotation
-                    ? LocaleKeys.quotationCreatedSuccessfully
-                    : (state.isSuspended
-                        ? LocaleKeys.saleSuspendedSuccessfully
-                        : LocaleKeys.saleCompletedSuccessfully)),
+            successMessage: LocaleKeys.saleCompletedSuccessfully,
             createdSellId: createdSell.id,
             // Store created sell ID for printing
             shouldPrintInvoice: shouldPrint,
@@ -514,11 +510,16 @@ class PosBloc extends Bloc<PosEvent, PosState> {
             taxId: null,
             taxRate: 0,
             selectedCustomer:
-                state.customers.isNotEmpty ? state.customers[0] : null,
+            state.customers.isNotEmpty ? state.customers[0] : null,
             invoiceType: InvoiceType.final_,
             isQuotation: false,
             isSuspended: false,
-          ));
+            clearPayment: true,
+          );
+
+          _broadcastCartUpdate(newState);
+
+          emit(newState);
         },
         onError: (failure) {
           emit(state.copyWith(
@@ -1291,6 +1292,23 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     ));
   }
 
+  void _onSelectPayment(
+    PosSelectPayment event,
+    Emitter<PosState> emit,
+  ) {
+
+    bool clearPaymentMethod = event.paymentMethod == null && event.paymentAccount == null;
+
+    final newState = state.copyWith(
+      selectedPaymentMethod: event.paymentMethod,
+      selectedPaymentAccount: event.paymentAccount,
+      clearPayment: clearPaymentMethod,
+
+    );
+    emit(newState);
+    _broadcastCartUpdate(newState);
+  }
+
   /// Broadcast cart update to customer window
   void _broadcastCartUpdate(PosState state) {
     if(state.isCustomerWindowOpening){
@@ -1302,6 +1320,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         total: state.total,
         currencySymbol: state.currencySymbol,
         customer: state.selectedCustomer,
+        paymentMethod: state.selectedPaymentMethod,
+        paymentAccount: state.selectedPaymentAccount,
       );
       OfflineCustomerService().broadcastCartUpdate(cartSyncData);
     }
