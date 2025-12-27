@@ -325,7 +325,7 @@ class PosState {
           clearMessages ? null : (successMessage ?? this.successMessage),
       createdSellId: createdSellId ?? this.createdSellId,
       shouldPrintInvoice: shouldPrintInvoice ?? this.shouldPrintInvoice,
-      isCustomerWindowOpening: isCustomerWindowOpening ?? this.isCustomerWindowOpening
+      isCustomerWindowOpening: isCustomerWindowOpening ?? this.isCustomerWindowOpening,
     );
   }
 }

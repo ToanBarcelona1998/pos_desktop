@@ -1,5 +1,6 @@
 import 'package:domain/domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/core.dart';
 import '../../../core/services/offline_customer_service.dart';
@@ -448,7 +449,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           isCredit ? SellStatus.pending : state.invoiceType.toSellStatus();
 
       // Create sell entity - use state values, no hardcoded values
-      final invoiceNo = _generateInvoiceNo();
+      final invoiceNo = await _generateInvoiceNo();
       final sell = SellEntity(
         id: 0,
         locationId: state.selectedLocationId,
@@ -570,7 +571,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       final adjustedInvoiceAmount = state.adjustedInvoiceAmount;
 
       // Create sell entity - draft uses 'draft' status
-      final invoiceNo = _generateInvoiceNo();
+      final invoiceNo = await _generateInvoiceNo();
       final sell = SellEntity(
         id: 0,
         locationId: state.selectedLocationId,
@@ -655,7 +656,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       final adjustedInvoiceAmount = state.adjustedInvoiceAmount;
 
       // Create sell entity - quotation uses 'quotation' status
-      final invoiceNo = _generateInvoiceNo();
+      final invoiceNo = await _generateInvoiceNo();
       final sell = SellEntity(
         id: 0,
         locationId: state.selectedLocationId,
@@ -741,7 +742,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       final adjustedInvoiceAmount = state.adjustedInvoiceAmount;
 
       // Create sell entity - suspended uses 'suspended' status
-      final invoiceNo = _generateInvoiceNo();
+      final invoiceNo = await _generateInvoiceNo();
       final sell = SellEntity(
         id: 0,
         locationId: state.selectedLocationId,
@@ -1118,8 +1119,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
               unitPrice: line.unitPrice!,
               discountAmount: line.discountAmount ?? 0,
               discountType:
-                  DiscountTypeExtension.fromString(line.discountType) ??
-                      DiscountType.fixed,
+                  DiscountTypeExtension.fromString(line.discountType),
               taxId: line.taxRateId,
             ));
           }
@@ -1130,8 +1130,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
     // Set discount and tax
     final discountAmount = sell.discountAmount ?? 0;
-    final discountType = DiscountTypeExtension.fromString(sell.discountType) ??
-        DiscountType.fixed;
+    final discountType = DiscountTypeExtension.fromString(sell.discountType);
     final taxId = sell.taxRateId;
 
     // Get tax rate if taxId is available
@@ -1281,9 +1280,54 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     emit(state.copyWith(shouldPrintInvoice: false));
   }
 
-  String _generateInvoiceNo() {
+  /// Load invoice number counter from SharedPreferences
+  /// Key format: invoice_number_{year}_{locationId}
+  Future<int> _loadInvoiceNumberCounter({int? locationId}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final locationIdValue = locationId ?? state.selectedLocationId ?? 0;
+      final key = 'invoice_number_$locationIdValue';
+      return prefs.getInt(key) ?? 0;
+    } catch (e) {
+      Logger.logE('Failed to load invoice number counter', e);
+      return 0;
+    }
+  }
+
+  /// Save invoice number counter to SharedPreferences
+  /// Key format: invoice_number_{year}_{locationId}
+  Future<void> _saveInvoiceNumberCounter(int counter, {int? locationId}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final locationIdValue = locationId ?? state.selectedLocationId ?? 0;
+      final key = 'invoice_number_$locationIdValue';
+      await prefs.setInt(key, counter);
+    } catch (e) {
+      Logger.logE('Failed to save invoice number counter', e);
+    }
+  }
+
+  /// Generate invoice number in format: {year}_{locationId}_{number}
+  /// Increments and saves the counter
+  Future<String> _generateInvoiceNo() async {
     final now = DateTime.now();
-    return '${now.year}_${state.selectedLocationId ?? 0}_';
+    final year = now.year;
+    final locationId = state.selectedLocationId ?? 0;
+    
+    // Load current counter for this year and location
+    int counter = await _loadInvoiceNumberCounter(locationId: locationId);
+    
+    // Increment counter
+    counter++;
+    
+    // Save the incremented counter
+    await _saveInvoiceNumberCounter(counter, locationId: locationId);
+
+    if(locationId < 10){
+      return 'off_${year}_0$locationId$counter';
+    }
+
+    return 'off_${year}_${locationId}_$counter';
   }
 
   void _onChangeCustomerWindowStatus(PosChangeCustomerWindowStatus event,Emitter<PosState> emit,){

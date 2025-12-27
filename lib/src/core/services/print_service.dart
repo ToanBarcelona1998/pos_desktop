@@ -28,8 +28,8 @@ class PrintService {
     );
   }
 
-  static PdfPageFormat pos80 = PdfPageFormat(
-    80 * PdfPageFormat.mm,
+  static PdfPageFormat pos72 = PdfPageFormat(
+    72 * PdfPageFormat.mm,
     double.infinity,
     marginAll: 5 * PdfPageFormat.mm,
   );
@@ -103,32 +103,32 @@ class PrintService {
           cashier: cashier,
         );
 
-        // showDialog(
-        //   context: context,
-        //   builder: (ctx) => Dialog(
-        //     child: PdfPreview(
-        //       initialPageFormat: pos80,
-        //       build: (format) => pdfBytes,
-        //     ),
-        //   ),
-        // );
-
-        final printers = await Printing.listPrinters();
-
-        final printer = printers.firstWhere(
-          (p) => p.isDefault,
-          orElse: () => printers.first,
-        );
-
-        await Future.microtask(
-          () => Printing.directPrintPdf(
-            printer: printer,
-            onLayout: (format) {
-              return pdfBytes;
-            },
-            name: name,
+        showDialog(
+          context: context,
+          builder: (ctx) => Dialog(
+            child: PdfPreview(
+              initialPageFormat: pos72,
+              build: (format) => pdfBytes,
+            ),
           ),
         );
+
+        // final printers = await Printing.listPrinters();
+        //
+        // final printer = printers.firstWhere(
+        //   (p) => p.isDefault,
+        //   orElse: () => printers.first,
+        // );
+        //
+        // await Future.microtask(
+        //   () => Printing.directPrintPdf(
+        //     printer: printer,
+        //     onLayout: (format) {
+        //       return pdfBytes;
+        //     },
+        //     name: name,
+        //   ),
+        // );
       }
 
       // Print the invoice
@@ -189,7 +189,7 @@ class PrintService {
           base: robotoRegular,
           bold: robotoBold,
         ),
-        pageFormat: pos80,
+        pageFormat: pos72,
         build: (ctx) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -319,10 +319,12 @@ class PrintService {
                     text: pw.TextSpan(
                       children: [
                         pw.TextSpan(
-                            text: '${l10n.tr(LocaleKeys.billCashier)}:',
-                            style: pw.TextStyle(
-                              fontWeight: pw.FontWeight.bold,
-                            )),
+                          text: '${l10n.tr(LocaleKeys.billCashier)}:',
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
                         pw.TextSpan(
                           text: ' $cashier',
                           style: pw.TextStyle(

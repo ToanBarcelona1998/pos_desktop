@@ -76,7 +76,7 @@ class AppVersionManager {
       
       // Remove all keys except version (we'll set it after)
       for (final key in keys) {
-        if (key != _versionKey) {
+        if (key != _versionKey && !key.contains('invoice_number')) {
           await prefs.remove(key);
         }
       }
