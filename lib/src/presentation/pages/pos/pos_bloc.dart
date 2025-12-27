@@ -1283,7 +1283,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
   String _generateInvoiceNo() {
     final now = DateTime.now();
-    return '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.millisecondsSinceEpoch}';
+    return '${now.year}_${state.selectedLocationId ?? 0}_';
   }
 
   void _onChangeCustomerWindowStatus(PosChangeCustomerWindowStatus event,Emitter<PosState> emit,){

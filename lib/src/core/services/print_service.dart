@@ -116,10 +116,9 @@ class PrintService {
         final printers = await Printing.listPrinters();
 
         final printer = printers.firstWhere(
-              (p) => p.isDefault,
+          (p) => p.isDefault,
           orElse: () => printers.first,
         );
-
 
         await Future.microtask(
           () => Printing.directPrintPdf(
@@ -197,7 +196,7 @@ class PrintService {
             children: [
               if (logoBytes != null)
                 pw.Center(
-                  child: pw.Image(pw.MemoryImage(logoBytes), height: 20),
+                  child: pw.Image(pw.MemoryImage(logoBytes), height: 30),
                 ),
               pw.SizedBox(height: 6),
 
@@ -205,6 +204,7 @@ class PrintService {
               pw.Center(
                 child: pw.Text(
                   layoutBill.business.name,
+                  textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(
                     fontSize: 10,
                     fontWeight: pw.FontWeight.bold,
@@ -215,6 +215,7 @@ class PrintService {
               pw.Center(
                 child: pw.Text(
                   address,
+                  textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(
                     fontSize: 8,
                     fontWeight: pw.FontWeight.normal,
@@ -263,6 +264,7 @@ class PrintService {
                           text: '${l10n.tr(LocaleKeys.billId)}:',
                           style: pw.TextStyle(
                             fontWeight: pw.FontWeight.bold,
+                            fontSize: 8,
                           ),
                         ),
                         pw.TextSpan(
@@ -281,6 +283,7 @@ class PrintService {
                         pw.TextSpan(
                             text: '${l10n.tr(LocaleKeys.billCustomer)}:',
                             style: pw.TextStyle(
+                              fontSize: 8,
                               fontWeight: pw.FontWeight.bold,
                             )),
                         pw.TextSpan(
@@ -299,6 +302,7 @@ class PrintService {
                         pw.TextSpan(
                             text: '${l10n.tr(LocaleKeys.billContact)}:',
                             style: pw.TextStyle(
+                              fontSize: 8,
                               fontWeight: pw.FontWeight.bold,
                             )),
                         pw.TextSpan(
@@ -336,6 +340,7 @@ class PrintService {
                             text: '${l10n.tr(LocaleKeys.billDate)}:',
                             style: pw.TextStyle(
                               fontWeight: pw.FontWeight.bold,
+                              fontSize: 8,
                             )),
                         pw.TextSpan(
                           text:
@@ -542,7 +547,9 @@ class PrintService {
                   '${l10n.tr(LocaleKeys.billEnd)} ${locationEntity.name}',
                   textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold, fontSize: 10),
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 8,
+                  ),
                 ),
               ),
             ],
@@ -559,11 +566,13 @@ class PrintService {
       children: [
         pw.Padding(
           padding: const pw.EdgeInsets.only(bottom: 4),
-          child: pw.Text(left,
-              style: pw.TextStyle(
-                fontSize: 8,
-                fontWeight: pw.FontWeight.bold,
-              )),
+          child: pw.Text(
+            left,
+            style: pw.TextStyle(
+              fontSize: 8,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
         ),
         pw.Padding(
           padding: const pw.EdgeInsets.only(bottom: 4),
