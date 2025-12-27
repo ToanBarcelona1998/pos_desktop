@@ -17,6 +17,7 @@ class ImageCacheHelper {
     try {
       // Validate URL
       final uri = Uri.tryParse(imageUrl);
+      Logger.logI('Image url: $imageUrl');
       if (imageUrl.isEmpty || uri == null || !uri.hasAbsolutePath) {
         Logger.logI('Invalid image URL: $imageUrl');
         return null;
