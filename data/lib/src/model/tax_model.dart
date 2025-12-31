@@ -26,7 +26,7 @@ class TaxModel extends BaseModel {
 
   factory TaxModel.fromJson(Map<String, dynamic> json) {
     return TaxModel(
-      id: json['id'] as int,
+      id: int.parse(json['id'].toString()),
       businessId: int.parse(json['business_id'].toString()),
       name: json['name'] as String,
       amount: _parseDouble(json['amount']),

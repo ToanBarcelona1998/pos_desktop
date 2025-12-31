@@ -38,7 +38,7 @@ class ContactModel extends BaseModel {
 
   factory ContactModel.fromJson(Map<String, dynamic> json) {
     return ContactModel(
-      id: json['id'] as int?,
+      id: int.tryParse(json['id']?.toString() ?? ''),
       name: json['name'] as String?,
       mobile: json['mobile'] as String?,
       prefix: json['prefix'] as String?,

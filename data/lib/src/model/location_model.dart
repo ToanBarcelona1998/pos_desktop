@@ -42,7 +42,7 @@ class LocationModel extends BaseModel {
 
   factory LocationModel.fromJson(Map<String, dynamic> json) {
     return LocationModel(
-      id: json['id'] as int,
+      id: int.parse(json['id'].toString()),
       businessId: int.parse(json['business_id'].toString()),
       name: json['name'] as String,
       locationId: json['location_id'] as String?,

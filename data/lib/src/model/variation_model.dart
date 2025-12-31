@@ -32,7 +32,7 @@ class VariationModel extends BaseModel {
 
   factory VariationModel.fromJson(Map<String, dynamic> json) {
     return VariationModel(
-      id: json['id'] as int,
+      id: int.parse(json['id'].toString()),
       productId: int.parse(json['product_id'].toString()),
       name: json['name'] as String? ?? '',
       subSku: json['sub_sku'] as String?,

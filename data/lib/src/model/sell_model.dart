@@ -46,7 +46,7 @@ class SellModel extends BaseModel {
 
   factory SellModel.fromJson(Map<String, dynamic> json) {
     return SellModel(
-      id: json['id'] as int,
+      id: int.parse(json['id'].toString()),
       businessId: int.parse(json['business_id'].toString()),
       locationId: int.parse(json['location_id'].toString()),
       contactId: int.tryParse(json['contact_id']?.toString() ?? ''),

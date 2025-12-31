@@ -35,7 +35,7 @@ class CategoryModel extends BaseModel {
         .toList() ?? [];
 
     return CategoryModel(
-      id: json['id'] as int,
+      id: int.parse(json['id'].toString()),
       name: json['name'] as String,
       businessId: int.parse(json['business_id'].toString()),
       shortCode: json['short_code'] as String?,

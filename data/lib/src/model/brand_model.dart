@@ -26,7 +26,7 @@ class BrandModel extends BaseModel {
 
   factory BrandModel.fromJson(Map<String, dynamic> json) {
     return BrandModel(
-      id: json['id'] as int,
+      id: int.parse(json['id'].toString()),
       businessId: int.parse(json['business_id'].toString()),
       name: json['name'] as String,
       description: json['description'] as String?,

@@ -172,7 +172,7 @@ class BusinessModel extends BaseModel {
     }
 
     return BusinessModel(
-      id: json['id'] as int,
+      id: int.parse(json['id'].toString()),
       name: json['name'] as String,
       currencyId: json['currency_id']?.toString(),
       currencySymbol: currencySymbol,

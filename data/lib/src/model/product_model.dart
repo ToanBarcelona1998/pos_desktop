@@ -59,7 +59,7 @@ class ProductModel extends BaseModel {
     }
 
     // Use variation_id as id if id is not present (database uses variation_id as primary key)
-    int? id = json['id'] as int?;
+    int? id = int.tryParse(json['id']?.toString() ?? '');
     id ??= int.tryParse(json['variation_id']?.toString() ?? '');
 
     // Extract qty_available from variation_location_details or directly from json
