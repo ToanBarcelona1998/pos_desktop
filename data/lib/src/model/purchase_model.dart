@@ -37,9 +37,9 @@ class PurchaseModel extends BaseModel {
   factory PurchaseModel.fromJson(Map<String, dynamic> json) {
     return PurchaseModel(
       id: json['id'] as int,
-      businessId: json['business_id'] as int,
-      locationId: json['location_id'] as int,
-      contactId: json['contact_id'] as int,
+      businessId: int.parse(json['business_id'].toString()),
+      locationId: int.parse(json['location_id'].toString()),
+      contactId: int.parse(json['contact_id'].toString()),
       refNo: json['ref_no'] as String? ?? '',
       transactionDate: json['transaction_date'] as String,
       totalBeforeTax: _parseDouble(json['total_before_tax']),

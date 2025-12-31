@@ -37,9 +37,9 @@ class CategoryModel extends BaseModel {
     return CategoryModel(
       id: json['id'] as int,
       name: json['name'] as String,
-      businessId: json['business_id'] as int,
+      businessId: int.parse(json['business_id'].toString()),
       shortCode: json['short_code'] as String?,
-      parentId: json['parent_id'] as int?,
+      parentId: int.tryParse(json['parent_id']?.toString() ?? ''),
       categoryType: json['category_type'] as String?,
       description: json['description'] as String?,
       slug: json['slug'] as String?,

@@ -43,7 +43,7 @@ class LocationModel extends BaseModel {
   factory LocationModel.fromJson(Map<String, dynamic> json) {
     return LocationModel(
       id: json['id'] as int,
-      businessId: json['business_id'] as int,
+      businessId: int.parse(json['business_id'].toString()),
       name: json['name'] as String,
       locationId: json['location_id'] as String?,
       landmark: json['landmark'] as String?,
@@ -55,7 +55,7 @@ class LocationModel extends BaseModel {
       alternateNumber: json['alternate_number'] as String?,
       email: json['email'] as String?,
       website: json['website'] as String?,
-      isActive: json['is_active'] as int? ?? 1,
+      isActive: int.tryParse(json['is_active']?.toString() ?? '') ?? 1,
       paymentMethods: json['payment_methods'] as List<dynamic>?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,

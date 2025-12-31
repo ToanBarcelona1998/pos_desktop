@@ -47,9 +47,9 @@ class SellModel extends BaseModel {
   factory SellModel.fromJson(Map<String, dynamic> json) {
     return SellModel(
       id: json['id'] as int,
-      businessId: json['business_id'] as int,
-      locationId: json['location_id'] as int,
-      contactId: json['contact_id'] as int?,
+      businessId: int.parse(json['business_id'].toString()),
+      locationId: int.parse(json['location_id'].toString()),
+      contactId: int.tryParse(json['contact_id']?.toString() ?? ''),
       invoiceNo: json['invoice_no'] as String?,
       transactionDate: json['transaction_date'] as String,
       totalBeforeTax: _parseDouble(json['total_before_tax']),
@@ -58,8 +58,8 @@ class SellModel extends BaseModel {
       finalTotal: _parseDouble(json['final_total']),
       status: json['status'] as String? ?? 'final',
       paymentStatus: json['payment_status'] as String? ?? 'due',
-      isQuotation: json['is_quotation'] as int? ?? 0,
-      isSuspend: json['is_suspend'] as int? ?? 0,
+      isQuotation: int.tryParse(json['is_quotation']?.toString() ?? '') ?? 0,
+      isSuspend: int.tryParse(json['is_suspend']?.toString() ?? '') ?? 0,
       invoiceUrl: json['invoice_url'] as String?,
       changeReturn: _parseDouble(json['change_return']),
       paymentLines: json['payment_lines'] != null

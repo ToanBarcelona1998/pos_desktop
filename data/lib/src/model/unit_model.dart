@@ -23,10 +23,10 @@ class UnitModel extends BaseModel {
   factory UnitModel.fromJson(Map<String, dynamic> json) {
     return UnitModel(
       id: json['id'] as int,
-      businessId: json['business_id'] as int,
+      businessId: int.parse(json['business_id'].toString()),
       actualName: json['actual_name'] as String? ?? '',
       shortName: json['short_name'] as String? ?? '',
-      allowDecimal: json['allow_decimal'] as int? ?? 0,
+      allowDecimal: int.tryParse(json['allow_decimal']?.toString() ?? '') ?? 0,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
     );

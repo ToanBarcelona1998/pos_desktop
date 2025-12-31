@@ -27,7 +27,7 @@ class NotificationModel extends BaseModel {
       id: json['id'] as String,
       type: json['type'] as String?,
       notifiableType: json['notifiable_type'] as String?,
-      notifiableId: json['notifiable_id'] as int?,
+      notifiableId: int.tryParse(json['notifiable_id']?.toString() ?? ''),
       data: json['data'] as Map<String, dynamic>?,
       readAt: json['read_at'] as String?,
       createdAt: json['created_at'] as String?,

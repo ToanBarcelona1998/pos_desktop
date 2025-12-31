@@ -60,7 +60,7 @@ class ProductModel extends BaseModel {
 
     // Use variation_id as id if id is not present (database uses variation_id as primary key)
     int? id = json['id'] as int?;
-    id ??= json['variation_id'] as int?;
+    id ??= int.tryParse(json['variation_id']?.toString() ?? '');
 
     // Extract qty_available from variation_location_details or directly from json
     dynamic qtyAvailable = json['qty_available'];
@@ -75,8 +75,8 @@ class ProductModel extends BaseModel {
     }
     return ProductModel(
       id: id,
-      productId: json['product_id'] as int?,
-      variationId: json['variation_id'] as int?,
+      productId: int.tryParse(json['product_id']?.toString() ?? ''),
+      variationId: int.tryParse(json['variation_id']?.toString() ?? ''),
       productName: json['product_name'] as String?,
       productVariationName: json['product_variation_name'] as String?,
       variationName: json['variation_name'] as String?,
@@ -84,12 +84,12 @@ class ProductModel extends BaseModel {
       sku: json['sku'] as String?,
       subSku: json['sub_sku'] as String?,
       type: json['type'] as String?,
-      enableStock: json['enable_stock'] as int?,
-      brandId: json['brand_id'] as int?,
-      unitId: json['unit_id'] as int?,
-      categoryId: json['category_id'] as int?,
-      subCategoryId: json['sub_category_id'] as int?,
-      taxId: json['tax_id'] as int?,
+      enableStock: int.tryParse(json['enable_stock']?.toString() ?? ''),
+      brandId: int.tryParse(json['brand_id']?.toString() ?? ''),
+      unitId: int.tryParse(json['unit_id']?.toString() ?? ''),
+      categoryId: int.tryParse(json['category_id']?.toString() ?? ''),
+      subCategoryId: int.tryParse(json['sub_category_id']?.toString() ?? ''),
+      taxId: int.tryParse(json['tax_id']?.toString() ?? ''),
       defaultSellPrice: _parseDouble(json['default_sell_price']),
       sellPriceIncTax: _parseDouble(json['sell_price_inc_tax']),
       productImageUrl: json['product_image_url'] as String?,

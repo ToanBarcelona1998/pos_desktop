@@ -33,7 +33,7 @@ class VariationModel extends BaseModel {
   factory VariationModel.fromJson(Map<String, dynamic> json) {
     return VariationModel(
       id: json['id'] as int,
-      productId: json['product_id'] as int,
+      productId: int.parse(json['product_id'].toString()),
       name: json['name'] as String? ?? '',
       subSku: json['sub_sku'] as String?,
       defaultPurchasePrice: _parseDouble(json['default_purchase_price']),
@@ -41,7 +41,7 @@ class VariationModel extends BaseModel {
       profitPercent: _parseDouble(json['profit_percent']),
       defaultSellPrice: _parseDouble(json['default_sell_price']),
       sellPriceIncTax: _parseDouble(json['sell_price_inc_tax']),
-      variationValueId: json['variation_value_id'] as int?,
+      variationValueId: int.tryParse(json['variation_value_id']?.toString() ?? ''),
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
     );
