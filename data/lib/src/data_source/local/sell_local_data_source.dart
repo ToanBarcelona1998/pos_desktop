@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../../model/sell_model.dart';
-import 'database/database_helper.dart';
+import 'database/user_database_helper.dart';
 
 /// Local data source for sells using SQLite
 abstract class SellLocalDataSource {
@@ -47,10 +47,10 @@ abstract class SellLocalDataSource {
 
 /// Implementation of SellLocalDataSource
 class SellLocalDataSourceImpl implements SellLocalDataSource {
-  final DatabaseHelper _dbHelper;
+  final UserDatabaseHelper _dbHelper;
 
-  SellLocalDataSourceImpl({DatabaseHelper? dbHelper})
-      : _dbHelper = dbHelper ?? DatabaseHelper.instance;
+  SellLocalDataSourceImpl({UserDatabaseHelper? dbHelper})
+      : _dbHelper = dbHelper ?? UserDatabaseHelper.instance;
 
   @override
   Future<int> saveSell({

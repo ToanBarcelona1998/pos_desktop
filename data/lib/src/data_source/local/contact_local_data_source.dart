@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../../model/contact_model.dart';
-import 'database/database_helper.dart';
+import 'database/global_database_helper.dart';
 
 /// Local data source for contacts using SQLite
 abstract class ContactLocalDataSource {
@@ -20,10 +20,10 @@ abstract class ContactLocalDataSource {
 
 /// Implementation of ContactLocalDataSource
 class ContactLocalDataSourceImpl implements ContactLocalDataSource {
-  final DatabaseHelper _dbHelper;
+  final GlobalDatabaseHelper _dbHelper;
 
-  ContactLocalDataSourceImpl({DatabaseHelper? dbHelper})
-      : _dbHelper = dbHelper ?? DatabaseHelper.instance;
+  ContactLocalDataSourceImpl({GlobalDatabaseHelper? dbHelper})
+      : _dbHelper = dbHelper ?? GlobalDatabaseHelper.instance;
 
   @override
   Future<List<ContactModel>> getContacts({String? type}) async {

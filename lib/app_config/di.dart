@@ -94,15 +94,30 @@ Future<void> initDependencies({Environment env = Environment.development}) async
 
   // ============== Core ==============
   sl.register<AppConfig>(config);
+  // Keep old DatabaseHelper for backward compatibility during migration
   sl.register<DatabaseHelper>(DatabaseHelper.instance);
+  
+  // New database helpers
+  sl.register<GlobalDatabaseHelper>(GlobalDatabaseHelper.instance);
+  sl.register<UserDatabaseHelper>(UserDatabaseHelper.instance);
+  sl.registerLazy<DatabaseManager>(() => DatabaseManager(
+        globalDb: sl.get<GlobalDatabaseHelper>(),
+        userDb: sl.get<UserDatabaseHelper>(),
+      ));
+  
   sl.registerLazy<ApiClient>(() => ApiClient(baseUrl: config.baseUrl));
 
   // ============== Local Data Sources ==============
   sl.registerLazy<AuthLocalDataSource>(() => AuthLocalDataSourceImpl());
-  sl.registerLazy<ProductLocalDataSource>(() => ProductLocalDataSourceImpl());
-  sl.registerLazy<ContactLocalDataSource>(() => ContactLocalDataSourceImpl());
+  sl.registerLazy<ProductLocalDataSource>(() => ProductLocalDataSourceImpl(
+        dbHelper: sl.get<GlobalDatabaseHelper>(),
+      ));
+  sl.registerLazy<ContactLocalDataSource>(() => ContactLocalDataSourceImpl(
+        dbHelper: sl.get<GlobalDatabaseHelper>(),
+      ));
   sl.registerLazy<SystemLocalDataSource>(() => SystemLocalDataSourceImpl(
-        databaseHelper: sl.get<DatabaseHelper>(),
+        globalDbHelper: sl.get<GlobalDatabaseHelper>(),
+        userDbHelper: sl.get<UserDatabaseHelper>(),
       ));
 
   // ============== Remote Data Sources ==============
@@ -346,7 +361,7 @@ void _registerRepositories() {
       ));
 
   sl.registerLazy<SellLocalDataSource>(() => SellLocalDataSourceImpl(
-        dbHelper: sl.get<DatabaseHelper>(),
+        dbHelper: sl.get<UserDatabaseHelper>(),
       ));
 
   sl.registerLazy<SellRepository>(() => SellRepositoryImpl(

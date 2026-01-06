@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../../model/product_model.dart';
-import 'database/database_helper.dart';
+import 'database/global_database_helper.dart';
 
 /// Local data source for products using SQLite
 abstract class ProductLocalDataSource {
@@ -39,10 +39,10 @@ abstract class ProductLocalDataSource {
 
 /// Implementation of ProductLocalDataSource
 class ProductLocalDataSourceImpl implements ProductLocalDataSource {
-  final DatabaseHelper _dbHelper;
+  final GlobalDatabaseHelper _dbHelper;
 
-  ProductLocalDataSourceImpl({DatabaseHelper? dbHelper})
-      : _dbHelper = dbHelper ?? DatabaseHelper.instance;
+  ProductLocalDataSourceImpl({GlobalDatabaseHelper? dbHelper})
+      : _dbHelper = dbHelper ?? GlobalDatabaseHelper.instance;
 
   @override
   Future<List<ProductModel>> getProducts({
@@ -280,6 +280,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   @override
   Future<void> updateLastSync() async {
     final db = await _dbHelper.database;
+    // products_last_sync is a global key, stored in global database system table
     await db.insert(
       'system',
       {

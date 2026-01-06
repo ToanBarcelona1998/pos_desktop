@@ -8,15 +8,15 @@ import 'auth_state.dart';
 /// Cubit for managing authentication state globally
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
-  final DatabaseHelper _databaseHelper;
+  final DatabaseManager _databaseManager;
   final SystemSyncService _syncService;
 
   AuthCubit({
     AuthRepository? authRepository,
-    DatabaseHelper? databaseHelper,
+    DatabaseManager? databaseManager,
     SystemSyncService? syncService,
   })  : _authRepository = authRepository ?? sl.get<AuthRepository>(),
-        _databaseHelper = databaseHelper ?? sl.get<DatabaseHelper>(),
+        _databaseManager = databaseManager ?? sl.get<DatabaseManager>(),
         _syncService = syncService ?? sl.get<SystemSyncService>(),
         super(const AuthInitial());
 
@@ -152,7 +152,16 @@ class AuthCubit extends Cubit<AuthState> {
   /// Initialize database for user
   Future<void> _initializeDatabase(int userId) async {
     try {
-      await _databaseHelper.initDatabase(userId);
+      // Initialize both global and user databases
+      await _databaseManager.initialize(userId);
+      
+      // Try to migrate from old database if it exists
+      try {
+        await MigrationHelper.migrateFromOldDatabase(userId: userId);
+      } catch (e) {
+        // Migration is optional, log but don't fail
+        Logger.logI('Migration skipped or failed (this is OK for new users): $e');
+      }
     } catch (e) {
       // Log error but don't fail login
       Logger.logE('Database initialization error', e);
@@ -190,18 +199,18 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
-  /// Cleanup on logout - delete database and clear cache
+  /// Cleanup on logout - delete user database and clear cache
   Future<void> _cleanupOnLogout(int? userId) async {
     setAccessToken(null);
     
     try {
-      // Close database connection
-      await _databaseHelper.close();
-      
-      // Optionally delete database file
+      // Delete user database (global database is kept)
       if (userId != null) {
-        await _databaseHelper.deleteDatabase(userId);
+        await _databaseManager.deleteUserDatabase(userId);
       }
+      
+      // Close database connections
+      await _databaseManager.close();
       
       // Clear sync cache
       await _syncService.clearCache();

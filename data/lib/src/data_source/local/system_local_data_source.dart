@@ -2,7 +2,8 @@ import 'dart:convert';
 
 import 'package:sqflite/sqflite.dart';
 
-import 'database/database_helper.dart';
+import 'database/global_database_helper.dart';
+import 'database/user_database_helper.dart';
 
 /// Local data source for system data storage
 abstract class SystemLocalDataSource {
@@ -24,34 +25,75 @@ abstract class SystemLocalDataSource {
 
 /// Implementation of [SystemLocalDataSource]
 class SystemLocalDataSourceImpl implements SystemLocalDataSource {
-  final DatabaseHelper _databaseHelper;
+  final GlobalDatabaseHelper _globalDbHelper;
+  final UserDatabaseHelper _userDbHelper;
 
   const SystemLocalDataSourceImpl({
-    required DatabaseHelper databaseHelper,
-  }) : _databaseHelper = databaseHelper;
+    required GlobalDatabaseHelper globalDbHelper,
+    required UserDatabaseHelper userDbHelper,
+  })  : _globalDbHelper = globalDbHelper,
+        _userDbHelper = userDbHelper;
+
+  /// Determine if key is global or user-specific
+  bool _isGlobalKey(String key) {
+    const globalKeys = [
+      'brand',
+      'taxonomy',
+      'sub_categories',
+      'payment_methods',
+      'location',
+      'payment_accounts',
+      'active-subscription',
+      'products_last_sync',
+      'customers_last_sync',
+      'call_logs_last_sync',
+      'business',
+    ];
+    return globalKeys.contains(key);
+  }
 
   @override
   Future<void> insert(String key, String value, [int? keyId]) async {
-    final db = await _databaseHelper.database;
-
-    // Use ConflictAlgorithm.replace to match old behavior
-    await db.insert(
-      'system',
-      {
-        'key': key,
-        'keyId': keyId,
-        'value': value,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    if (_isGlobalKey(key)) {
+      final db = await _globalDbHelper.database;
+      await db.insert(
+        'system',
+        {
+          'key': key,
+          'keyId': keyId,
+          'value': value,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } else {
+      final db = await _userDbHelper.database;
+      await db.insert(
+        'system_user',
+        {
+          'key': key,
+          'keyId': keyId,
+          'value': value,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
   }
 
   @override
   Future<dynamic> get(String key) async {
-    final db = await _databaseHelper.database;
+    Database db;
+    String tableName;
+
+    if (_isGlobalKey(key)) {
+      db = await _globalDbHelper.database;
+      tableName = 'system';
+    } else {
+      db = await _userDbHelper.database;
+      tableName = 'system_user';
+    }
 
     final result = await db.query(
-      'system',
+      tableName,
       where: 'key = ?',
       whereArgs: [key],
     );
@@ -79,10 +121,19 @@ class SystemLocalDataSourceImpl implements SystemLocalDataSource {
 
   @override
   Future<dynamic> getByKeyId(String key, int keyId) async {
-    final db = await _databaseHelper.database;
+    Database db;
+    String tableName;
+
+    if (_isGlobalKey(key)) {
+      db = await _globalDbHelper.database;
+      tableName = 'system';
+    } else {
+      db = await _userDbHelper.database;
+      tableName = 'system_user';
+    }
 
     final result = await db.query(
-      'system',
+      tableName,
       where: 'key = ? AND keyId = ?',
       whereArgs: [key, keyId],
     );
@@ -110,19 +161,29 @@ class SystemLocalDataSourceImpl implements SystemLocalDataSource {
 
   @override
   Future<void> delete(String key) async {
-    final db = await _databaseHelper.database;
-
-    await db.delete(
-      'system',
-      where: 'key = ?',
-      whereArgs: [key],
-    );
+    if (_isGlobalKey(key)) {
+      final db = await _globalDbHelper.database;
+      await db.delete(
+        'system',
+        where: 'key = ?',
+        whereArgs: [key],
+      );
+    } else {
+      final db = await _userDbHelper.database;
+      await db.delete(
+        'system_user',
+        where: 'key = ?',
+        whereArgs: [key],
+      );
+    }
   }
 
   @override
   Future<void> clearAll() async {
-    final db = await _databaseHelper.database;
+    final globalDb = await _globalDbHelper.database;
+    await globalDb.delete('system');
 
-    await db.delete('system');
+    final userDb = await _userDbHelper.database;
+    await userDb.delete('system_user');
   }
 }

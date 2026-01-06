@@ -3,6 +3,10 @@ library;
 
 // Database
 export 'local/database/database_helper.dart';
+export 'local/database/global_database_helper.dart';
+export 'local/database/user_database_helper.dart';
+export 'local/database/database_manager.dart';
+export 'local/database/migration_helper.dart';
 
 // Local
 export 'local/auth_local_data_source.dart';
