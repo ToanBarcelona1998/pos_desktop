@@ -20,22 +20,22 @@ class BusinessRepositoryImpl implements BusinessRepository {
 
   @override
   Future<Result<BusinessEntity>> getBusinessDetails() async {
-    try {
-      final business = await _remoteDataSource.getBusinessDetails();
-      return Success(_mapToEntity(business));
-    } catch (e) {
-      // If server call fails, try local
-      final localResult = await getLocalBusinessDetails();
-      return localResult.fold(
-        onSuccess: (business) {
-          if (business == null) {
+    final localResult = await getLocalBusinessDetails();
+
+    return localResult.fold(
+      onSuccess: (business) async{
+        if (business == null) {
+          try{
+            final business = await _remoteDataSource.getBusinessDetails();
+            return Success(_mapToEntity(business));
+          }catch(e){
             return Error(ExceptionHandler.handleException(e));
           }
-          return Success(business);
-        },
-        onError: (failure) => Error(ExceptionHandler.handleException(e)),
-      );
-    }
+        }
+        return Success(business);
+      },
+      onError: (failure) => Error(ExceptionHandler.handleException(failure)),
+    );
   }
 
   @override
