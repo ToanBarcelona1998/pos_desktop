@@ -35,8 +35,8 @@ class SubscriptionModel extends BaseModel {
   factory SubscriptionModel.fromJson(Map<String, dynamic> json) {
     return SubscriptionModel(
       id: json['id'] as int,
-      businessId: json['business_id'] as int,
-      packageId: json['package_id'] as int,
+      businessId: int.parse(json['business_id'].toString()),
+      packageId: int.parse(json['package_id'].toString()),
       packageName: json['package']?['name'] as String?,
       startDate: json['start_date'] as String,
       endDate: json['end_date'] as String,
@@ -44,7 +44,7 @@ class SubscriptionModel extends BaseModel {
       status: json['status'] as String,
       packagePrice: _parseDouble(json['package']?['price']),
       packageInterval: json['package']?['interval'] as String?,
-      packageIntervalCount: json['package']?['interval_count'] as int?,
+      packageIntervalCount: null,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
     );

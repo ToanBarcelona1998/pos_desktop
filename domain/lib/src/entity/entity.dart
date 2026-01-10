@@ -7,6 +7,7 @@ export 'brand_entity.dart';
 export 'business_entity.dart';
 export 'category_entity.dart';
 export 'contact_entity.dart';
+export 'exchange_rate_entity.dart';
 export 'expense_entity.dart';
 export 'field_force_entity.dart';
 export 'follow_up_entity.dart';

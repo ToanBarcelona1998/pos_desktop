@@ -438,6 +438,13 @@ abstract final class LocaleKeys {
   static const String billTransfer = 'bill_transfer';
   static const String billEWallet = 'bill_e_wallet';
   static const String billEnd = 'bill_end';
+
+  // Currency
+  static const String selectCurrency = 'select_currency';
+  static const String exchangeRate = 'exchange_rate';
+  static const String vietnameseDong = 'vietnamese_dong';
+  static const String usDollar = 'us_dollar';
+  static const String currency = 'currency';
 }
 
 

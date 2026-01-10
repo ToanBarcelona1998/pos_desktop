@@ -5,7 +5,6 @@ import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:pos_final/helpers/other_helpers.dart';
 import 'package:pos_final/src/core/core.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
@@ -40,6 +39,8 @@ class PrintService {
   /// [taxId] - Optional tax ID
   /// [context] - BuildContext for localization
   /// [invoiceHtml] - Optional pre-generated invoice HTML (from API)
+  /// [currency] - Currency to print in ('VND' or 'USD')
+  /// [exchangeRate] - Exchange rate entity for currency conversion
   static Future<void> printInvoice({
     required int sellId,
     int? taxId,
@@ -50,6 +51,8 @@ class PrintService {
     required int locationId,
     required AppLocalizations l10n,
     required List<ProductEntity> products,
+    String currency = 'VND',
+    ExchangeRateEntity? exchangeRate,
   }) async {
     try {
       final GetLayoutBillUseCase getLayoutBillUseCase =
@@ -101,6 +104,8 @@ class PrintService {
           unit: unit,
           l10n: l10n,
           cashier: cashier,
+          currency: currency,
+          exchangeRate: exchangeRate,
         );
 
         showDialog(
@@ -145,12 +150,18 @@ class PrintService {
     required String cashier,
     ContactEntity? contact,
     required AppLocalizations l10n,
+    String currency = 'VND',
+    ExchangeRateEntity? exchangeRate,
   }) {
     final LayoutBillLocationEntity locationEntity = layoutBill.location;
     final String address =
         '${locationEntity.name}, ${locationEntity.landmark ?? ''}, ${locationEntity.city ?? ''}, ${locationEntity.state ?? ''}, ${locationEntity.zipCode ?? ''}, ${locationEntity.country ?? ''}';
 
-    final paymentLines = sell.payments;
+    // Currency conversion logic
+    final bool isUSD = currency.toUpperCase() == 'USD';
+    final double conversionRate = exchangeRate?.conversionRate ?? 1.0;
+    final String currencySymbol = isUSD ? '\$' : '₫';
+    final int decimalPlaces = isUSD ? 2 : 0;
 
     final pdf = pw.Document();
 
@@ -164,7 +175,8 @@ class PrintService {
       logoBytes = logoFile.readAsBytesSync();
     }
 
-    final double total = sell.sellLines.fold(0, (e, s) {
+    // Calculate total in VND (original currency)
+    final double totalVND = sell.sellLines.fold(0, (e, s) {
       final discountType = DiscountTypeExtension.fromString(s.discountType);
 
       double discount = 0;
@@ -182,6 +194,25 @@ class PrintService {
       final lineTotal = subtotal - discount;
       return e + lineTotal;
     });
+
+    // Convert total if USD selected
+    final double total = isUSD ? totalVND / conversionRate : totalVND;
+
+    // Helper để format currency với symbol
+    String formatCurrencyWithSymbol(double amount) {
+      final formatted = amount.toStringAsFixed(decimalPlaces);
+      final parts = formatted.split('.');
+      final integerPart = parts[0].replaceAllMapped(
+        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+        (Match m) => '${m[1]},',
+      );
+
+      if (parts.length > 1 && decimalPlaces > 0) {
+        return '$currencySymbol$integerPart.${parts[1]}';
+      }
+
+      return '$currencySymbol$integerPart';
+    }
 
     pdf.addPage(
       pw.Page(
@@ -442,7 +473,10 @@ class PrintService {
                         discount = (e.discountAmount ?? 0) * quantity;
                       }
 
-                      final lineTotal = subtotal - discount;
+                      final lineTotalVND = subtotal - discount;
+                      // Convert if USD selected
+                      final convertedUnitPrice = isUSD ? unitPrice / conversionRate : unitPrice;
+                      final convertedLineTotal = isUSD ? lineTotalVND / conversionRate : lineTotalVND;
 
                       return pw.TableRow(
                         children: [
@@ -472,7 +506,7 @@ class PrintService {
                           pw.Padding(
                             padding: const pw.EdgeInsets.only(bottom: 4),
                             child: pw.Text(
-                              Helper().formatCurrency(unitPrice),
+                              formatCurrencyWithSymbol(convertedUnitPrice),
                               textAlign: pw.TextAlign.right,
                               style: pw.TextStyle(
                                 fontSize: 8,
@@ -483,7 +517,7 @@ class PrintService {
                           pw.Padding(
                             padding: const pw.EdgeInsets.only(bottom: 4),
                             child: pw.Text(
-                              Helper().formatCurrency(lineTotal),
+                              formatCurrencyWithSymbol(convertedLineTotal),
                               textAlign: pw.TextAlign.right,
                               style: pw.TextStyle(
                                 fontSize: 8,
@@ -507,11 +541,11 @@ class PrintService {
                   ),
                   _rowText(
                     '${l10n.tr(LocaleKeys.billTempPrice)}:',
-                    '${Helper().formatCurrency(total)} $unit',
+                    formatCurrencyWithSymbol(total),
                   ),
                   _rowText(
                     '${l10n.tr(LocaleKeys.billTotal)}:',
-                    '${Helper().formatCurrency(total)} $unit',
+                    formatCurrencyWithSymbol(total),
                   ),
                 ],
               ),
@@ -535,10 +569,14 @@ class PrintService {
                       ),
                     ],
                   ),
-                  ...paymentLines.map((payment) => _rowText(
-                        '${_getCashTranslate(payment.method ?? '', l10n: l10n)}:',
-                        '${Helper().formatCurrency(payment.amount)} $unit',
-                      )),
+                  ...sell.payments.map((payment) {
+                    final amount = payment.amount ?? 0.0;
+                    final convertedAmount = isUSD ? amount / conversionRate : amount;
+                    return _rowText(
+                      '${_getCashTranslate(payment.method ?? '', l10n: l10n)}:',
+                      formatCurrencyWithSymbol(convertedAmount),
+                    );
+                  }),
                 ],
               ),
 

@@ -117,6 +117,7 @@ class AuthCubit extends Cubit<AuthState> {
       await saveTokenResult.fold(
         onSuccess: (_) {},
         onError: (failure) async {
+          print('run failure ${failure.message}');
           emit(AuthError(failure));
           return;
         },

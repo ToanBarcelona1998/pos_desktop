@@ -644,5 +644,10 @@
   "bill_cash": "Tiền mặt",
   "bill_transfer": "Chuyển khoản",
   "bill_e_wallet": "Ví điện tử",
-  "bill_end": "Cảm ơn Quý khách đã mua hàng tại"
+  "bill_end": "Thank you for shopping at",
+  "select_currency": "Select Currency",
+  "exchange_rate": "Exchange Rate",
+  "vietnamese_dong": "Vietnamese Dong",
+  "us_dollar": "US Dollar",
+  "currency": "Currency"
 }

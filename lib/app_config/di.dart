@@ -2,12 +2,16 @@ import 'dart:io';
 
 import 'package:data/data.dart';
 import 'package:domain/domain.dart';
+import 'package:data/src/data_source/local/exchange_rate_local_data_source.dart';
+import 'package:data/src/data_source/remote/exchange_rate_remote_data_source.dart';
+import 'package:data/src/repository/exchange_rate_repository_impl.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app_config.dart';
 import 'env_config.dart';
+import '../src/core/services/currency_converter_service.dart';
 
 /// Service Locator for dependency injection
 class ServiceLocator {
@@ -124,7 +128,7 @@ Future<void> initDependencies({Environment env = Environment.development}) async
   _registerRemoteDataSources(config);
 
   // ============== Repositories ==============
-  _registerRepositories();
+  _registerRepositories(config);
 
   // ============== Services ==============
   _registerServices();
@@ -261,9 +265,13 @@ void _registerRemoteDataSources(AppConfig config) {
         apiClient: sl.get<ApiClient>(),
         endpoint: '${config.apiUrl}/notifications',
       ));
+
+  sl.registerLazy<ExchangeRateRemoteDataSource>(() => ExchangeRateRemoteDataSourceImpl());
+  
+  sl.registerLazy<ExchangeRateLocalDataSource>(() => ExchangeRateLocalDataSourceImpl());
 }
 
-void _registerRepositories() {
+void _registerRepositories(AppConfig config) {
   sl.registerLazy<AuthRepository>(() => AuthRepositoryImpl(
         remoteDataSource: sl.get<AuthRemoteDataSource>(),
         localDataSource: sl.get<AuthLocalDataSource>(),
@@ -372,6 +380,17 @@ void _registerRepositories() {
   sl.registerLazy<NotificationRepository>(() => NotificationRepositoryImpl(
         remoteDataSource: sl.get<NotificationRemoteDataSource>(),
       ));
+
+  sl.registerLazy<ExchangeRateRepository>(() {
+    final appConfig = sl.get<AppConfig>();
+    return ExchangeRateRepositoryImpl(
+      remoteDataSource: sl.get<ExchangeRateRemoteDataSource>(),
+      localDataSource: sl.get<ExchangeRateLocalDataSource>(),
+      apiKey: appConfig.exchangeRateApiKey,
+      baseUrl: appConfig.exchangeRateBaseUrl,
+      defaultRate: appConfig.defaultExchangeRate,
+    );
+  });
 }
 
 void _registerServices() {
@@ -392,6 +411,8 @@ void _registerServices() {
         contactLocalDataSource: sl.get<ContactLocalDataSource>(),
         baseUrl: sl.get<AppConfig>().baseUrl,
       ));
+
+  sl.registerLazy<CurrencyConverterService>(() => CurrencyConverterService());
 }
 
 void _registerUseCases() {

@@ -11,6 +11,7 @@ export 'local/database/migration_helper.dart';
 // Local
 export 'local/auth_local_data_source.dart';
 export 'local/contact_local_data_source.dart';
+export 'local/exchange_rate_local_data_source.dart';
 export 'local/product_local_data_source.dart';
 export 'local/sell_local_data_source.dart';
 export 'local/system_local_data_source.dart';
@@ -22,6 +23,7 @@ export 'remote/brand_remote_data_source.dart';
 export 'remote/business_remote_data_source.dart';
 export 'remote/category_remote_data_source.dart';
 export 'remote/contact_remote_data_source.dart';
+export 'remote/exchange_rate_remote_data_source.dart';
 export 'remote/expense_remote_data_source.dart';
 export 'remote/field_force_remote_data_source.dart';
 export 'remote/follow_up_remote_data_source.dart';

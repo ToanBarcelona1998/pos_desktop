@@ -1,23 +1,29 @@
 import 'dart:io';
 import 'package:domain/domain.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pos_final/app_config/env_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Manages app version and handles cache/database clearing on version updates
 class AppVersionManager {
   static const String _versionKey = 'app_version';
-  static const String _appVersion = '1.0.7'; // Update this when releasing new version
+  static const String _environment = 'app_environment';
+  static const String _appVersion = '1.0.8'; // Update this when releasing new version
 
   /// Checks if app version has changed and clears cache/database if needed
-  static Future<void> checkAndHandleVersionUpdate() async {
+  static Future<void> checkAndHandleVersionUpdate(Environment env) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final environment = prefs.getString(_environment);
+
       final storedVersion = prefs.getString(_versionKey);
-      
+
+      final bool envDifference = env.name != environment;
+
       // Get current version from package info
       
       // If no stored version or version changed, clear cache and database
-      if (storedVersion == null || _isVersionNewer(_appVersion, storedVersion)) {
+      if (storedVersion == null || _isVersionNewer(_appVersion, storedVersion) || envDifference) {
         Logger.logI('App version updated from $storedVersion to $_appVersion. Clearing cache and database...');
         
         // Clear shared preferences (languages, theme, etc.)
@@ -30,6 +36,10 @@ class AppVersionManager {
         
         // Save new version
         await prefs.setString(_versionKey, _appVersion);
+
+        if(envDifference){
+          await prefs.setString(_environment, env.name);
+        }
 
         Logger.logI('Cache and database cleared successfully.');
       } else {
@@ -96,7 +106,7 @@ class AppVersionManager {
       final dir = Directory(documentsPath);
       if (await dir.exists()) {
         await for (final entity in dir.list()) {
-          if (entity is File && entity.path.contains('PosDemo') && entity.path.endsWith('.db')) {
+          if (entity is File && entity.path.endsWith('.db')) {
             try {
               await entity.delete();
               Logger.logI('Deleted database file: ${entity.path}');

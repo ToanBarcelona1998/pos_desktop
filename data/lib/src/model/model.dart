@@ -7,6 +7,7 @@ export 'brand_model.dart';
 export 'business_model.dart';
 export 'category_model.dart';
 export 'contact_model.dart';
+export 'exchange_rate_model.dart';
 export 'location_model.dart';
 export 'notification_model.dart';
 export 'product_model.dart';

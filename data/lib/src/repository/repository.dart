@@ -7,6 +7,7 @@ export 'brand_repository_impl.dart';
 export 'business_repository_impl.dart';
 export 'category_repository_impl.dart';
 export 'contact_repository_impl.dart';
+export 'exchange_rate_repository_impl.dart';
 export 'expense_repository_impl.dart';
 export 'field_force_repository_impl.dart';
 export 'follow_up_repository_impl.dart';

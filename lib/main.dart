@@ -26,7 +26,7 @@ Future<void> main() async {
 
   await PrintService.init();
   // Check app version and clear cache/database if needed
-  await AppVersionManager.checkAndHandleVersionUpdate();
+  await AppVersionManager.checkAndHandleVersionUpdate(EnvConfig.environment);
 
   await initDependencies(env: EnvConfig.environment);
 

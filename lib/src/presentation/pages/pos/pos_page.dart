@@ -9,13 +9,16 @@ import 'package:pos_final/src/core/services/barcode_scan_service.dart';
 
 import 'package:pos_final/src/core/services/offline_customer_service.dart';
 import 'package:pos_final/src/core/services/print_service.dart';
+import 'package:pos_final/src/core/services/currency_converter_service.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import '../../../../app_config/di.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/toast/toast_manager.dart';
 import '../../widgets/dialog/dialog_provider.dart';
+import '../../widgets/dialog/currency_selection_dialog.dart';
 import 'pos_bloc.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
@@ -404,6 +407,35 @@ class _PosPageState extends State<PosPage> {
       confirmColor: AppThemes.light.primaryColor,
       onConfirm: () async {
         try {
+          // Show currency selection dialog
+          final currencyConverter = sl.get<CurrencyConverterService>();
+          final exchangeRate = await currencyConverter.getCurrentRate();
+
+          final selectedCurrency = await showDialog<String>(
+            context: context,
+            builder: (context) => CurrencySelectionDialog(
+              exchangeRate: exchangeRate,
+              onCurrencySelected: (currency) {
+                Navigator.of(context).pop(currency);
+              },
+            ),
+          );
+
+          if (selectedCurrency == null) return; // User cancelled
+
+          // Validate exchange rate if USD selected
+          if (selectedCurrency == 'USD') {
+            if (exchangeRate == null || exchangeRate.conversionRate <= 0) {
+              if (context.mounted) {
+                ToastManager.showError(
+                  context,
+                  l10n.translate(LocaleKeys.error),
+                );
+              }
+              return;
+            }
+          }
+
           await PrintService.printInvoice(
             sellId: sellId,
             taxId: taxId,
@@ -411,9 +443,11 @@ class _PosPageState extends State<PosPage> {
             name: l10n.translate(LocaleKeys.invoice),
             locationId: locationId,
             products: products,
-            unit: unit,
+            unit: selectedCurrency,
             l10n: l10n,
             cashier: cashier,
+            currency: selectedCurrency,
+            exchangeRate: exchangeRate,
           );
         } catch (e) {
           if (context.mounted) {

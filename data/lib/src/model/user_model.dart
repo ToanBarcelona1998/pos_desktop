@@ -49,7 +49,7 @@ class UserModel extends BaseModel {
       isAdmin: json['is_admin'] as bool? ?? (json['user_type'] == 'admin'),
       allPermissions: json['all_permissions'] as List<dynamic>?,
       businessId: int.tryParse(json['business_id']?.toString() ?? ''),
-      roleId: int.tryParse(json['role_id'] ?? ''),
+      roleId: int.tryParse(json['role_id']?.toString() ?? ''),
       roleName: json['role_name'] as String?,
       userType: json['user_type'] as String?,
       language: json['language'] as String?,
