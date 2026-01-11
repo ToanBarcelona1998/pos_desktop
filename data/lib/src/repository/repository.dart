@@ -5,6 +5,7 @@ export 'attendance_repository_impl.dart';
 export 'auth_repository_impl.dart';
 export 'brand_repository_impl.dart';
 export 'business_repository_impl.dart';
+export 'cashier_session_repository_impl.dart';
 export 'category_repository_impl.dart';
 export 'contact_repository_impl.dart';
 export 'exchange_rate_repository_impl.dart';

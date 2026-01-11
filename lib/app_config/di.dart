@@ -119,6 +119,9 @@ Future<void> initDependencies({Environment env = Environment.development}) async
   sl.registerLazy<ContactLocalDataSource>(() => ContactLocalDataSourceImpl(
         dbHelper: sl.get<GlobalDatabaseHelper>(),
       ));
+  sl.registerLazy<CashierSessionLocalDataSource>(() => CashierSessionLocalDataSourceImpl(
+        dbHelper: sl.get<UserDatabaseHelper>(),
+      ));
   sl.registerLazy<SystemLocalDataSource>(() => SystemLocalDataSourceImpl(
         globalDbHelper: sl.get<GlobalDatabaseHelper>(),
         userDbHelper: sl.get<UserDatabaseHelper>(),
@@ -391,6 +394,11 @@ void _registerRepositories(AppConfig config) {
       defaultRate: appConfig.defaultExchangeRate,
     );
   });
+
+  sl.registerLazy<CashierSessionRepository>(() => CashierSessionRepositoryImpl(
+        remoteDataSource: sl.get<CashierSessionRemoteDataSource>(),
+        localDataSource: sl.get<CashierSessionLocalDataSource>(),
+      ));
 }
 
 void _registerServices() {

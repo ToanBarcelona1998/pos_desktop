@@ -11,7 +11,7 @@ class UserDatabaseHelper {
   static UserDatabaseHelper? _instance;
   static Database? _database;
   static int? _userId;
-  static const int _version = 1;
+  static const int _version = 2;
 
   UserDatabaseHelper._();
 
@@ -94,6 +94,27 @@ class UserDatabaseHelper {
     )
   ''';
 
+  static const String _createCashierSessionsTable = '''
+    CREATE TABLE cashier_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      location_id INTEGER NOT NULL,
+      opening_amount REAL NOT NULL,
+      closing_amount TEXT,
+      closing_amount_on_staff TEXT,
+      total_card_slips TEXT,
+      total_cheques TEXT,
+      closing_note TEXT,
+      denominations TEXT,
+      start_time TEXT,
+      end_time TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      is_synced INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT
+    )
+  ''';
+
   /// Initializes the user database
   Future<Database> initUserDatabase(int userId) async {
     _userId = userId;
@@ -138,6 +159,7 @@ class UserDatabaseHelper {
     await db.execute(_createSellTable);
     await db.execute(_createSellLineTable);
     await db.execute(_createSellPaymentsTable);
+    await db.execute(_createCashierSessionsTable);
 
     // Create indexes for better query performance
     await db.execute(
@@ -146,6 +168,8 @@ class UserDatabaseHelper {
         'CREATE INDEX IF NOT EXISTS idx_sell_lines_sell_id ON sell_lines(sell_id)');
     await db.execute(
         'CREATE INDEX IF NOT EXISTS idx_sell_payments_sell_id ON sell_payments(sell_id)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_cashier_sessions_user_location_status ON cashier_sessions(user_id, location_id, status)');
 
     Logger.logI('✅ User database created successfully for user $_userId');
   }
@@ -153,7 +177,13 @@ class UserDatabaseHelper {
   /// Handles database upgrades
   Future<void> _onUpgrade(
       Database db, int oldVersion, int newVersion) async {
-    // Add migration logic here when needed
+    if (oldVersion < 2) {
+      // Add cashier_sessions table
+      await db.execute(_createCashierSessionsTable);
+      await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_cashier_sessions_user_location_status ON cashier_sessions(user_id, location_id, status)');
+      Logger.logI('✅ Added cashier_sessions table');
+    }
     Logger.logI(
         'User database upgraded from version $oldVersion to $newVersion');
   }

@@ -4,6 +4,7 @@ library;
 export 'base_model.dart';
 export 'auth_token_model.dart';
 export 'brand_model.dart';
+export 'cashier_session_model.dart';
 export 'business_model.dart';
 export 'category_model.dart';
 export 'contact_model.dart';

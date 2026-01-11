@@ -445,6 +445,17 @@ abstract final class LocaleKeys {
   static const String vietnameseDong = 'vietnamese_dong';
   static const String usDollar = 'us_dollar';
   static const String currency = 'currency';
+
+  // Cashier Session
+  static const String cashierCheckIn = 'cashier_check_in';
+  static const String cashierCheckOut = 'cashier_check_out';
+  static const String openingAmount = 'opening_amount';
+  static const String closingAmount = 'closing_amount';
+  static const String currentSession = 'current_session';
+  static const String count = 'count';
+  static const String denominations = 'denominations';
+  static const String pleaseEnterAmount = 'please_enter_amount';
+  static const String invalidAmount = 'invalid_amount';
 }
 
 
