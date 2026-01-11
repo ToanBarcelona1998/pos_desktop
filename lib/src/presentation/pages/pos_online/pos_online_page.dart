@@ -40,6 +40,9 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     allowsInlineMediaPlayback: true,
     iframeAllow: "camera; microphone",
     iframeAllowFullscreen: true,
+    supportMultipleWindows: true,
+    javaScriptCanOpenWindowsAutomatically: true,
+    useShouldOverrideUrlLoading: true,
   );
 
   late PosOnlineBloc _posOnlineBloc;
@@ -229,6 +232,32 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                       },
                       onWebViewCreated: (controller) async {
                         webViewController = controller;
+
+                        controller.addJavaScriptHandler(handlerName: 'getCashierLogin', callback: (args) {
+                          //             const userId = 7;
+                          //             const amount = document.getElementById('amount').value;
+                          //             const now = new Date();
+                          //
+                          //             const startTime = now.getFullYear() + '-' +
+                          //                 String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                          //                 String(now.getDate()).padStart(2, '0') + ' ' +
+                          //                 String(now.getHours()).padStart(2, '0') + ':' +
+                          //                 String(now.getMinutes()).padStart(2, '0') + ':' +
+                          //                 String(now.getSeconds()).padStart(2, '0');
+                          //
+                          //             const data = {
+                          //                 userId: userId,
+                          //                 amount: amount,
+                          //                 startTime: startTime,
+                          //             }
+
+
+                          // Cần cache lại hoặc lưu global state. Best practice là cache lại để sử dụng tính năng check in, out trong chế độ offline mode.
+
+                          final data = args[0];
+
+                          return 'success';
+                        });
 
                         // Handle authentication completed
                         controller.addJavaScriptHandler(
