@@ -6,6 +6,7 @@ import 'package:pos_final/app_config/di.dart';
 import 'package:pos_final/app_config/env_config.dart';
 import 'package:pos_final/src/application.dart';
 import 'package:pos_final/src/core/services/print_service.dart';
+import 'package:pos_final/src/core/utils/platform_helper.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
 import 'package:pos_final/src/offline_customer_application.dart';
 import 'package:pos_final/src/online_customer_application.dart';
@@ -19,59 +20,81 @@ Future<void> main() async {
   Bloc.observer = Observer();
 
   WidgetsFlutterBinding.ensureInitialized();
-  await windowManager.ensureInitialized();
 
-  final windowController = await WindowController.fromCurrentEngine();
+  // Desktop-only initialization
+  if (PlatformHelper.isDesktop) {
+    await windowManager.ensureInitialized();
 
-  await windowController.customMethods();
+    final windowController = await WindowController.fromCurrentEngine();
 
-  await PrintService.init();
-  // Check app version and clear cache/database if needed
-  await AppVersionManager.checkAndHandleVersionUpdate(EnvConfig.environment);
+    await windowController.customMethods();
 
-  await initDependencies(env: EnvConfig.environment);
+    await PrintService.init();
+    // Check app version and clear cache/database if needed
+    await AppVersionManager.checkAndHandleVersionUpdate(EnvConfig.environment);
 
-  final exchangeRateRepository = sl.get<ExchangeRateRepository>();
+    await initDependencies(env: EnvConfig.environment);
 
-  try{
-    await exchangeRateRepository.getExchangeRate();
-  }catch(e){
-    Logger.logE('Fetch exchange rate error ${e.toString()}', e);
-  }
+    final exchangeRateRepository = sl.get<ExchangeRateRepository>();
 
-  final WindowArguments windowArguments = WindowManagerUtils.parseWindowArguments(windowController.arguments);
+    try{
+      await exchangeRateRepository.getExchangeRate();
+    }catch(e){
+      Logger.logE('Fetch exchange rate error ${e.toString()}', e);
+    }
 
-  WindowOptions windowOptions = const WindowOptions(
-    size: Size(1200, 600),
-    center: true,
-    backgroundColor: Colors.transparent,
-    skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.normal,
-    windowButtonVisibility: true,
-  );
+    final WindowArguments windowArguments = WindowManagerUtils.parseWindowArguments(windowController.arguments);
 
-  switch(windowArguments.type){
-    case WindowType.none:
-      windowManager.waitUntilReadyToShow(windowOptions, () async {
-        await windowManager.show();
-        await windowManager.focus();
-      });
-      runApp(const Application());
-      break;
-    case WindowType.onlineCustomer:
-      windowManager.waitUntilReadyToShow(windowOptions, () async {
-        await windowManager.show();
-        await windowManager.focus();
-      });
-      final String href = windowArguments.params['href'];
-      runApp(OnlineCustomerApplication(href: href));
-      break;
-    case WindowType.offlineCustomer:
-      windowManager.waitUntilReadyToShow(windowOptions, () async {
-        await windowManager.show();
-        await windowManager.focus();
-      });
-      runApp(const OfflineCustomerApplication());
-      break;
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(1200, 600),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.normal,
+      windowButtonVisibility: true,
+    );
+
+    switch(windowArguments.type){
+      case WindowType.none:
+        windowManager.waitUntilReadyToShow(windowOptions, () async {
+          await windowManager.show();
+          await windowManager.focus();
+        });
+        runApp(const Application());
+        break;
+      case WindowType.onlineCustomer:
+        windowManager.waitUntilReadyToShow(windowOptions, () async {
+          await windowManager.show();
+          await windowManager.focus();
+        });
+        final String href = windowArguments.params['href'];
+        runApp(OnlineCustomerApplication(href: href));
+        break;
+      case WindowType.offlineCustomer:
+        windowManager.waitUntilReadyToShow(windowOptions, () async {
+          await windowManager.show();
+          await windowManager.focus();
+        });
+        runApp(const OfflineCustomerApplication());
+        break;
+    }
+  } else {
+    // Android/Mobile initialization
+    await PrintService.init();
+    // Check app version and clear cache/database if needed
+    await AppVersionManager.checkAndHandleVersionUpdate(EnvConfig.environment);
+
+    await initDependencies(env: EnvConfig.environment);
+
+    final exchangeRateRepository = sl.get<ExchangeRateRepository>();
+
+    try{
+      await exchangeRateRepository.getExchangeRate();
+    }catch(e){
+      Logger.logE('Fetch exchange rate error ${e.toString()}', e);
+    }
+
+    // Android: Run main app directly
+    runApp(const Application());
   }
 }

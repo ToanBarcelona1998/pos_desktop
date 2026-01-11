@@ -5,6 +5,11 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'platform_helper.dart';
+import 'window_manager_abstract.dart';
+import 'window_manager_desktop.dart';
+import 'window_manager_android.dart';
+
 extension WindowControllerExtension on WindowController {
   Future<void> customMethods() async {
     return await setWindowMethodHandler((call) async {
@@ -92,7 +97,23 @@ sealed class WindowManagerUtils {
   static Size? previousSize;
   static Offset? previousPosition;
 
+  /// Get platform-specific window manager
+  static WindowManagerAbstract getWindowManager() {
+    if (PlatformHelper.isDesktop) {
+      return WindowManagerDesktop();
+    } else if (PlatformHelper.isAndroid) {
+      return WindowManagerAndroid();
+    } else {
+      throw UnsupportedError('Platform not supported for multi-window');
+    }
+  }
+
   static void openFullScreen() async {
+    // Only support fullscreen on desktop
+    if (!PlatformHelper.isDesktop) {
+      return;
+    }
+    
     bool isFullScreen = await windowManager.isFullScreen();
     if (isFullScreen) {
       await windowManager.setFullScreen(false);
