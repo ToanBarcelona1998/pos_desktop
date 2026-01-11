@@ -29,9 +29,8 @@ class ExchangeRateRepositoryImpl implements ExchangeRateRepository {
 
   @override
   Future<Result<ExchangeRateEntity>> getExchangeRate({
-    String baseCurrency = 'VND',
-    String targetCurrency = 'USD',
-    double defaultRate = 25000.0,
+    String baseCurrency = 'USD',
+    String targetCurrency = 'VND',
   }) async {
     try {
       // Step 1: Check if rate was updated today
@@ -59,7 +58,7 @@ class ExchangeRateRepositoryImpl implements ExchangeRateRepository {
       if (_apiKey.isEmpty) {
         Logger.logE('❌ Exchange Rate API key is not configured');
         // Fallback to cache or default
-        return await _fallbackToCacheOrDefault(baseCurrency, targetCurrency, defaultRate);
+        return await _fallbackToCacheOrDefault(baseCurrency, targetCurrency);
       }
 
       final apiResult = await _remoteDataSource.getExchangeRate(
@@ -79,12 +78,12 @@ class ExchangeRateRepositoryImpl implements ExchangeRateRepository {
         onError: (failure) async {
           // API failed → fallback to cache or default
           Logger.logE('❌ API failed: ${failure.message}');
-          return await _fallbackToCacheOrDefault(baseCurrency, targetCurrency, defaultRate);
+          return await _fallbackToCacheOrDefault(baseCurrency, targetCurrency);
         },
       );
     } catch (e) {
       Logger.logE('❌ Exchange rate repository error', e);
-      return await _fallbackToCacheOrDefault(baseCurrency, targetCurrency, defaultRate);
+      return await _fallbackToCacheOrDefault(baseCurrency, targetCurrency);
     }
   }
 
@@ -102,8 +101,8 @@ class ExchangeRateRepositoryImpl implements ExchangeRateRepository {
 
   @override
   Future<Result<ExchangeRateEntity?>> getCachedExchangeRate({
-    String baseCurrency = 'VND',
-    String targetCurrency = 'USD',
+    String baseCurrency = 'USD',
+    String targetCurrency = 'VND',
   }) async {
     try {
       final model = await _localDataSource.getCachedExchangeRate(
@@ -126,9 +125,8 @@ class ExchangeRateRepositoryImpl implements ExchangeRateRepository {
   Future<Result<ExchangeRateEntity>> _fallbackToCacheOrDefault(
     String baseCurrency,
     String targetCurrency,
-    double? defaultRate,
   ) async {
-    final rateToUse = defaultRate ?? _defaultRate;
+    final rateToUse = _defaultRate;
     // Try to get from cache (yesterday's value is better than default)
     final cached = await _localDataSource.getCachedExchangeRate(
       baseCurrency: baseCurrency,

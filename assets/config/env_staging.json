@@ -4,7 +4,10 @@
   "web_url": "https://stg.oman.digityze.asia/",
   "web_header": "W8UqtE9LHZW+gRag78o4BCbN1M0w4HdaIFdLqHJ/9PA=",
   "client_id": "7",
-  "environment": "staging"
+  "environment": "staging",
+  "exchange_rate_api_key": "04f80373090bf35301a16e88",
+  "exchange_rate_base_url": "https://v6.exchangerate-api.com",
+  "default_exchange_rate": 26184.6772
 }
 
 

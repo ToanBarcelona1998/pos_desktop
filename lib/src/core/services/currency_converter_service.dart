@@ -15,19 +15,14 @@ class CurrencyConverterService {
     double? defaultRate,
   })  : _exchangeRateRepository =
             exchangeRateRepository ?? sl.get<ExchangeRateRepository>(),
-        _defaultRate = defaultRate ??
-            (sl.get<AppConfig>().defaultExchangeRate);
+        _defaultRate = defaultRate ?? (sl.get<AppConfig>().defaultExchangeRate);
 
   /// Convert amount from VND to USD
   Future<double?> convertToUSD(double amountVND) async {
-    final rateResult = await _exchangeRateRepository.getExchangeRate(
-      baseCurrency: 'VND',
-      targetCurrency: 'USD',
-      defaultRate: _defaultRate,
-    );
+    final rateResult = await _exchangeRateRepository.getCachedExchangeRate();
 
     return rateResult.fold(
-      onSuccess: (rate) => amountVND / rate.conversionRate,
+      onSuccess: (rate) => amountVND / (rate?.conversionRate ?? _defaultRate),
       onError: (_) {
         // Fallback to default rate
         return amountVND / _defaultRate;
@@ -37,14 +32,10 @@ class CurrencyConverterService {
 
   /// Convert amount from USD to VND
   Future<double?> convertToVND(double amountUSD) async {
-    final rateResult = await _exchangeRateRepository.getExchangeRate(
-      baseCurrency: 'VND',
-      targetCurrency: 'USD',
-      defaultRate: _defaultRate,
-    );
+    final rateResult = await _exchangeRateRepository.getCachedExchangeRate();
 
     return rateResult.fold(
-      onSuccess: (rate) => amountUSD * rate.conversionRate,
+      onSuccess: (rate) => amountUSD * (rate?.conversionRate ?? _defaultRate),
       onError: (_) {
         // Fallback to default rate
         return amountUSD * _defaultRate;
@@ -85,9 +76,7 @@ class CurrencyConverterService {
 
   /// Get current exchange rate (cached or from API)
   Future<ExchangeRateEntity?> getCurrentRate() async {
-    final result = await _exchangeRateRepository.getExchangeRate(
-      defaultRate: _defaultRate,
-    );
+    final result = await _exchangeRateRepository.getExchangeRate();
 
     return result.fold(
       onSuccess: (rate) => rate,

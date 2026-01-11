@@ -1,4 +1,5 @@
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_final/app_config/di.dart';
@@ -29,6 +30,14 @@ Future<void> main() async {
   await AppVersionManager.checkAndHandleVersionUpdate(EnvConfig.environment);
 
   await initDependencies(env: EnvConfig.environment);
+
+  final exchangeRateRepository = sl.get<ExchangeRateRepository>();
+
+  try{
+    await exchangeRateRepository.getExchangeRate();
+  }catch(e){
+    Logger.logE('Fetch exchange rate error ${e.toString()}', e);
+  }
 
   final WindowArguments windowArguments = WindowManagerUtils.parseWindowArguments(windowController.arguments);
 

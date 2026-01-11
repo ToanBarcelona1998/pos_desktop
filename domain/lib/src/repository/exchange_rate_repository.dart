@@ -8,9 +8,8 @@ abstract class ExchangeRateRepository {
   /// - If API fails → return cached (yesterday's value)
   /// - If no cache and API fails → return default value
   Future<Result<ExchangeRateEntity>> getExchangeRate({
-    String baseCurrency = 'VND',
-    String targetCurrency = 'USD',
-    double defaultRate = 25000.0,
+    String baseCurrency = 'USD',
+    String targetCurrency = 'VND',
   });
 
   /// Save exchange rate to cache
@@ -18,7 +17,7 @@ abstract class ExchangeRateRepository {
 
   /// Get cached exchange rate
   Future<Result<ExchangeRateEntity?>> getCachedExchangeRate({
-    String baseCurrency = 'VND',
-    String targetCurrency = 'USD',
+    String baseCurrency = 'USD',
+    String targetCurrency = 'VND',
   });
 }
