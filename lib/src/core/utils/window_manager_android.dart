@@ -1,30 +1,23 @@
-// Note: This file requires flutter_presentation_display package
-// Run 'flutter pub get' to install the package
-// TODO: Uncomment imports and implementation once package is available
-
 import 'dart:async';
 
-// TODO: Uncomment when flutter_presentation_display package is available
-// import 'package:flutter_presentation_display/flutter_presentation_display.dart';
+import 'package:flutter_presentation_display/flutter_presentation_display.dart';
 
 import 'window_manager_abstract.dart';
 
 /// Android implementation of WindowManagerAbstract using flutter_presentation_display
 class WindowManagerAndroid implements WindowManagerAbstract {
-  // TODO: Uncomment when flutter_presentation_display package is available
-  // final FlutterPresentationDisplay _display = FlutterPresentationDisplay();
+  final FlutterPresentationDisplay _display = FlutterPresentationDisplay();
   int? _currentDisplayId;
   WindowType? _currentWindowType;
   StreamSubscription? _displayChangeSubscription;
   final _windowStatusController = StreamController<WindowStatus>.broadcast();
+  Function(Map<String, dynamic>)? _cartUpdateCallback;
 
   WindowManagerAndroid() {
     _setupDisplayListener();
   }
 
   void _setupDisplayListener() {
-    // TODO: Uncomment when flutter_presentation_display package is available
-    /*
     _displayChangeSubscription = _display.connectedDisplaysChangedStream.listen((displayId) {
       // Handle display connection changes
       if (displayId == null) {
@@ -46,11 +39,10 @@ class WindowManagerAndroid implements WindowManagerAbstract {
     // Listen for data from presentation display
     _display.listenDataFromPresentationDisplay((data) {
       // Handle data from customer window
-      if (data is Map<String, dynamic>) {
-        // Process data if needed
+      if (data is Map<String, dynamic> && _cartUpdateCallback != null) {
+        _cartUpdateCallback!(data);
       }
     });
-    */
   }
 
   @override
@@ -58,8 +50,6 @@ class WindowManagerAndroid implements WindowManagerAbstract {
     required WindowType type,
     Map<String, dynamic>? params,
   }) async {
-    // TODO: Implement when flutter_presentation_display package is available
-    /*
     try {
       // Get available displays
       final displays = await _display.getDisplays();
@@ -69,9 +59,13 @@ class WindowManagerAndroid implements WindowManagerAbstract {
       }
 
       // Use first secondary display (index 1) if available, otherwise use primary (index 0)
-      final displayId = displays.length > 1 ? displays[1].displayId : displays[0].displayId;
+      // For POS devices like SUNMI T2s, secondary display is usually at index 1
+      final displayId = displays.length > 1 
+          ? (displays[1].displayId ?? displays[0].displayId ?? 1)
+          : (displays[0].displayId ?? 1);
 
       // Determine router name based on type
+      // These router names must match routes defined in app navigation
       final routerName = type == WindowType.offlineCustomer
           ? '/offline_customer'
           : '/online_customer';
@@ -103,22 +97,13 @@ class WindowManagerAndroid implements WindowManagerAbstract {
       _windowStatusController.add(WindowStatus(isOpen: false));
       rethrow;
     }
-    */
-    
-    // Temporary placeholder implementation
-    throw UnsupportedError(
-      'flutter_presentation_display package not available. '
-      'Please run "flutter pub get" to install the package.',
-    );
   }
 
   @override
   Future<void> closeCustomerWindow() async {
-    // TODO: Implement when flutter_presentation_display package is available
-    /*
     if (_currentDisplayId != null) {
       try {
-        await _display.hideSecondaryDisplay(_currentDisplayId!);
+        await _display.hideSecondaryDisplay(displayId: _currentDisplayId!);
       } catch (e) {
         // Ignore errors
       }
@@ -126,11 +111,6 @@ class WindowManagerAndroid implements WindowManagerAbstract {
       _currentWindowType = null;
       _windowStatusController.add(WindowStatus(isOpen: false));
     }
-    */
-    
-    _currentDisplayId = null;
-    _currentWindowType = null;
-    _windowStatusController.add(WindowStatus(isOpen: false));
   }
 
   @override
@@ -157,8 +137,6 @@ class WindowManagerAndroid implements WindowManagerAbstract {
 
   /// Transfer data to customer window (presentation display)
   Future<void> transferDataToCustomer(Map<String, dynamic> data) async {
-    // TODO: Implement when flutter_presentation_display package is available
-    /*
     if (_currentDisplayId != null) {
       try {
         await _display.transferDataToPresentation(data);
@@ -166,12 +144,34 @@ class WindowManagerAndroid implements WindowManagerAbstract {
         // Handle error silently or log
       }
     }
-    */
+  }
+
+  @override
+  Future<void> syncCartData(Map<String, dynamic> cartData) async {
+    if (_currentDisplayId == null) return;
+
+    try {
+      await _display.transferDataToPresentation(cartData);
+    } catch (e) {
+      // Handle error silently
+    }
+  }
+
+  @override
+  void listenToCartUpdates(Function(Map<String, dynamic>) onUpdate) {
+    _cartUpdateCallback = onUpdate;
+    // Listener is already set up in _setupDisplayListener
+  }
+
+  @override
+  void unregisterCartListener() {
+    _cartUpdateCallback = null;
   }
 
   @override
   void dispose() {
     _displayChangeSubscription?.cancel();
+    unregisterCartListener();
     _windowStatusController.close();
   }
 }

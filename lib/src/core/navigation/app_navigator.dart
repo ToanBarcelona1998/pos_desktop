@@ -17,6 +17,8 @@ import '../../../pages/notifications/notify.dart';
 import '../../../pages/on_boarding/on_boarding.dart';
 import '../../presentation/pages/pos_online/pos_online_page.dart';
 import '../../presentation/pages/pos/pos_page.dart';
+import '../../presentation/pages/offline_customer/offline_customer_page.dart';
+import '../../presentation/pages/online_customer/online_customer_page.dart';
 import '../../../pages/product_stock_report.dart';
 import '../../presentation/pages/products/products_page.dart';
 import '../../../pages/profit_loss_report.dart';
@@ -289,6 +291,23 @@ class AppNavigator {
       // Customer routes
       case '/customer':
         return _buildRoute(settings, const Customer());
+
+      case '/offline_customer':
+        return _buildRoute(settings, const OfflineCustomerPage());
+
+      case '/online_customer':
+        final href = args is String ? args : (args is Map ? args['href'] as String? : null);
+        if (href == null) {
+          return _buildRoute(
+            settings,
+            const Scaffold(
+              body: Center(
+                child: Text('Missing href parameter for online customer page'),
+              ),
+            ),
+          );
+        }
+        return _buildRoute(settings, OnlineCustomerPage(href: href));
 
       case '/leads':
         return _buildRoute(settings, const Contacts());

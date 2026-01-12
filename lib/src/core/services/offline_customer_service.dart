@@ -2,6 +2,7 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:domain/domain.dart';
 
 import '../../presentation/pages/pos/pos.dart';
+import '../utils/window_manager_utils.dart';
 
 /// Simplified cart item for transmission between windows
 class CartSyncItem {
@@ -138,8 +139,23 @@ class OfflineCustomerService {
   );
 
   /// Broadcast cart update to customer window (called from POS window)
+  /// Now uses WindowManagerAbstract for platform-agnostic syncing
   Future<void> broadcastCartUpdate(CartSyncData cartData) async {
     try {
+      // Try to use window manager first (platform-agnostic)
+      try {
+        final windowManager = WindowManagerUtils.getWindowManager();
+        final isOpen = await windowManager.isCustomerWindowOpen();
+        if (isOpen) {
+          await windowManager.syncCartData(cartData.toJson());
+          Logger.logI('Cart update synced via window manager');
+          return;
+        }
+      } catch (e) {
+        // Window manager not available or not supported, fall back to desktop method channel
+      }
+
+      // Fallback to desktop-specific method channel (for backward compatibility)
       await offlineCustomerMethodChannel.invokeMethod('update_cart', {
         'data': cartData.toJson(),
       });

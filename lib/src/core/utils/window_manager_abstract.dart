@@ -35,6 +35,15 @@ abstract class WindowManagerAbstract {
   /// Stream of window status changes
   Stream<WindowStatus> get windowStatusStream;
   
+  /// Sync cart data to customer window (presentation display)
+  Future<void> syncCartData(Map<String, dynamic> cartData);
+  
+  /// Listen to cart updates from customer window
+  void listenToCartUpdates(Function(Map<String, dynamic>) onUpdate);
+  
+  /// Unregister cart update listener
+  void unregisterCartListener();
+  
   /// Dispose resources
   void dispose();
 }

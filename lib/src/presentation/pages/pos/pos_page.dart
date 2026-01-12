@@ -11,7 +11,9 @@ import 'package:pos_final/src/core/services/offline_customer_service.dart';
 import 'package:pos_final/src/core/services/print_service.dart';
 import 'package:pos_final/src/core/services/currency_converter_service.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:pos_final/src/core/utils/window_manager_abstract.dart' as wm_abstract;
+import 'package:pos_final/src/core/utils/platform_helper.dart';
+import 'package:desktop_multi_window/desktop_multi_window.dart' show onWindowsChanged;
 import '../../../../app_config/di.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/localization/locale_keys.dart';
@@ -40,8 +42,9 @@ class PosPage extends StatefulWidget {
 }
 
 class _PosPageState extends State<PosPage> {
-  WindowController? _customerWindowController;
-  StreamSubscription ?_subscription;
+  wm_abstract.WindowManagerAbstract? _windowManager;
+  StreamSubscription? _windowStatusSubscription;
+  StreamSubscription? _subscription;
 
   late final BarcodeScannerService scanner;
   late final WindowActiveObserver windowObserver;
@@ -66,36 +69,35 @@ class _PosPageState extends State<PosPage> {
       scanner.setEnabled(windowObserver.isActive.value);
     });
 
-    _subscription = onWindowsChanged.listen((_) async {
-      if(_customerWindowController != null){
-        bool setNullCustomerWindow = false;
-        try{
-
-          final windows = await WindowController.getAll();
-
-          if(!windows.map((e) => e.windowId).contains(_customerWindowController!.windowId)){
-            setNullCustomerWindow = true;
-            try{
-              await _customerWindowController!.close();
-            }catch(e){
-              //
-            }
-            await Future.delayed(const Duration(milliseconds: 300));
+    // Initialize window manager (only on supported platforms)
+    try {
+      if (PlatformHelper.isDesktop || PlatformHelper.isAndroid) {
+        _windowManager = WindowManagerUtils.getWindowManager();
+        
+        // Listen to window status changes
+        _windowStatusSubscription = _windowManager!.windowStatusStream.listen((status) {
+          if (mounted && !status.isOpen) {
+            context.read<PosBloc>().add(PosChangeCustomerWindowStatus(false));
           }
-        }catch(e){
-          setNullCustomerWindow = true;
-        }
+        });
+      }
+    } catch (e) {
+      // Platform not supported for multi-window, ignore
+      Logger.logI('Window manager not available on this platform');
+    }
 
-        if(setNullCustomerWindow){
-          _customerWindowController = null;
-
-          if(context.mounted){
+    // Desktop-only: Legacy window change listener (for backward compatibility)
+    if (PlatformHelper.isDesktop) {
+      _subscription = onWindowsChanged.listen((_) async {
+        if (_windowManager != null) {
+          final isOpen = await _windowManager!.isCustomerWindowOpen();
+          if (!isOpen && mounted) {
             context.read<PosBloc>().add(PosChangeCustomerWindowStatus(false));
           }
         }
-      }
+      });
+    }
 
-    });
     context.read<PosBloc>().add(const PosInitialize());
   }
 
@@ -103,10 +105,16 @@ class _PosPageState extends State<PosPage> {
   void dispose() {
     scanner.stop();
     windowObserver.dispose();
+    
+    _windowStatusSubscription?.cancel();
+    _windowStatusSubscription = null;
+    
     try {
-      _customerWindowController?.close();
+      _windowManager?.closeCustomerWindow();
     } catch (_) {}
-    _customerWindowController = null;
+    
+    _windowManager?.dispose();
+    _windowManager = null;
 
     _subscription?.cancel();
     _subscription = null;
@@ -114,48 +122,79 @@ class _PosPageState extends State<PosPage> {
   }
 
   Future<void> _openCustomerWindow(BuildContext context) async {
+    if (_windowManager == null) {
+      if (mounted) {
+        ToastManager.showError(context, 'Multi-window not supported on this platform');
+      }
+      return;
+    }
+
     try {
-      if (_customerWindowController != null) {
-        await _customerWindowController!.show();
-        await _customerWindowController!.focus();
+      final isOpen = await _windowManager!.isCustomerWindowOpen();
+      
+      if (isOpen) {
+        await _windowManager!.showCustomerWindow();
         return;
       }
-      // Create new customer window
-      final windowArgs = WindowArguments(
-        type: WindowType.offlineCustomer,
-        params: {
 
-        },
+      // Get current cart state
+      final state = context.read<PosBloc>().state;
+      final cartSyncData = OfflineCustomerService.convertToSyncData(
+        cartItems: state.cartItems,
+        subtotal: state.subtotal,
+        discount: state.invoiceDiscount,
+        tax: state.taxAmount,
+        total: state.total,
+        currencySymbol: state.currencySymbol,
+        customer: state.selectedCustomer,
+        paymentMethod: state.selectedPaymentMethod,
+        paymentAccount: state.selectedPaymentAccount,
       );
-      _customerWindowController = await WindowManagerUtils.createNewWindow(windowArgs);
 
-      if(context.mounted){
+      // Open customer window
+      await _windowManager!.openCustomerWindow(
+        type: wm_abstract.WindowType.offlineCustomer,
+        params: {},
+      );
+
+      if (context.mounted) {
         context.read<PosBloc>().add(PosChangeCustomerWindowStatus(true));
       }
 
-      // Broadcast current cart state immediately
-
-      await Future.delayed(const Duration(milliseconds: 2), (){
-        if(context.mounted){
-          final state = context.read<PosBloc>().state;
-          final cartSyncData = OfflineCustomerService.convertToSyncData(
-            cartItems: state.cartItems,
-            subtotal: state.subtotal,
-            discount: state.invoiceDiscount,
-            tax: state.taxAmount,
-            total: state.total,
-            currencySymbol: state.currencySymbol,
-            customer: state.selectedCustomer,
-            paymentMethod: state.selectedPaymentMethod,
-            paymentAccount: state.selectedPaymentAccount,
-          );
-          OfflineCustomerService().broadcastCartUpdate(cartSyncData);
-        }
-      });
-
+      // Sync cart data after opening window (with small delay to ensure window is ready)
+      await Future.delayed(const Duration(milliseconds: 100));
+      await _windowManager!.syncCartData(cartSyncData.toJson());
     } catch (e) {
-      // Handle error - maybe show a toast
-      Logger.logE('Failed to open customer window');
+      Logger.logE('Failed to open customer window', e);
+      if (mounted) {
+        ToastManager.showError(context, 'Failed to open customer window: ${e.toString()}');
+      }
+    }
+  }
+
+  Future<void> _syncCartDataToCustomerWindow(PosState state) async {
+    if (_windowManager == null) return;
+
+    try {
+      final isOpen = await _windowManager!.isCustomerWindowOpen();
+      if (!isOpen) return;
+
+      final cartSyncData = OfflineCustomerService.convertToSyncData(
+        cartItems: state.cartItems,
+        subtotal: state.subtotal,
+        discount: state.invoiceDiscount,
+        tax: state.taxAmount,
+        total: state.total,
+        currencySymbol: state.currencySymbol,
+        customer: state.selectedCustomer,
+        paymentMethod: state.selectedPaymentMethod,
+        paymentAccount: state.selectedPaymentAccount,
+      );
+
+      await _windowManager!.syncCartData(cartSyncData.toJson());
+    } catch (e) {
+      // Ignore sync errors silently
+      Logger.logI('Failed to sync cart data to customer window: $e');
     }
   }
 
@@ -169,7 +208,15 @@ class _PosPageState extends State<PosPage> {
           previous.errorMessage != current.errorMessage ||
           previous.successMessage != current.successMessage ||
           previous.shouldPrintInvoice != current.shouldPrintInvoice ||
-          previous.createdSellId != current.createdSellId,
+          previous.createdSellId != current.createdSellId ||
+          previous.cartItems != current.cartItems ||
+          previous.subtotal != current.subtotal ||
+          previous.invoiceDiscount != current.invoiceDiscount ||
+          previous.taxAmount != current.taxAmount ||
+          previous.total != current.total ||
+          previous.selectedCustomer != current.selectedCustomer ||
+          previous.selectedPaymentMethod != current.selectedPaymentMethod ||
+          previous.selectedPaymentAccount != current.selectedPaymentAccount,
       listener: (context, state) {
         if (state.actionStatus == PosStatus.error &&
             state.errorMessage != null) {
@@ -199,6 +246,11 @@ class _PosPageState extends State<PosPage> {
             state.selectedLocationId!,
             state.taxId,
           );
+        }
+
+        // Sync cart data to customer window when cart changes
+        if (_windowManager != null) {
+          _syncCartDataToCustomerWindow(state);
         }
       },
       builder: (context, state) {

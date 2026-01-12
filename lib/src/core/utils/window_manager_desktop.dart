@@ -9,8 +9,9 @@ import 'window_manager_utils.dart' as utils;
 class WindowManagerDesktop implements WindowManagerAbstract {
   WindowController? _customerWindowController;
   final _windowStatusController = StreamController<WindowStatus>.broadcast();
-  WindowType? _currentWindowType;
   StreamSubscription? _windowChangeSubscription;
+  WindowMethodChannel? _methodChannel;
+  Function(Map<String, dynamic>)? _cartUpdateCallback;
 
   WindowManagerDesktop() {
     _setupWindowListener();
@@ -46,7 +47,6 @@ class WindowManagerDesktop implements WindowManagerAbstract {
 
       // Create new window
       _customerWindowController = await utils.WindowManagerUtils.createNewWindow(windowArgs);
-      _currentWindowType = type;
 
       _windowStatusController.add(WindowStatus(
         isOpen: true,
@@ -67,7 +67,6 @@ class WindowManagerDesktop implements WindowManagerAbstract {
         // Ignore errors when closing
       }
       _customerWindowController = null;
-      _currentWindowType = null;
       _windowStatusController.add(WindowStatus(isOpen: false));
     }
   }
@@ -104,8 +103,65 @@ class WindowManagerDesktop implements WindowManagerAbstract {
   Stream<WindowStatus> get windowStatusStream => _windowStatusController.stream;
 
   @override
+  Future<void> syncCartData(Map<String, dynamic> cartData) async {
+    if (_customerWindowController == null) return;
+
+    try {
+      _methodChannel ??= WindowMethodChannel(
+        'com.oman.offline_customer_channel',
+        mode: ChannelMode.unidirectional,
+      );
+
+      await _methodChannel!.invokeMethod('update_cart', {
+        'data': cartData,
+      });
+    } catch (e) {
+      // Window might be closed, ignore error
+    }
+  }
+
+  @override
+  void listenToCartUpdates(Function(Map<String, dynamic>) onUpdate) {
+    _cartUpdateCallback = onUpdate;
+
+    try {
+      _methodChannel ??= WindowMethodChannel(
+        'com.oman.offline_customer_channel',
+        mode: ChannelMode.unidirectional,
+      );
+
+      _methodChannel!.setMethodCallHandler((call) async {
+        if (call.method == 'update_cart') {
+          try {
+            final data = Map<String, dynamic>.from(call.arguments);
+            if (data['data'] != null) {
+              final cartData = Map<String, dynamic>.from(data['data']);
+              onUpdate(cartData);
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+      });
+    } catch (e) {
+      // Ignore setup errors
+    }
+  }
+
+  @override
+  void unregisterCartListener() {
+    _cartUpdateCallback = null;
+    try {
+      _methodChannel?.setMethodCallHandler(null);
+    } catch (e) {
+      // Ignore errors
+    }
+  }
+
+  @override
   void dispose() {
     _windowChangeSubscription?.cancel();
+    unregisterCartListener();
     _windowStatusController.close();
   }
 
