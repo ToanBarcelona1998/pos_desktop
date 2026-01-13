@@ -15,6 +15,8 @@ import 'package:pos_final/src/core/utils/window_manager_abstract.dart' as wm_abs
 import 'package:pos_final/src/core/utils/platform_helper.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart' show onWindowsChanged;
 import '../../../../app_config/di.dart';
+import '../../../application/auth/auth_cubit.dart';
+import '../../../application/auth/auth_state.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../widgets/app_loading.dart';
@@ -32,6 +34,10 @@ import 'widgets/pos_customer_selector_widget.dart';
 import 'widgets/pos_suspended_sales_widget.dart';
 import 'widgets/pos_history_sells_widget.dart';
 import 'widgets/pos_payment_method_dialog.dart';
+import 'cashier_session/cashier_session_cubit.dart';
+import 'cashier_session/cashier_session_state.dart';
+import 'widgets/cashier_checkin_dialog.dart';
+import 'widgets/cashier_checkout_dialog.dart';
 
 /// POS page
 class PosPage extends StatefulWidget {
@@ -48,6 +54,9 @@ class _PosPageState extends State<PosPage> {
 
   late final BarcodeScannerService scanner;
   late final WindowActiveObserver windowObserver;
+  
+  bool _cashierSessionInitialized = false; // Track initialization
+  PosState? _previousPosState; // Track previous POS state for location change detection
 
   @override
   void initState() {
@@ -202,57 +211,117 @@ class _PosPageState extends State<PosPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    return BlocConsumer<PosBloc, PosState>(
+    return BlocConsumer<CashierSessionCubit, CashierSessionState>(
       listenWhen: (previous, current) =>
-          previous.actionStatus != current.actionStatus ||
-          previous.errorMessage != current.errorMessage ||
-          previous.successMessage != current.successMessage ||
-          previous.shouldPrintInvoice != current.shouldPrintInvoice ||
-          previous.createdSellId != current.createdSellId ||
-          previous.cartItems != current.cartItems ||
-          previous.subtotal != current.subtotal ||
-          previous.invoiceDiscount != current.invoiceDiscount ||
-          previous.taxAmount != current.taxAmount ||
-          previous.total != current.total ||
-          previous.selectedCustomer != current.selectedCustomer ||
-          previous.selectedPaymentMethod != current.selectedPaymentMethod ||
-          previous.selectedPaymentAccount != current.selectedPaymentAccount,
-      listener: (context, state) {
-        if (state.actionStatus == PosStatus.error &&
-            state.errorMessage != null) {
-          final translatedMessage = l10n.translate(state.errorMessage!);
-          ToastManager.showError(context, translatedMessage);
+          previous.showCheckInDialog != current.showCheckInDialog ||
+          previous.showCheckOutDialog != current.showCheckOutDialog ||
+          previous.checkOutSuccess != current.checkOutSuccess ||
+          previous.errorMessage != current.errorMessage,
+      listener: (context, sessionState) {
+        // Show check-in dialog
+        if (sessionState.showCheckInDialog) {
+          _showCheckInDialog(context);
         }
-        if (state.actionStatus == PosStatus.success &&
-            state.successMessage != null) {
-          // Translate success message key
-          final translatedMessage = l10n.translate(state.successMessage!);
-          ToastManager.showSuccess(context, translatedMessage);
+        
+        // Show check-out dialog
+        if (sessionState.showCheckOutDialog) {
+          _showCheckOutDialog(context, sessionState);
         }
-
-        // Handle invoice printing
-        if (state.shouldPrintInvoice && state.createdSellId != null) {
-          // Reset the flag immediately to prevent multiple prints
-          context.read<PosBloc>().add(const PosClearPrintFlag());
-
-          // Show print dialog
-          // [TODO] Can't show print now with html
-          _showPrintInvoiceDialog(
-            context,
-            state.products,
-            state.currencySymbol,
-            context.authCubit.currentUser?.fullName ?? '',
-            state.createdSellId!,
-            state.selectedLocationId!,
-            state.taxId,
-          );
+        
+        // Logout after successful check-out
+        if (sessionState.checkOutSuccess) {
+          _logoutAfterCheckOut(context);
         }
-
-        // Sync cart data to customer window when cart changes
-        if (_windowManager != null) {
-          _syncCartDataToCustomerWindow(state);
+        
+        // Show error if any
+        if (sessionState.errorMessage != null) {
+          ToastManager.showError(context, sessionState.errorMessage!);
         }
       },
+      builder: (context, sessionState) {
+        return BlocConsumer<PosBloc, PosState>(
+          listenWhen: (previous, current) {
+            _previousPosState = previous;
+            return previous.actionStatus != current.actionStatus ||
+                previous.errorMessage != current.errorMessage ||
+                previous.successMessage != current.successMessage ||
+                previous.shouldPrintInvoice != current.shouldPrintInvoice ||
+                previous.createdSellId != current.createdSellId ||
+                previous.cartItems != current.cartItems ||
+                previous.subtotal != current.subtotal ||
+                previous.invoiceDiscount != current.invoiceDiscount ||
+                previous.taxAmount != current.taxAmount ||
+                previous.total != current.total ||
+                previous.selectedCustomer != current.selectedCustomer ||
+                previous.selectedPaymentMethod != current.selectedPaymentMethod ||
+                previous.selectedPaymentAccount != current.selectedPaymentAccount ||
+                // Listen when POS is ready and location is selected
+                (previous.pageStatus == PosPageStatus.loading && 
+                 current.pageStatus == PosPageStatus.idle) ||
+                (previous.selectedLocationId != current.selectedLocationId &&
+                 current.selectedLocationId != null);
+          },
+          listener: (context, state) {
+            if (state.actionStatus == PosStatus.error &&
+                state.errorMessage != null) {
+              final translatedMessage = l10n.translate(state.errorMessage!);
+              ToastManager.showError(context, translatedMessage);
+            }
+            if (state.actionStatus == PosStatus.success &&
+                state.successMessage != null) {
+              // Translate success message key
+              final translatedMessage = l10n.translate(state.successMessage!);
+              ToastManager.showSuccess(context, translatedMessage);
+            }
+
+            // Handle invoice printing
+            if (state.shouldPrintInvoice && state.createdSellId != null) {
+              // Reset the flag immediately to prevent multiple prints
+              context.read<PosBloc>().add(const PosClearPrintFlag());
+
+              // Show print dialog
+              // [TODO] Can't show print now with html
+              _showPrintInvoiceDialog(
+                context,
+                state.products,
+                state.currencySymbol,
+                context.authCubit.currentUser?.fullName ?? '',
+                state.createdSellId!,
+                state.selectedLocationId!,
+                state.taxId,
+              );
+            }
+
+            // Sync cart data to customer window when cart changes
+            if (_windowManager != null) {
+              _syncCartDataToCustomerWindow(state);
+            }
+            
+            // Initialize cashier session when POS is ready and location is available
+            if (!_cashierSessionInitialized &&
+                state.pageStatus == PosPageStatus.idle &&
+                state.selectedLocationId != null) {
+              _initializeCashierSession(context, state.selectedLocationId!);
+            }
+            
+            // Reset flag when location changes to allow re-initialization
+            if (_previousPosState != null &&
+                _previousPosState!.selectedLocationId != state.selectedLocationId &&
+                state.selectedLocationId != null) {
+              _cashierSessionInitialized = false;
+              
+              // If there's an active session from previous location, log it
+              final cashierSessionCubit = context.read<CashierSessionCubit>();
+              final sessionState = cashierSessionCubit.state;
+              
+              if (sessionState.activeSession != null) {
+                Logger.logI('Location changed but active session exists for previous location');
+              }
+              
+              // Re-initialize for new location
+              _initializeCashierSession(context, state.selectedLocationId!);
+            }
+          },
       builder: (context, state) {
         if (state.pageStatus == PosPageStatus.loading ||
             state.pageStatus == PosPageStatus.initial) {
@@ -277,7 +346,22 @@ class _PosPageState extends State<PosPage> {
             },
             onSuspendedSales: () => showSuspendedSalesDialog(context),
             onOpenCustomerWindow: () => _openCustomerWindow(context),
-            onCloseSession: () {},
+            onCloseSession: () {
+              final cashierSessionCubit = context.read<CashierSessionCubit>();
+              final sessionState = cashierSessionCubit.state;
+              
+              // Check if there's an active session
+              if (sessionState.activeSession == null) {
+                ToastManager.showError(
+                  context,
+                  'No active session to close',
+                );
+                return;
+              }
+              
+              // Show check-out dialog
+              cashierSessionCubit.showCheckOutDialog();
+            },
           ),
           body: Row(
             children: [
@@ -390,7 +474,134 @@ class _PosPageState extends State<PosPage> {
           ),
         );
       },
+        );
+      },
     );
+  }
+
+  Future<void> _initializeCashierSession(
+    BuildContext context,
+    int locationId,
+  ) async {
+    if (_cashierSessionInitialized) return; // Prevent multiple calls
+    
+    final authCubit = context.read<AuthCubit>();
+    final user = authCubit.state is Authenticated 
+        ? (authCubit.state as Authenticated).user 
+        : null;
+    
+    if (user == null) {
+      Logger.logI('User not authenticated, skipping cashier session init');
+      return;
+    }
+    
+    _cashierSessionInitialized = true; // Mark as initialized
+    
+    final cashierSessionCubit = context.read<CashierSessionCubit>();
+    await cashierSessionCubit.initialize(
+      userId: user.id,
+      locationId: locationId,
+    );
+  }
+
+  void _showCheckInDialog(BuildContext context) {
+    final authCubit = context.read<AuthCubit>();
+    final posBloc = context.read<PosBloc>();
+    final cashierSessionCubit = context.read<CashierSessionCubit>();
+    
+    final user = authCubit.state is Authenticated 
+        ? (authCubit.state as Authenticated).user 
+        : null;
+    final locationId = posBloc.state.selectedLocationId;
+    
+    if (user == null || locationId == null) {
+      ToastManager.showError(context, 'User or location not available');
+      return;
+    }
+    
+    DialogProvider.showCustomDialog(
+      context,
+      child: CashierCheckInDialog(
+        onCheckIn: (amount) async {
+          await cashierSessionCubit.checkIn(
+            userId: user.id,
+            locationId: locationId,
+            amount: amount,
+          );
+        },
+      ),
+    );
+  }
+
+  void _showCheckOutDialog(
+    BuildContext context,
+    CashierSessionState sessionState,
+  ) {
+    if (sessionState.activeSession == null) {
+      return;
+    }
+    
+    final authCubit = context.read<AuthCubit>();
+    final posBloc = context.read<PosBloc>();
+    final cashierSessionCubit = context.read<CashierSessionCubit>();
+    
+    final user = authCubit.state is Authenticated 
+        ? (authCubit.state as Authenticated).user 
+        : null;
+    final locationId = posBloc.state.selectedLocationId;
+    final location = posBloc.state.locations
+        .where((l) => l.id == locationId)
+        .isNotEmpty
+        ? posBloc.state.locations.firstWhere((l) => l.id == locationId)
+        : null;
+    
+    if (user == null || locationId == null) {
+      ToastManager.showError(context, 'User or location not available');
+      return;
+    }
+    
+    DialogProvider.showCustomDialog(
+      context,
+      child: CashierCheckOutDialog(
+        session: sessionState.activeSession!,
+        cashierName: _getUserDisplayName(user),
+        locationName: location?.name ?? 'Location',
+        onCheckOut: ({
+          required double closingAmount,
+          required double closingAmountOnStaff,
+          required double totalCardSlips,
+          required double totalCheques,
+          required String closingNote,
+          required Map<String, int> denominations,
+        }) async {
+          await cashierSessionCubit.checkOut(
+            closingAmount: closingAmount,
+            closingAmountOnStaff: closingAmountOnStaff,
+            totalCardSlips: totalCardSlips,
+            totalCheques: totalCheques,
+            closingNote: closingNote,
+            denominations: denominations,
+            userId: user.id,
+            locationId: locationId,
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _logoutAfterCheckOut(BuildContext context) async {
+    final authCubit = context.read<AuthCubit>();
+    
+    // Logout directly after check-out
+    // App will automatically handle Unauthenticated state
+    await authCubit.logout();
+  }
+
+  String _getUserDisplayName(UserEntity user) {
+    if (user.firstName != null || user.lastName != null) {
+      return '${user.firstName ?? ''} ${user.lastName ?? ''}'.trim();
+    }
+    return user.username ?? 'Cashier';
   }
 
   void _showCustomerSelector(BuildContext context) {

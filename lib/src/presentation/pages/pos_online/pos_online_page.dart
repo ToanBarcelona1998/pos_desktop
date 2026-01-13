@@ -19,6 +19,7 @@ import 'package:pos_final/src/core/utils/window_manager_utils.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/dialog_provider.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/base_dialog_widget.dart';
 import 'package:data/data.dart';
+import 'package:pos_final/src/presentation/pages/pos/cashier_session/cashier_session_cubit.dart';
 
 import '../../presentation.dart';
 
@@ -131,6 +132,9 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                 sl.get<GetPaymentAccountsByTypeUseCase>(),
             getFinalSellsUseCase: sl.get<GetFinalSellsUseCase>(),
           ),
+        ),
+        BlocProvider(
+          create: (context) => CashierSessionCubit(),
         ),
       ],
       child: BlocListener<AuthCubit, AuthState>(

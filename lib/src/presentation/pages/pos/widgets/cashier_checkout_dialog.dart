@@ -1,5 +1,7 @@
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
+import 'package:pos_final/helpers/app_theme.dart';
+import 'package:pos_final/src/presentation/presentation.dart';
 
 import '../../../../../helpers/other_helpers.dart';
 import '../../../../core/core.dart';
@@ -33,19 +35,27 @@ class CashierCheckOutDialog extends StatefulWidget {
 class _CashierCheckOutDialogState extends State<CashierCheckOutDialog> {
   final Map<String, TextEditingController> _denominationControllers = {};
   final _noteController = TextEditingController();
-  
+
   // Vietnamese banknotes (1000 to 500000)
   static const List<int> _denominations = [
-    500000, 200000, 100000, 50000, 20000, 10000, 5000, 2000, 1000,
+    500000,
+    200000,
+    100000,
+    50000,
+    20000,
+    10000,
+    5000,
+    2000,
+    1000,
   ];
 
   @override
   void initState() {
     super.initState();
-    final helper = Helper();
     for (final denom in _denominations) {
       _denominationControllers[denom.toString()] = TextEditingController(
-        text: widget.session.denominations?[denom.toString()]?.toString() ?? '0',
+        text:
+            widget.session.denominations?[denom.toString()]?.toString() ?? '0',
       );
     }
   }
@@ -108,7 +118,7 @@ class _CashierCheckOutDialogState extends State<CashierCheckOutDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Total amount display
             Container(
               padding: const EdgeInsets.all(16),
@@ -138,14 +148,15 @@ class _CashierCheckOutDialogState extends State<CashierCheckOutDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Denominations list
             Flexible(
               child: SingleChildScrollView(
                 child: Column(
                   children: _denominations.map((denom) {
-                    final controller = _denominationControllers[denom.toString()]!;
-                    
+                    final controller =
+                        _denominationControllers[denom.toString()]!;
+
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
@@ -180,7 +191,8 @@ class _CashierCheckOutDialogState extends State<CashierCheckOutDialog> {
                             flex: 2,
                             child: Text(
                               helper.formatCurrency(
-                                (int.tryParse(controller.text) ?? 0) * denom.toDouble(),
+                                (int.tryParse(controller.text) ?? 0) *
+                                    denom.toDouble(),
                               ),
                               textAlign: TextAlign.right,
                               style: const TextStyle(
@@ -196,13 +208,13 @@ class _CashierCheckOutDialogState extends State<CashierCheckOutDialog> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Note field
             TextField(
               controller: _noteController,
-              maxLines: 3,
+              maxLines: 1,
               decoration: InputDecoration(
                 labelText: l10n.tr(LocaleKeys.note),
                 border: OutlineInputBorder(
@@ -210,9 +222,9 @@ class _CashierCheckOutDialogState extends State<CashierCheckOutDialog> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Cashier and location info
             Container(
               padding: const EdgeInsets.all(12),
@@ -235,9 +247,9 @@ class _CashierCheckOutDialogState extends State<CashierCheckOutDialog> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Actions
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -247,22 +259,23 @@ class _CashierCheckOutDialogState extends State<CashierCheckOutDialog> {
                   child: Text(l10n.tr(LocaleKeys.cancel)),
                 ),
                 const SizedBox(width: 8),
-                ElevatedButton(
+                AppButton(
+                  text: l10n.tr(LocaleKeys.cashierCheckOut),
+                  backgroundColor: AppThemes.light.primaryColor,
                   onPressed: () {
                     widget.onCheckOut(
                       closingAmount: totalAmount,
-                      closingAmountOnStaff: totalAmount, // Assuming all cash
-                      totalCardSlips: 0, // TODO: Get from payment summary
-                      totalCheques: 0, // TODO: Get from payment summary
+                      closingAmountOnStaff: totalAmount,
+                      // Assuming all cash
+                      totalCardSlips: 0,
+                      // TODO: Get from payment summary
+                      totalCheques: 0,
+                      // TODO: Get from payment summary
                       closingNote: _noteController.text,
                       denominations: _getDenominations(),
                     );
                     Navigator.pop(context);
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.primaryColor,
-                  ),
-                  child: Text(l10n.tr(LocaleKeys.cashierCheckOut)),
                 ),
               ],
             ),
