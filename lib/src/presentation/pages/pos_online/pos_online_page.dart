@@ -240,7 +240,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                             final data = args[0] as Map<String, dynamic>;
                             
                             final userId = (data['userId'] as num?)?.toInt();
-                            final amount = (data['amount'] as num?)?.toDouble();
+                            final amount = double.tryParse(data['amount'].toString().replaceAll(',', ''));
                             final startTimeStr = data['startTime'] as String?;
                             final locationId = (data['locationId'] as num?)?.toInt();
 

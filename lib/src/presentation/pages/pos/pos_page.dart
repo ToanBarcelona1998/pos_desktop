@@ -277,6 +277,7 @@ class _PosPageState extends State<PosPage> {
             },
             onSuspendedSales: () => showSuspendedSalesDialog(context),
             onOpenCustomerWindow: () => _openCustomerWindow(context),
+            onCloseSession: () {},
           ),
           body: Row(
             children: [
