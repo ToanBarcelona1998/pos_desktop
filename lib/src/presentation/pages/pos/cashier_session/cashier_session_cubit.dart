@@ -74,6 +74,7 @@ class CashierSessionCubit extends Cubit<CashierSessionState> {
   }
 
   /// Check-out (end session)
+  /// BẮT BUỘC phải thành công - không cho phép lưu local khi fail
   Future<void> checkOut({
     required double closingAmount,
     required double closingAmountOnStaff,
@@ -86,18 +87,49 @@ class CashierSessionCubit extends Cubit<CashierSessionState> {
   }) async {
     emit(state.copyWith(isLoading: true, clearError: true));
 
-    final result = await _repository.checkOut(
-      closingAmount: closingAmount,
-      closingAmountOnStaff: closingAmountOnStaff,
-      totalCardSlips: totalCardSlips,
-      totalCheques: totalCheques,
-      closingNote: closingNote,
-      denominations: denominations,
-      userId: userId,
-      locationId: locationId,
-    );
+    const int maxRetries = 3;
+    int retryCount = 0;
+    Result<CashierSessionEntity>? finalResult;
 
-    result.fold(
+    while (retryCount < maxRetries) {
+      final result = await _repository.checkOut(
+        closingAmount: closingAmount,
+        closingAmountOnStaff: closingAmountOnStaff,
+        totalCardSlips: totalCardSlips,
+        totalCheques: totalCheques,
+        closingNote: closingNote,
+        denominations: denominations,
+        userId: userId,
+        locationId: locationId,
+      );
+
+      finalResult = result;
+
+      // Check if success
+      bool isSuccess = false;
+      result.fold(
+        onSuccess: (_) {
+          isSuccess = true;
+        },
+        onError: (_) {
+          isSuccess = false;
+        },
+      );
+
+      if (isSuccess) {
+        // Checkout thành công - break loop
+        break;
+      }
+
+      retryCount++;
+      if (retryCount < maxRetries) {
+        // Wait before retry
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    }
+
+    // Handle final result
+    finalResult?.fold(
       onSuccess: (_) {
         emit(state.copyWith(
           isLoading: false,
@@ -109,6 +141,7 @@ class CashierSessionCubit extends Cubit<CashierSessionState> {
         emit(state.copyWith(
           isLoading: false,
           errorMessage: failure.message,
+          showCheckOutDialog: true, // Keep dialog open for retry
         ));
       },
     );

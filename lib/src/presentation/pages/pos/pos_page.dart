@@ -592,8 +592,9 @@ class _PosPageState extends State<PosPage> {
   Future<void> _logoutAfterCheckOut(BuildContext context) async {
     final authCubit = context.read<AuthCubit>();
     
-    // Logout directly after check-out
-    // App will automatically handle Unauthenticated state
+    // Logout app - this will emit Unauthenticated state
+    // pos_online_page will automatically handle webview logout 
+    // when it detects Unauthenticated state in its BlocListener
     await authCubit.logout();
   }
 

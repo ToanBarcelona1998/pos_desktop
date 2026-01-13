@@ -11,14 +11,17 @@ class CashierSessionRepositoryImpl implements CashierSessionRepository {
   final CashierSessionRemoteDataSource _remoteDataSource;
   final CashierSessionLocalDataSource _localDataSource;
   final CashierSessionMapper _mapper;
+  final SellRepository _sellRepository;
 
   CashierSessionRepositoryImpl({
     required CashierSessionRemoteDataSource remoteDataSource,
     required CashierSessionLocalDataSource localDataSource,
     CashierSessionMapper? mapper,
+    required SellRepository sellRepository,
   })  : _remoteDataSource = remoteDataSource,
         _localDataSource = localDataSource,
-        _mapper = mapper ?? const CashierSessionMapper();
+        _mapper = mapper ?? const CashierSessionMapper(),
+        _sellRepository = sellRepository;
 
   @override
   Future<Result<CashierSessionEntity?>> getActiveSession({
@@ -58,7 +61,7 @@ class CashierSessionRepositoryImpl implements CashierSessionRepository {
         return Success(_mapper.toEntity(remoteSession));
       } catch (e) {
         Logger.logE('Check-in failed, saving to local', e);
-        
+
         // If remote fails, create local session
         final localSession = CashierSessionModel(
           userId: userId,
@@ -90,56 +93,47 @@ class CashierSessionRepositoryImpl implements CashierSessionRepository {
     required int locationId,
   }) async {
     try {
-      // First sync unsynced sessions
+      // Step 1: Sync unsynced sessions first
       await syncUnsyncedSessions();
 
-      try {
-        // Try remote check-out
-        final remoteSession = await _remoteDataSource.checkOut(
-          closingAmount: closingAmount,
-          closingAmountOnStaff: closingAmountOnStaff,
-          totalCardSlips: totalCardSlips,
-          totalCheques: totalCheques,
-          closingNote: closingNote,
-          denominations: denominations,
-        );
-
-        await _localDataSource.updateSession(remoteSession);
-        if (remoteSession.id != null) {
-          await _localDataSource.markSessionAsSynced(remoteSession.id!);
-        }
-
-        return Success(_mapper.toEntity(remoteSession));
-      } catch (e) {
-        Logger.logE('Check-out failed, saving to local', e);
-        
-        // If remote fails, update local session
-        final activeSession = await _localDataSource.getActiveSession(
-          userId: userId,
-          locationId: locationId,
-        );
-
-        if (activeSession != null) {
-          final updatedSession = activeSession.copyWith(
+      // Step 2: Sync unsynced sells before checkout
+      // This ensures all sales data is synced to server before closing the session
+      final syncResult = await _sellRepository.syncSells();
+      final result = syncResult.fold(
+        onSuccess: (_) async{
+          // Step 3: Try remote check-out - BẮT BUỘC phải thành công
+          // Không lưu local nếu remote fail
+          final remoteSession = await _remoteDataSource.checkOut(
             closingAmount: closingAmount,
             closingAmountOnStaff: closingAmountOnStaff,
             totalCardSlips: totalCardSlips,
             totalCheques: totalCheques,
             closingNote: closingNote,
             denominations: denominations,
-            endTime: DateTime.now(),
-            status: 'closed',
-            isSynced: false,
           );
 
-          await _localDataSource.updateSession(updatedSession);
-          return Success(_mapper.toEntity(updatedSession));
-        }
+          // Step 4: Update local session after successful remote check-out
+          await _localDataSource.updateSession(remoteSession);
+          if (remoteSession.id != null) {
+            await _localDataSource.markSessionAsSynced(remoteSession.id!);
+          }
 
-        return Error(NotFoundFailure(message: 'Active session not found'));
-      }
+          return Success(_mapper.toEntity(remoteSession));
+        },
+        onError: (failure) {
+          Logger.logE(
+              'Failed to sync some sells before checkout: ${failure.message}',
+              null);
+          throw Error(failure);
+        },
+      );
+
+      return result;
+
     } catch (e) {
-      Logger.logE('Error in check-out', e);
+      Logger.logE('Check-out failed - must retry', e);
+      // Không lưu local khi checkout fail
+      // Return error để user phải retry
       return Error(ExceptionHandler.handleException(e));
     }
   }
@@ -217,7 +211,8 @@ class CashierSessionRepositoryImpl implements CashierSessionRepository {
       );
 
       if (savedSession == null) {
-        return const Error(UnknownFailure(message: 'Failed to save session locally'));
+        return const Error(
+            UnknownFailure(message: 'Failed to save session locally'));
       }
 
       return Success(_mapper.toEntity(savedSession));

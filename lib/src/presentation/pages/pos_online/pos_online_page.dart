@@ -16,6 +16,7 @@ import 'package:pos_final/src/core/core.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_observer.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_subject.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
+import 'package:pos_final/src/presentation/pages/pos/cashier_session/cashier_session_state.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/dialog_provider.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/base_dialog_widget.dart';
 import 'package:data/data.dart';
@@ -137,16 +138,30 @@ class _PosOnlinePageState extends State<PosOnlinePage>
           create: (context) => CashierSessionCubit(),
         ),
       ],
-      child: BlocListener<AuthCubit, AuthState>(
-        listener: (context, authState) {
-          if (authState is Unauthenticated) {
-            // Hide offline POS when logged out
-            // Don't navigate away - let webview handle login page
-            if (mounted) {
-              context.read<PosOnlineBloc>().add(const PosOnlineHideOffline());
-            }
-          }
-        },
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<AuthCubit, AuthState>(
+            listener: (context, authState) {
+              if (authState is Unauthenticated) {
+                // Hide offline POS when logged out
+                // Don't navigate away - let webview handle login page
+                if (mounted) {
+                  context
+                      .read<PosOnlineBloc>()
+                      .add(const PosOnlineHideOffline());
+                }
+              }
+            },
+          ),
+          BlocListener<CashierSessionCubit, CashierSessionState>(
+            listenWhen: (pre, current) => pre.checkOutSuccess != current.checkOutSuccess,
+            listener: (context, sessionState) {
+              if(sessionState.checkOutSuccess){
+                webViewController!.evaluateJavascript(source: _logoutScript);
+              }
+            },
+          ),
+        ],
         child: BlocConsumer<PosOnlineBloc, PosOnlineState>(
           listenWhen: (previous, current) =>
               previous.status != current.status ||
@@ -237,73 +252,91 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                       onWebViewCreated: (controller) async {
                         webViewController = controller;
 
-                        controller.addJavaScriptHandler(handlerName: 'getCashierLogin', callback: (args) async {
-                          try {
-                            // Parse data from webview
-                            // Format: {userId: number, amount: number, startTime: string, locationId?: number}
-                            final data = args[0] as Map<String, dynamic>;
-                            
-                            final userId = (data['userId'] as num?)?.toInt();
-                            final amount = double.tryParse(data['amount'].toString().replaceAll(',', ''));
-                            final startTimeStr = data['startTime'] as String?;
-                            final locationId = (data['locationId'] as num?)?.toInt();
+                        controller.addJavaScriptHandler(
+                            handlerName: 'getCashierLogin',
+                            callback: (args) async {
+                              try {
+                                // Parse data from webview
+                                // Format: {userId: number, amount: number, startTime: string, locationId?: number}
+                                final data = args[0] as Map<String, dynamic>;
 
-                            if (userId == null || amount == null || startTimeStr == null) {
-                              if (mounted) {
-                                debugPrint('Invalid cashier login data: $data');
-                              }
-                              return 'error: invalid_data';
-                            }
+                                final userId =
+                                    (data['userId'] as num?)?.toInt();
+                                final amount = double.tryParse(data['amount']
+                                    .toString()
+                                    .replaceAll(',', ''));
+                                final startTimeStr =
+                                    data['startTime'] as String?;
+                                final locationId =
+                                    (data['locationId'] as num?)?.toInt();
 
-                            // Parse startTime (format: "YYYY-MM-DD HH:mm:ss")
-                            final startTime = DateTime.tryParse(startTimeStr);
-                            if (startTime == null) {
-                              if (mounted) {
-                                debugPrint('Invalid startTime format: $startTimeStr');
-                              }
-                              return 'error: invalid_time';
-                            }
-
-                            // LocationId should be provided from webview
-                            // If not provided, we cannot proceed
-                            if (locationId == null) {
-                              if (mounted) {
-                                debugPrint('LocationId is required for cashier login');
-                              }
-                              return 'error: location_required';
-                            }
-
-                            // Save session locally (marked as synced since it's from online mode)
-                            final cashierSessionRepository = sl.get<CashierSessionRepository>();
-                            final result = await cashierSessionRepository.saveSessionLocally(
-                              userId: userId,
-                              locationId: locationId,
-                              openingAmount: amount,
-                              startTime: startTime,
-                              isSynced: true, // Already synced from webview
-                            );
-
-                            result.fold(
-                              onSuccess: (_) {
-                                if (mounted) {
-                                  Logger.logI('Cashier session cached successfully: userId=$userId, locationId=$locationId, amount=$amount');
+                                if (userId == null ||
+                                    amount == null ||
+                                    startTimeStr == null) {
+                                  if (mounted) {
+                                    debugPrint(
+                                        'Invalid cashier login data: $data');
+                                  }
+                                  return 'error: invalid_data';
                                 }
-                              },
-                              onError: (failure) {
-                                if (mounted) {
-                                  Logger.logE('Failed to cache cashier session: ${failure.message}');
-                                }
-                              },
-                            );
 
-                            return 'success';
-                          } catch (e) {
-                            if (mounted) {
-                              Logger.logE('Error handling getCashierLogin: $e');
-                            }
-                            return 'error: ${e.toString()}';
-                          }
-                        });
+                                // Parse startTime (format: "YYYY-MM-DD HH:mm:ss")
+                                final startTime =
+                                    DateTime.tryParse(startTimeStr);
+                                if (startTime == null) {
+                                  if (mounted) {
+                                    debugPrint(
+                                        'Invalid startTime format: $startTimeStr');
+                                  }
+                                  return 'error: invalid_time';
+                                }
+
+                                // LocationId should be provided from webview
+                                // If not provided, we cannot proceed
+                                if (locationId == null) {
+                                  if (mounted) {
+                                    debugPrint(
+                                        'LocationId is required for cashier login');
+                                  }
+                                  return 'error: location_required';
+                                }
+
+                                // Save session locally (marked as synced since it's from online mode)
+                                final cashierSessionRepository =
+                                    sl.get<CashierSessionRepository>();
+                                final result = await cashierSessionRepository
+                                    .saveSessionLocally(
+                                  userId: userId,
+                                  locationId: locationId,
+                                  openingAmount: amount,
+                                  startTime: startTime,
+                                  isSynced: true, // Already synced from webview
+                                );
+
+                                result.fold(
+                                  onSuccess: (_) {
+                                    if (mounted) {
+                                      Logger.logI(
+                                          'Cashier session cached successfully: userId=$userId, locationId=$locationId, amount=$amount');
+                                    }
+                                  },
+                                  onError: (failure) {
+                                    if (mounted) {
+                                      Logger.logE(
+                                          'Failed to cache cashier session: ${failure.message}');
+                                    }
+                                  },
+                                );
+
+                                return 'success';
+                              } catch (e) {
+                                if (mounted) {
+                                  Logger.logE(
+                                      'Error handling getCashierLogin: $e');
+                                }
+                                return 'error: ${e.toString()}';
+                              }
+                            });
 
                         // Handle authentication completed
                         controller.addJavaScriptHandler(

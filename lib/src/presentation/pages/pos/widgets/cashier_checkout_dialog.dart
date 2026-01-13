@@ -1,10 +1,12 @@
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
-import 'package:pos_final/helpers/app_theme.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_final/src/presentation/presentation.dart';
 
 import '../../../../../helpers/other_helpers.dart';
 import '../../../../core/core.dart';
+import '../cashier_session/cashier_session_cubit.dart';
+import '../cashier_session/cashier_session_state.dart';
 
 /// Cashier check-out dialog
 class CashierCheckOutDialog extends StatefulWidget {
@@ -97,7 +99,19 @@ class _CashierCheckOutDialogState extends State<CashierCheckOutDialog> {
     final helper = Helper();
     final totalAmount = _calculateTotal();
 
-    return Dialog(
+    return BlocListener<CashierSessionCubit, CashierSessionState>(
+      listener: (context, state) {
+        // Close dialog only when checkout is successful
+        if (state.checkOutSuccess) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: BlocBuilder<CashierSessionCubit, CashierSessionState>(
+        builder: (context, sessionState) {
+          final isLoading = sessionState.isLoading;
+          final errorMessage = sessionState.errorMessage;
+
+          return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: AppRadius.borderRadiusMd,
       ),
@@ -248,6 +262,34 @@ class _CashierCheckOutDialogState extends State<CashierCheckOutDialog> {
               ),
             ),
 
+            const SizedBox(height: 16),
+
+            // Error message
+            if (errorMessage != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade300),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        errorMessage,
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             const SizedBox(height: 24),
 
             // Actions
@@ -255,32 +297,40 @@ class _CashierCheckOutDialogState extends State<CashierCheckOutDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: isLoading ? null : () => Navigator.pop(context),
                   child: Text(l10n.tr(LocaleKeys.cancel)),
                 ),
                 const SizedBox(width: 8),
                 AppButton(
-                  text: l10n.tr(LocaleKeys.cashierCheckOut),
+                  text: isLoading
+                      ? l10n.tr(LocaleKeys.loading)
+                      : l10n.tr(LocaleKeys.cashierCheckOut),
                   backgroundColor: AppThemes.light.primaryColor,
-                  onPressed: () {
-                    widget.onCheckOut(
-                      closingAmount: totalAmount,
-                      closingAmountOnStaff: totalAmount,
-                      // Assuming all cash
-                      totalCardSlips: 0,
-                      // TODO: Get from payment summary
-                      totalCheques: 0,
-                      // TODO: Get from payment summary
-                      closingNote: _noteController.text,
-                      denominations: _getDenominations(),
-                    );
-                    Navigator.pop(context);
-                  },
+                  isLoading: isLoading,
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          widget.onCheckOut(
+                            closingAmount: totalAmount,
+                            closingAmountOnStaff: totalAmount,
+                            // Assuming all cash
+                            totalCardSlips: 0,
+                            // TODO: Get from payment summary
+                            totalCheques: 0,
+                            // TODO: Get from payment summary
+                            closingNote: _noteController.text,
+                            denominations: _getDenominations(),
+                          );
+                          // Don't close dialog here - let BlocListener handle it
+                        },
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+        },
       ),
     );
   }

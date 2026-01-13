@@ -418,6 +418,7 @@ void _registerRepositories(AppConfig config) {
   sl.registerLazy<CashierSessionRepository>(() => CashierSessionRepositoryImpl(
         remoteDataSource: sl.get<CashierSessionRemoteDataSource>(),
         localDataSource: sl.get<CashierSessionLocalDataSource>(),
+        sellRepository: sl.get<SellRepository>(),
       ));
 }
 
