@@ -28,8 +28,6 @@ class LocationRepositoryImpl implements LocationRepository {
       onSuccess: (localLocations) async {
         // If we have local data, return it immediately
         if (localLocations.isNotEmpty) {
-          // Sync in background for next time
-          _syncLocationsInBackground();
           return Success(localLocations);
         }
         
@@ -79,13 +77,6 @@ class LocationRepositoryImpl implements LocationRepository {
       },
       onError: (failure) => Error(failure),
     );
-  }
-
-  /// Sync locations in background without blocking
-  void _syncLocationsInBackground() {
-    syncLocations().catchError((e) {
-      Logger.logE('Background location sync error', e);
-    });
   }
 
   @override

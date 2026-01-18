@@ -32,8 +32,6 @@ class BrandRepositoryImpl implements BrandRepository {
       onSuccess: (localBrands) async {
         // If we have local data, return it immediately
         if (localBrands.isNotEmpty) {
-          // Sync in background for next time
-          _syncBrandsInBackground();
           return Success(localBrands);
         }
         
@@ -183,13 +181,6 @@ class BrandRepositoryImpl implements BrandRepository {
     } catch (e) {
       return Error(ExceptionHandler.handleException(e));
     }
-  }
-
-  /// Sync brands in background without blocking
-  void _syncBrandsInBackground() {
-    syncBrands().catchError((e) {
-      Logger.logE('Background brand sync error', e);
-    });
   }
 
   /// Sync brands from remote to local

@@ -28,8 +28,6 @@ class CategoryRepositoryImpl implements CategoryRepository {
       onSuccess: (localCategories) async {
         // If we have local data, return it immediately
         if (localCategories.isNotEmpty) {
-          // Sync in background for next time
-          _syncCategoriesInBackground();
           return Success(localCategories);
         }
         
@@ -79,13 +77,6 @@ class CategoryRepositoryImpl implements CategoryRepository {
       },
       onError: (failure) => Error(failure),
     );
-  }
-
-  /// Sync categories in background without blocking
-  void _syncCategoriesInBackground() {
-    syncCategories().catchError((e) {
-      Logger.logE('Background category sync error', e);
-    });
   }
 
   @override

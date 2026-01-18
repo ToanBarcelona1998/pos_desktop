@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AppVersionManager {
   static const String _versionKey = 'app_version';
   static const String _environment = 'app_environment';
-  static const String _appVersion = '1.1.0'; // Update this when releasing new version
+  static const String _appVersion = '1.1.1'; // Update this when releasing new version
 
   /// Checks if app version has changed and clears cache/database if needed
   static Future<void> checkAndHandleVersionUpdate(Environment env) async {

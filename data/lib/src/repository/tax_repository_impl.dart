@@ -28,8 +28,6 @@ class TaxRepositoryImpl implements TaxRepository {
       onSuccess: (localTaxes) async {
         // If we have local data, return it immediately
         if (localTaxes.isNotEmpty) {
-          // Sync in background for next time
-          _syncTaxesInBackground();
           return Success(localTaxes);
         }
         
@@ -79,13 +77,6 @@ class TaxRepositoryImpl implements TaxRepository {
       },
       onError: (failure) => Error(failure),
     );
-  }
-
-  /// Sync taxes in background without blocking
-  void _syncTaxesInBackground() {
-    syncTaxes().catchError((e) {
-      Logger.logE('Background tax sync error', e);
-    });
   }
 
   @override

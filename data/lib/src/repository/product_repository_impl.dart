@@ -36,10 +36,6 @@ class ProductRepositoryImpl implements ProductRepository {
       if (cachedProducts.isNotEmpty) {
         // Return local data immediately
         final entities = cachedProducts.map(_mapToEntity).toList();
-        
-        // Sync in background for next time
-        _syncProductsInBackground(locationId);
-        
         return Success(entities);
       }
     } catch (e) {
@@ -134,13 +130,6 @@ class ProductRepositoryImpl implements ProductRepository {
       Logger.logE('Failed to search products from server', e);
       return const Success([]);
     }
-  }
-
-  /// Sync products in background without blocking
-  void _syncProductsInBackground(int locationId) {
-    syncProducts(locationId).catchError((e) {
-      Logger.logE('Background product sync error', e);
-    });
   }
 
   @override

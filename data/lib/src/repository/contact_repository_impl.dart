@@ -35,8 +35,6 @@ class ContactRepositoryImpl implements ContactRepository {
         
         // If we have local data, return it immediately
         if (filteredContacts.isNotEmpty) {
-          // Sync in background for next time
-          _syncContactsInBackground(type: type);
           return Success(filteredContacts);
         }
         
@@ -171,13 +169,6 @@ class ContactRepositoryImpl implements ContactRepository {
         }
       },
     );
-  }
-
-  /// Sync contacts in background without blocking
-  void _syncContactsInBackground({String? type}) {
-    syncContacts().catchError((e) {
-      Logger.logE('Background contact sync error', e);
-    });
   }
 
   @override
