@@ -1,3 +1,5 @@
+import 'package:domain/domain.dart';
+
 import '../../core/api_client.dart';
 import '../../model/cashier_session_model.dart';
 
@@ -48,6 +50,8 @@ class CashierSessionRemoteDataSourceImpl
       },
     );
 
+    Logger.logI('checkIn response $response');
+
     return CashierSessionModel.fromJson(response);
   }
 
@@ -72,6 +76,8 @@ class CashierSessionRemoteDataSourceImpl
         'denominations': denominations,
       },
     );
+
+    Logger.logI('checkOut response $response');
 
     return CashierSessionModel.fromJson(response);
   }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pos_final/src/core/utils/currency_input_formatter.dart';
+import 'package:pos_final/src/presentation/presentation.dart';
 
 import '../../../../core/core.dart';
 
@@ -55,9 +57,11 @@ class _CashierCheckInDialogState extends State<CashierCheckInDialog> {
               TextFormField(
                 controller: _amountController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  VNCurrencyFormatter(),
+                ],
                 decoration: InputDecoration(
                   labelText: l10n.tr(LocaleKeys.openingAmount),
-                  prefixIcon: const Icon(Icons.money),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -82,7 +86,9 @@ class _CashierCheckInDialogState extends State<CashierCheckInDialog> {
                     child: Text(l10n.tr(LocaleKeys.cancel)),
                   ),
                   const SizedBox(width: 8),
-                  ElevatedButton(
+                  AppButton(
+                    text: l10n.tr(LocaleKeys.cashierCheckIn),
+                    backgroundColor: AppThemes.light.primaryColor,
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         final amount = double.parse(_amountController.text);
@@ -90,10 +96,6 @@ class _CashierCheckInDialogState extends State<CashierCheckInDialog> {
                         Navigator.pop(context);
                       }
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.primaryColor,
-                    ),
-                    child: Text(l10n.tr(LocaleKeys.cashierCheckIn)),
                   ),
                 ],
               ),

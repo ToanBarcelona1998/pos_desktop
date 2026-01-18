@@ -129,8 +129,8 @@ Future<void> initDependencies(
   sl.registerLazy<CashierSessionRemoteDataSource>(
       () => CashierSessionRemoteDataSourceImpl(
             apiClient: sl.get<ApiClient>(),
-            checkInEndpoint: '/cashier/start',
-            checkOutEndpoint: '/cashier/end',
+            checkInEndpoint: '/api/cashier/start',
+            checkOutEndpoint: '/api/cashier/end',
           ));
   sl.registerLazy<SystemLocalDataSource>(() => SystemLocalDataSourceImpl(
         globalDbHelper: sl.get<GlobalDatabaseHelper>(),
@@ -392,7 +392,8 @@ void _registerRepositories(AppConfig config) {
       ));
 
   sl.registerLazy<SellLocalDataSource>(() => SellLocalDataSourceImpl(
-        dbHelper: sl.get<UserDatabaseHelper>(),
+        userDbHelper: sl.get<UserDatabaseHelper>(),
+        globalDbHelper: sl.get<GlobalDatabaseHelper>(),
       ));
 
   sl.registerLazy<SellRepository>(() => SellRepositoryImpl(

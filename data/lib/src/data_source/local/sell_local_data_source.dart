@@ -1,6 +1,7 @@
+import 'package:domain/domain.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../../model/sell_model.dart';
+import 'database/global_database_helper.dart';
 import 'database/user_database_helper.dart';
 
 /// Local data source for sells using SQLite
@@ -47,10 +48,14 @@ abstract class SellLocalDataSource {
 
 /// Implementation of SellLocalDataSource
 class SellLocalDataSourceImpl implements SellLocalDataSource {
-  final UserDatabaseHelper _dbHelper;
+  final UserDatabaseHelper _userDbHelper;
+  final GlobalDatabaseHelper _globalDbHelper;
 
-  SellLocalDataSourceImpl({UserDatabaseHelper? dbHelper})
-      : _dbHelper = dbHelper ?? UserDatabaseHelper.instance;
+  SellLocalDataSourceImpl({
+    UserDatabaseHelper? userDbHelper,
+    GlobalDatabaseHelper? globalDbHelper,
+  })  : _userDbHelper = userDbHelper ?? UserDatabaseHelper.instance,
+        _globalDbHelper = globalDbHelper ?? GlobalDatabaseHelper.instance;
 
   @override
   Future<int> saveSell({
@@ -60,7 +65,8 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
     required bool isFinalOrSuspended,
     bool isSynced = false,
   }) async {
-    final db = await _dbHelper.database;
+    Logger.logI('💾 [SellLocalDataSource] Saving sell - isFinalOrSuspended: $isFinalOrSuspended, locationId: ${sellData['location_id']}');
+    final db = await _userDbHelper.database;
 
     return await db.transaction((txn) async {
       // Remove shipping-related fields before inserting (like old code)
@@ -123,33 +129,50 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
         whereArgs: [sellId],
       );
 
-      // Update stock if final or suspended (like old code)
+      return sellId;
+    }).then((sellId) async {
+      // Update stock in global database if final or suspended
+      // This must be done AFTER user database transaction commits
       if (isFinalOrSuspended && sellData['location_id'] != null) {
-        for (var line in sellLines) {
-          if (line['variation_id'] != null && line['quantity'] != null) {
-            await txn.rawUpdate(
-              '''
-              UPDATE variations_location_details 
-              SET qty_available = qty_available - ? 
-              WHERE variation_id = ? AND location_id = ?
-              ''',
-              [
-                line['quantity'],
-                line['variation_id'],
-                sellData['location_id'],
-              ],
-            );
+        try {
+          Logger.logI('📦 [SellLocalDataSource] Updating stock in global database for sellId: $sellId, locationId: ${sellData['location_id']}');
+          final globalDb = await _globalDbHelper.database;
+          
+          for (var line in sellLines) {
+            if (line['variation_id'] != null && line['quantity'] != null) {
+              final variationId = line['variation_id'] as int;
+              final quantity = line['quantity'] as num;
+              final locationId = sellData['location_id'] as int;
+              
+              Logger.logI('📦 [SellLocalDataSource] Updating stock - variationId: $variationId, quantity: -$quantity, locationId: $locationId');
+              
+              await globalDb.rawUpdate(
+                '''
+                UPDATE variations_location_details 
+                SET qty_available = qty_available - ? 
+                WHERE variation_id = ? AND location_id = ?
+                ''',
+                [quantity, variationId, locationId],
+              );
+              
+              Logger.logI('✅ [SellLocalDataSource] Stock updated successfully for variationId: $variationId');
+            }
           }
+          Logger.logI('✅ [SellLocalDataSource] All stock updates completed for sellId: $sellId');
+        } catch (e) {
+          Logger.logE('❌ [SellLocalDataSource] Failed to update stock in global database', e);
+          // Continue even if stock update fails - sell is already saved
+          // Stock can be synced from server later
         }
       }
-
+      
       return sellId;
     });
   }
 
   @override
   Future<List<Map<String, dynamic>>> getUnsyncedSells() async {
-    final db = await _dbHelper.database;
+    final db = await _userDbHelper.database;
     final sells = await db.query(
       'sell',
       where: 'is_synced = ?',
@@ -172,7 +195,7 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
 
   @override
   Future<Map<String, dynamic>?> getSellById(int sellId) async {
-    final db = await _dbHelper.database;
+    final db = await _userDbHelper.database;
     final sells = await db.query(
       'sell',
       where: 'id = ?',
@@ -196,7 +219,7 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
 
   @override
   Future<List<Map<String, dynamic>>> getSellLines(int sellId) async {
-    final db = await _dbHelper.database;
+    final db = await _userDbHelper.database;
     return await db.query(
       'sell_lines',
       where: 'sell_id = ?',
@@ -206,7 +229,7 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
 
   @override
   Future<List<Map<String, dynamic>>> getPayments(int sellId) async {
-    final db = await _dbHelper.database;
+    final db = await _userDbHelper.database;
     return await db.query(
       'sell_payments',
       where: 'sell_id = ?',
@@ -219,7 +242,7 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
     int sellId,
     Map<String, dynamic> updates,
   ) async {
-    final db = await _dbHelper.database;
+    final db = await _userDbHelper.database;
 
     // Wrap everything in a transaction for atomicity
     await db.transaction((txn) async {
@@ -304,7 +327,7 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
 
   @override
   Future<List<Map<String, dynamic>>> getSuspendedSells() async {
-    final db = await _dbHelper.database;
+    final db = await _userDbHelper.database;
     final sells = await db.query(
       'sell',
       where: 'is_suspend = ?',
@@ -326,7 +349,7 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
 
   @override
   Future<List<Map<String, dynamic>>> getQuotations() async {
-    final db = await _dbHelper.database;
+    final db = await _userDbHelper.database;
     final sells = await db.query(
       'sell',
       where: 'is_quotation = ?',
@@ -348,7 +371,7 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
 
   @override
   Future<List<Map<String, dynamic>>> getFinalSells() async {
-    final db = await _dbHelper.database;
+    final db = await _userDbHelper.database;
     final sells = await db.query(
       'sell',
       where: 'status IN (?, ?) AND is_suspend = ? AND is_quotation = ?',
@@ -370,7 +393,7 @@ class SellLocalDataSourceImpl implements SellLocalDataSource {
 
   @override
   Future<void> deleteSell(int sellId) async {
-    final db = await _dbHelper.database;
+    final db = await _userDbHelper.database;
     await db.transaction((txn) async {
       await txn.delete('sell', where: 'id = ?', whereArgs: [sellId]);
       await txn.delete('sell_lines', where: 'sell_id = ?', whereArgs: [sellId]);
