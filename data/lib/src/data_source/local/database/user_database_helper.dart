@@ -117,33 +117,49 @@ class UserDatabaseHelper {
 
   /// Initializes the user database
   Future<Database> initUserDatabase(int userId) async {
+    Logger.logI('🔄 [UserDatabaseHelper] Initializing user database for userId: $userId');
+    
+    // Close existing database if open
+    if (_database != null) {
+      Logger.logI('⚠️ [UserDatabaseHelper] Closing existing database before re-initialization');
+      await _database!.close();
+      _database = null;
+    }
+    
     _userId = userId;
-    _database = null; // Reset to force re-initialization
 
     final Directory documentsDirectory =
         await getApplicationDocumentsDirectory();
     final String path = join(documentsDirectory.path, 'PosUser$userId.db');
 
-    if (Platform.isWindows || Platform.isLinux) {
-      sqfliteFfiInit();
-      _database = await databaseFactoryFfi.openDatabase(
-        path,
-        options: OpenDatabaseOptions(
+    try {
+      if (Platform.isWindows || Platform.isLinux) {
+        sqfliteFfiInit();
+        _database = await databaseFactoryFfi.openDatabase(
+          path,
+          options: OpenDatabaseOptions(
+            version: _version,
+            onCreate: _onCreate,
+            onUpgrade: _onUpgrade,
+          ),
+        );
+      } else {
+        _database = await openDatabase(
+          path,
           version: _version,
           onCreate: _onCreate,
           onUpgrade: _onUpgrade,
-        ),
-      );
-    } else {
-      _database = await openDatabase(
-        path,
-        version: _version,
-        onCreate: _onCreate,
-        onUpgrade: _onUpgrade,
-      );
-    }
+        );
+      }
 
-    return _database!;
+      Logger.logI('✅ [UserDatabaseHelper] User database initialized successfully for userId: $userId');
+      return _database!;
+    } catch (e) {
+      Logger.logE('❌ [UserDatabaseHelper] Failed to initialize user database for userId: $userId', e);
+      _database = null;
+      _userId = null;
+      rethrow;
+    }
   }
 
   /// Gets the database instance
@@ -191,14 +207,19 @@ class UserDatabaseHelper {
   /// Closes the database
   Future<void> close() async {
     if (_database != null) {
+      Logger.logI('🔄 [UserDatabaseHelper] Closing database for userId: $_userId');
       await _database!.close();
       _database = null;
       _userId = null;
+      Logger.logI('✅ [UserDatabaseHelper] Database closed');
     }
   }
 
   /// Deletes the user database file
   Future<void> deleteUserDatabase(int userId) async {
+    Logger.logI('🔄 [UserDatabaseHelper] Deleting user database for userId: $userId');
+    
+    // Close database first
     await close();
 
     final Directory documentsDirectory =
@@ -208,8 +229,14 @@ class UserDatabaseHelper {
 
     if (await file.exists()) {
       await file.delete();
-      Logger.logI('✅ User database deleted for user $userId');
+      Logger.logI('✅ [UserDatabaseHelper] User database file deleted for user $userId');
+    } else {
+      Logger.logI('⚠️ [UserDatabaseHelper] User database file does not exist for user $userId');
     }
+    
+    // Ensure static state is cleared
+    _database = null;
+    _userId = null;
   }
 }
 

@@ -562,6 +562,7 @@ class _PosPageState extends State<PosPage> {
     
     DialogProvider.showCustomDialog(
       context,
+      barrierDismissible: false,
       child: BlocProvider.value(
         value: cashierSessionCubit,
         child: CashierCheckOutDialog(
@@ -683,9 +684,6 @@ class _PosPageState extends State<PosPage> {
             context: context,
             builder: (context) => CurrencySelectionDialog(
               exchangeRate: exchangeRate,
-              onCurrencySelected: (currency) {
-                Navigator.of(context).pop(currency);
-              },
             ),
           );
 

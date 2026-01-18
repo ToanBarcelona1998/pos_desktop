@@ -406,8 +406,9 @@ class SystemSyncService {
   /// Sync products for all locations
   /// Similar to old Variations.store() - syncs all products for each location
   Future<void> _syncProducts() async {
-    final Map<int,List<ProductModel>> allProducts = {};
+    final Map<int, List<ProductModel>> allProducts = {};
     int totalProducts = 0;
+    
     try {
       // Get all locations first
       final locations = await _locationDataSource.getLocations();
@@ -421,6 +422,7 @@ class SystemSyncService {
         try {
           int page = 1;
           bool hasMore = true;
+          List<ProductModel> locationProducts = [];
 
           // Sync all pages for this location
           while (hasMore) {
@@ -430,14 +432,34 @@ class SystemSyncService {
               perPage: 1000,
             );
 
-            // response.products is already List<ProductModel>
-            allProducts[location.id] = response.products;
+            // Append products from this page (don't overwrite)
+            locationProducts.addAll(response.products);
             hasMore = response.hasMore;
             page++;
+          }
+
+          // Save all products for this location
+          if (locationProducts.isNotEmpty) {
+            allProducts[location.id] = locationProducts;
           }
         } catch (e) {
           Logger.logE('Error syncing products for location ${location.id}: $e');
           // Continue with next location
+        }
+      }
+
+      // Save products to local database and calculate total
+      if (allProducts.isNotEmpty) {
+        for (final locationId in allProducts.keys.toList()) {
+          final products = allProducts[locationId]!;
+
+          await _productLocalDataSource.saveProducts(
+            products,
+            locationId,
+          );
+
+          totalProducts += products.length;
+          Logger.logI('Products synced for location $locationId: ${products.length}');
         }
       }
 
@@ -447,23 +469,6 @@ class SystemSyncService {
     } catch (e) {
       Logger.logE('Error syncing products: $e');
       // Silently fail
-    }finally {
-      // Save products to local database
-      if (allProducts.isNotEmpty) {
-        // allProducts contains ProductModel instances from ProductListResponse
-
-        for(final locationId in allProducts.keys.toList()){
-          final products = allProducts[locationId] as List<ProductModel>;
-
-          await _productLocalDataSource.saveProducts(
-            products,
-            locationId,
-          );
-
-          totalProducts += allProducts.length;
-          Logger.logI('Products synced for location $locationId: ${products.length}');
-        }
-      }
     }
   }
 

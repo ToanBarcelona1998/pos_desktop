@@ -6,12 +6,10 @@ import 'package:pos_final/helpers/other_helpers.dart';
 
 class CurrencySelectionDialog extends StatelessWidget {
   final ExchangeRateEntity? exchangeRate;
-  final Function(String selectedCurrency) onCurrencySelected;
 
   const CurrencySelectionDialog({
     super.key,
     this.exchangeRate,
-    required this.onCurrencySelected,
   });
 
   @override
@@ -91,8 +89,7 @@ class CurrencySelectionDialog extends StatelessWidget {
     final theme = AppThemes.light;
     return InkWell(
       onTap: () {
-        Navigator.of(context).pop();
-        onCurrencySelected(currency);
+        Navigator.of(context).pop(currency);
       },
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -101,47 +98,27 @@ class CurrencySelectionDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: theme.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  symbol,
-                  style: TextStyle(
-                    fontSize: 24,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  currency,
+                  style: const TextStyle(
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: theme.primaryColor,
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    currency,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
             Icon(
               Icons.arrow_forward_ios,

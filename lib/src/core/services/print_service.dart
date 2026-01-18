@@ -108,32 +108,32 @@ class PrintService {
           exchangeRate: exchangeRate,
         );
 
-        showDialog(
-          context: context,
-          builder: (ctx) => Dialog(
-            child: PdfPreview(
-              initialPageFormat: pos72,
-              build: (format) => pdfBytes,
-            ),
-          ),
-        );
-
-        // final printers = await Printing.listPrinters();
-        //
-        // final printer = printers.firstWhere(
-        //   (p) => p.isDefault,
-        //   orElse: () => printers.first,
-        // );
-        //
-        // await Future.microtask(
-        //   () => Printing.directPrintPdf(
-        //     printer: printer,
-        //     onLayout: (format) {
-        //       return pdfBytes;
-        //     },
-        //     name: name,
+        // showDialog(
+        //   context: context,
+        //   builder: (ctx) => Dialog(
+        //     child: PdfPreview(
+        //       initialPageFormat: pos72,
+        //       build: (format) => pdfBytes,
+        //     ),
         //   ),
         // );
+
+        final printers = await Printing.listPrinters();
+
+        final printer = printers.firstWhere(
+          (p) => p.isDefault,
+          orElse: () => printers.first,
+        );
+
+        await Future.microtask(
+          () => Printing.directPrintPdf(
+            printer: printer,
+            onLayout: (format) {
+              return pdfBytes;
+            },
+            name: name,
+          ),
+        );
       }
 
       // Print the invoice

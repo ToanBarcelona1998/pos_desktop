@@ -97,13 +97,21 @@ class CashierSessionRepositoryImpl implements CashierSessionRepository {
     
     try {
       // Check if local session is already closed (may happen if previous checkout succeeded but update failed)
-      final localActiveSession = await _localDataSource.getActiveSession(
-        userId: userId,
-        locationId: locationId,
-      );
+      // Wrap in try-catch because database may not be initialized yet (e.g., after logout and re-login)
+      CashierSessionModel? localActiveSession;
+      try {
+        localActiveSession = await _localDataSource.getActiveSession(
+          userId: userId,
+          locationId: locationId,
+        );
+      } catch (e) {
+        // Database not initialized or other error - skip local session check
+        Logger.logI('⚠️ [CashierSessionRepository] Cannot check local session (database may not be initialized): ${e.toString()}');
+        // Continue with checkout - will sync from server
+      }
       
       if (localActiveSession == null) {
-        Logger.logI('⚠️ [CashierSessionRepository] No active local session found - may already be closed');
+        Logger.logI('⚠️ [CashierSessionRepository] No active local session found - may already be closed or database not initialized');
         // Continue with checkout - server may have active session
       } else if (localActiveSession.status == 'closed' && localActiveSession.isSynced) {
         Logger.logI('✅ [CashierSessionRepository] Local session already closed and synced - checkout may already be completed');

@@ -144,8 +144,6 @@ class ApiClient {
     try {
       final uri = _buildUri(endpoint, queryParams);
 
-
-      print(uri.toString());
       final requestHeaders = {..._defaultHeaders, ...?headers};
       final encodedBody = body != null ? jsonEncode(body) : null;
 
