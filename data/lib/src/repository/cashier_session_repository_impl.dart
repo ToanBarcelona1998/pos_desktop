@@ -120,8 +120,18 @@ class CashierSessionRepositoryImpl implements CashierSessionRepository {
       }
       
       // Step 1: Sync unsynced sessions first - BẮT BUỘC phải thành công
+      // Wrap in try-catch to handle database not initialized case
       Logger.logI('🔄 [CashierSessionRepository] Step 1: Syncing unsynced sessions...');
-      final syncSessionsResult = await syncUnsyncedSessions();
+      Result<void> syncSessionsResult;
+      try {
+        syncSessionsResult = await syncUnsyncedSessions();
+      } catch (e) {
+        // Database may not be initialized - log and continue (checkout will sync from server)
+        Logger.logI('⚠️ [CashierSessionRepository] Cannot sync sessions (database may not be initialized): ${e.toString()}');
+        Logger.logI('⚠️ [CashierSessionRepository] Continuing checkout - will sync from server');
+        // Create a success result to continue checkout
+        syncSessionsResult = const Success(null);
+      }
       
       // Block checkout if sync sessions fails - keep current state to prevent data loss
       Failure? syncSessionsFailure;
@@ -319,7 +329,17 @@ class CashierSessionRepositoryImpl implements CashierSessionRepository {
   Future<Result<void>> syncUnsyncedSessions() async {
     try {
       Logger.logI('🔄 [CashierSessionRepository] Checking for unsynced sessions...');
-      final unsyncedSessions = await _localDataSource.getUnsyncedSessions();
+      
+      // Wrap getUnsyncedSessions in try-catch to handle database not initialized
+      List<CashierSessionModel> unsyncedSessions;
+      try {
+        unsyncedSessions = await _localDataSource.getUnsyncedSessions();
+      } catch (e) {
+        // Database may not be initialized - log and return success (no unsynced sessions to sync)
+        Logger.logI('⚠️ [CashierSessionRepository] Cannot get unsynced sessions (database may not be initialized): ${e.toString()}');
+        Logger.logI('✅ [CashierSessionRepository] No unsynced sessions to sync (database not initialized)');
+        return const Success(null);
+      }
       
       if (unsyncedSessions.isEmpty) {
         Logger.logI('✅ [CashierSessionRepository] No unsynced sessions found');

@@ -55,6 +55,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   bool _syncDialogShowing = false;
   bool _popupOfflineIsShowed = false;
   bool _offlineWebviewShown = false;
+  bool _isLoggingIn = false; // Flag to prevent logout during login process
 
   final AppConfig _appConfig = sl.get<AppConfig>();
   final WebViewEnvironment? _webViewEnvironment =
@@ -235,16 +236,35 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                           onLoadStop: (controller, url) async {
                             // Listen to URL changes
                             final urlString = url.toString();
-                            if (urlString.contains('/login')) {
-                              // URL changed to login page - logout
+                            
+                            // Check authentication on first load only
+                            if (_isFirstLoad) {
+                              _isFirstLoad = false;
                               _posOnlineBloc
-                                  .add(const PosOnlineUrlChangedToLogin());
-                            } else {
-                              // Check authentication on first load only
-                              if (_isFirstLoad) {
-                                _isFirstLoad = false;
+                                  .add(const PosOnlineCheckAuthentication());
+                            }
+                            
+                            // Only logout if URL is login page AND user is authenticated
+                            // Don't logout during login process (when authCompleted is being called)
+                            if (urlString.contains('/login')) {
+                              final authCubit = context.read<AuthCubit>();
+                              final authState = authCubit.state;
+                              
+                              // ROOT CAUSE FIX: Don't logout if:
+                              // 1. AuthCubit is in AuthLoading state (login in progress)
+                              // 2. Flag _isLoggingIn is true (authCompleted handler was called)
+                              // 3. User is not authenticated (no need to logout)
+                              final isLoginInProgress = authState is AuthLoading || _isLoggingIn;
+                              final isAuthenticated = authCubit.isAuthenticated;
+                              
+                              // Only logout if user is authenticated AND login is NOT in progress
+                              if (isAuthenticated && !isLoginInProgress) {
+                                Logger.logI('🔄 [PosOnlinePage] URL changed to /login and user is authenticated - triggering logout');
+                                // URL changed to login page - logout
                                 _posOnlineBloc
-                                    .add(const PosOnlineCheckAuthentication());
+                                    .add(const PosOnlineUrlChangedToLogin());
+                              } else {
+                                Logger.logI('ℹ️ [PosOnlinePage] URL changed to /login but skipping logout - isLoginInProgress: $isLoginInProgress, isAuthenticated: $isAuthenticated');
                               }
                             }
 
@@ -345,6 +365,9 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                               handlerName: 'authCompleted',
                               callback: (args) async {
                                 try {
+                                  // Set flag to prevent logout during login
+                                  _isLoggingIn = true;
+                                  
                                   if (_windowsDeviceInfo != null) {
                                     final String deviceId = _windowsDeviceInfo!
                                         .deviceId
@@ -367,7 +390,13 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                                           userInfo: userMap,
                                         ),
                                       );
+                                  
+                                  // Reset flag after a delay to allow login to complete
+                                  Future.delayed(const Duration(seconds: 2), () {
+                                    _isLoggingIn = false;
+                                  });
                                 } catch (e) {
+                                  _isLoggingIn = false; // Reset flag on error
                                   if (mounted) {
                                     final l10n = AppLocalizations.of(context);
                                     ToastManager.showError(

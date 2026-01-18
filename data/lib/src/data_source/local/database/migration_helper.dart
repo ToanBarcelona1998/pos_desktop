@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:domain/domain.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'database_helper.dart';
@@ -12,9 +16,32 @@ class MigrationHelper {
     required int userId,
   }) async {
     try {
+      // Check if old database file exists before attempting migration
+      final Directory documentsDirectory =
+          await getApplicationDocumentsDirectory();
+      final String oldDbPath = join(documentsDirectory.path, 'PosDemo$userId.db');
+      final oldDbFile = File(oldDbPath);
+      
+      if (!await oldDbFile.exists()) {
+        Logger.logI('ℹ️ [MigrationHelper] Old database file does not exist - skipping migration');
+        return;
+      }
+      
+      Logger.logI('🔄 [MigrationHelper] Old database file found - attempting migration...');
+      
       // Initialize old database helper
       final oldDbHelper = DatabaseHelper.instance;
-      final oldDb = await oldDbHelper.initDatabase(userId);
+      
+      // Try to open old database with error handling
+      Database? oldDb;
+      try {
+        oldDb = await oldDbHelper.initDatabase(userId);
+      } catch (e) {
+        // Database may be locked, corrupt, or in use - skip migration
+        Logger.logE('⚠️ [MigrationHelper] Cannot open old database (may be locked or corrupt): ${e.toString()}', e);
+        Logger.logI('ℹ️ [MigrationHelper] Skipping migration - will use fresh databases');
+        return;
+      }
 
       // Initialize new databases
       final globalDbHelper = GlobalDatabaseHelper.instance;
@@ -23,7 +50,7 @@ class MigrationHelper {
       final userDbHelper = UserDatabaseHelper.instance;
       final userDb = await userDbHelper.initUserDatabase(userId);
 
-      Logger.logI('🔄 Starting database migration for user $userId...');
+      Logger.logI('🔄 [MigrationHelper] Starting database migration for user $userId...');
 
       // 1. Migrate global tables to global database
       await _migrateGlobalTables(oldDb, globalDb);
@@ -34,10 +61,19 @@ class MigrationHelper {
       // 3. Split system table
       await _migrateSystemTable(oldDb, globalDb, userDb);
 
-      Logger.logI('✅ Database migration completed successfully');
+      Logger.logI('✅ [MigrationHelper] Database migration completed successfully');
+      
+      // Close old database after migration
+      try {
+        await oldDb.close();
+        Logger.logI('✅ [MigrationHelper] Old database closed');
+      } catch (e) {
+        Logger.logE('⚠️ [MigrationHelper] Error closing old database', e);
+      }
     } catch (e) {
-      Logger.logE('❌ Database migration failed', e);
-      rethrow;
+      Logger.logE('❌ [MigrationHelper] Database migration failed', e);
+      // Don't rethrow - migration is optional, app can continue without it
+      Logger.logI('ℹ️ [MigrationHelper] Migration failed but app will continue with fresh databases');
     }
   }
 
