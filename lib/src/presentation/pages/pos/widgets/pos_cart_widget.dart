@@ -176,7 +176,7 @@ class PosCartWidget extends StatelessWidget {
             tax: tax,
             total: total,
             currencySymbol: currencySymbol,
-            totalItems: cartItems.length,
+            totalItems: cartItems.fold(0, (sum, item) => sum + item.quantity),
             l10n: l10n,
             theme: theme,
           ),
@@ -552,13 +552,16 @@ class _CartItemRowState extends State<_CartItemRow> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                IconButton(
-                  onPressed: widget.quantity > 1 ? _onMinusQuantity : null,
-                  padding: EdgeInsets.symmetric(horizontal: rSpacing.xxs),
-                  icon: Text(
-                    '-',
-                    style: rTypography.titleLarge.copyWith(
-                      color: widget.quantity > 1 ? Colors.red : Colors.grey,
+                GestureDetector(
+                  onTap: widget.quantity > 1 ? _onMinusQuantity : null,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: rSpacing.xxs),
+                    child: Text(
+                      '-',
+                      style: rTypography.titleLarge.copyWith(
+                        color: widget.quantity > 1 ? Colors.red : Colors.grey,
+                      ),
                     ),
                   ),
                 ),
@@ -610,13 +613,16 @@ class _CartItemRowState extends State<_CartItemRow> {
                         widget.qtyAvailable == null ||
                         widget.qtyAvailable! > 0 &&
                             widget.quantity < widget.qtyAvailable!;
-                    return IconButton(
-                      onPressed: canIncrement ? _onPlusQuantity : null,
-                      padding: EdgeInsets.symmetric(horizontal: rSpacing.xxs),
-                      icon: Text(
-                        '+',
-                        style: rTypography.titleLarge.copyWith(
-                          color: canIncrement ? Colors.green : Colors.grey
+                    return GestureDetector(
+                      onTap: canIncrement ? _onPlusQuantity : null,
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: rSpacing.xxs),
+                        child: Text(
+                          '+',
+                          style: rTypography.titleLarge.copyWith(
+                            color: canIncrement ? Colors.green : Colors.grey
+                          ),
                         ),
                       ),
                     );

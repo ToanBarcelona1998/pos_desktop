@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../model/auth_token_model.dart';
@@ -78,17 +80,17 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<UserModel?> getCachedUser() async {
     final prefs = await _prefs;
-    final userId = prefs.getInt(_userIdKey);
-    if (userId == null) return null;
+    final user = prefs.getString(_userIdKey);
+    if (user == null) return null;
 
     // For more complex user caching, you might want to use a database
-    return UserModel(id: userId);
+    return UserModel.fromJson(jsonDecode(user));
   }
 
   @override
   Future<void> cacheUser(UserModel user) async {
     final prefs = await _prefs;
-    await prefs.setInt(_userIdKey, user.id);
+    await prefs.setString(_userIdKey, jsonEncode(user.toJson()));
   }
 
   @override

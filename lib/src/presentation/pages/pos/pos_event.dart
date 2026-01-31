@@ -202,5 +202,9 @@ class PosSelectPayment extends PosEvent {
   });
 }
 
+class PosReloadProduct extends PosEvent {
+  const PosReloadProduct();
+}
+
 
 

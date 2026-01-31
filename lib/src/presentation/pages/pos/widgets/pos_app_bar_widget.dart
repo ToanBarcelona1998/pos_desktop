@@ -1,6 +1,7 @@
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pos_final/src/application.dart';
 import 'package:pos_final/src/presentation/presentation.dart';
 import 'package:pos_final/src/presentation/widgets/icon_wrapper_widget.dart';
 import 'package:pos_final/src/presentation/widgets/live_clock_widget.dart';
@@ -43,7 +44,6 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     final rSpacing = context.rSpacing;
     final rTypography = context.rTypography;
     final rSizes = context.rSizes;
-
     return AppBar(
       leading: const SizedBox(),
       leadingWidth: 0,
@@ -128,8 +128,8 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                     icon: Icons.sync,
                     tooltip: l10n.translate(LocaleKeys.syncData),
                     onTap: () {
-                      context.read<PosOnlineBloc>().add(
-                            const PosOnlineSync(),
+                      context.read<PosBloc>().add(
+                            const PosRefreshProducts(),
                           );
                     },
                   ),
@@ -161,83 +161,117 @@ class PosAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     final theme = Theme.of(context);
 
     final rTypography = context.rTypography;
-    
-    if(locations.isEmpty){
+
+    if (locations.isEmpty) {
       return const SizedBox();
     }
 
     final initValue = locations
         .where(
           (element) => element.id == selectedLocationId,
-    )
+        )
         .first;
-    
-    if(locations.length == 1){
-      return Text(
-        initValue.name,
-        style: rTypography.titleMedium,
+
+    if (locations.length == 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            initValue.name,
+            style: rTypography.titleMedium,
+          ),
+
+          SizedBox(
+            height: 2,
+          ),
+
+          BlocBuilder<AuthCubit,AuthState>(builder: (context, state) {
+            if(state is Authenticated){
+              return Text(state.user.fullName, style: context.rTypography.bodyMedium,);
+            }
+
+            return const SizedBox.shrink();
+          }),
+        ],
       );
     }
-    
-    return IntrinsicWidth(
-      child: DropdownButtonFormField<LocationEntity>(
-        initialValue: initValue,
-        dropdownColor: Colors.white,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: AppRadius.borderRadiusSm,
-            borderSide: BorderSide(
-              color: theme.dividerColor,
-              width: 1,
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IntrinsicWidth(
+          child: DropdownButtonFormField<LocationEntity>(
+            initialValue: initValue,
+            dropdownColor: Colors.white,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: AppRadius.borderRadiusSm,
+                borderSide: BorderSide(
+                  color: theme.dividerColor,
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: AppRadius.borderRadiusSm,
+                borderSide: BorderSide(
+                  color: theme.dividerColor,
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: AppRadius.borderRadiusSm,
+                borderSide: BorderSide(
+                  color: theme.primaryColor,
+                  width: 1,
+                ),
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: context.rSpacing.md,
+                vertical: context.rSpacing.sm,
+              ),
             ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: AppRadius.borderRadiusSm,
-            borderSide: BorderSide(
-              color: theme.dividerColor,
-              width: 1,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: AppRadius.borderRadiusSm,
-            borderSide: BorderSide(
-              color: theme.primaryColor,
-              width: 1,
-            ),
-          ),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: context.rSpacing.md,
-            vertical: context.rSpacing.sm,
+            style: context.rTypography.bodyMedium.copyWith(color: Colors.black),
+            selectedItemBuilder: (context) {
+              return locations.map((location) {
+                return Text(
+                  location.name,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.rTypography.bodyMedium,
+                );
+              }).toList();
+            },
+            items: locations.map((location) {
+              return DropdownMenuItem<LocationEntity>(
+                value: location,
+                child: Text(
+                  location.name,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.rTypography.bodyMedium
+                      .copyWith(color: Colors.black),
+                ),
+              );
+            }).toList(),
+            onChanged: (location) {
+              if (location != null) {
+                onLocationChanged?.call(location.id);
+              }
+            },
           ),
         ),
-        style: context.rTypography.bodyMedium.copyWith(color: Colors.black),
-        selectedItemBuilder: (context) {
-          return locations.map((location) {
-            return Text(
-              location.name,
-              overflow: TextOverflow.ellipsis,
-              style: context.rTypography.bodyMedium,
-            );
-          }).toList();
-        },
-        items: locations.map((location) {
-          return DropdownMenuItem<LocationEntity>(
-            value: location,
-            child: Text(
-              location.name,
-              overflow: TextOverflow.ellipsis,
-              style: context.rTypography.bodyMedium.copyWith(color: Colors.black),
-            ),
-          );
-        }).toList(),
-        onChanged: (location) {
-          if(location != null){
-            onLocationChanged?.call(location.id); 
+        SizedBox(
+          height: 2,
+        ),
+
+        BlocBuilder<AuthCubit,AuthState>(builder: (context, state) {
+          if(state is Authenticated){
+            return Text(state.user.fullName, style: context.rTypography.bodyMedium,);
           }
-        },
-      ),
+
+          return const SizedBox.shrink();
+        }),
+      ],
     );
   }
 }

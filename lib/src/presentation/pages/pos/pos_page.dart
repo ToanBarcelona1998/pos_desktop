@@ -801,13 +801,8 @@ class _PosPageState extends State<PosPage> {
 
   void showSuspendedSalesDialog(BuildContext context) {
     final bloc = context.read<PosBloc>();
-    final state = bloc.state;
 
-    // Load suspended sells if not loaded
-    if (state.suspendedSells.isEmpty &&
-        state.pageStatus != PosPageStatus.loadingSuspendedSells) {
-      bloc.add(const PosLoadSuspendedSells());
-    }
+    bloc.add(const PosLoadSuspendedSells());
 
     DialogProvider.showAppDialog(
       context,

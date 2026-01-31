@@ -79,114 +79,117 @@ class _PosPaymentMethodDialogState extends State<PosPaymentMethodDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        Text(
-                          l10n.translate(LocaleKeys.selectPaymentMethod),
-                          style: rTypography.headlineLarge,
-                        ),
-                        const Spacer(),
-                        IconWrapper(
-                          icon: Icons.close,
-                          iconColor: Colors.black,
-                          onTap: () => Navigator.of(context).pop(),
-                        ),
-                      ],
-                    ),
-                    rSpacing.gapVerticalMd,
-
-                    // Payment Type Selection
-                    Text(
-                      l10n.translate(LocaleKeys.paymentType),
-                      style: rTypography.bodyMedium.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    rSpacing.gapVerticalSm,
-
-                    RadioGroup<PaymentMethod>(
-                      onChanged: (method){
-                        setState(() {
-                          selectedPaymentType = method;
-
-                          if(selectedPaymentType == PaymentMethod.eWallet && widget.eWalletAccounts.isNotEmpty){
-                            selectedAccount = widget.eWalletAccounts.first;
-                          }
-                          else if (widget.bankTransferAccounts.isNotEmpty) {
-                            selectedAccount = widget.bankTransferAccounts.first;
-                          }
-                        });
-                        // Broadcast payment selection immediately
-                        if (selectedAccount != null) {
-                          context.read<PosBloc>().add(
-                                PosSelectPayment(
-                                  paymentMethod: selectedPaymentType!,
-                                  paymentAccount: selectedAccount,
-                                ),
-                              );
-                        }
-                      },
-                      groupValue: selectedPaymentType,
-                      child: Row(
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
                         children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Radio(
-                                  value: PaymentMethod.eWallet,
-                                ),
-                                Text(l10n.translate(LocaleKeys.eWallet)),
-                              ],
-                            ),
+                          Text(
+                            l10n.translate(LocaleKeys.selectPaymentMethod),
+                            style: rTypography.headlineLarge,
                           ),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Radio(
-                                  value: PaymentMethod.bankTransfer,
-                                ),
-                                Text(l10n.translate(LocaleKeys.bankTransfer)),
-                              ],
-                            ),
+                          const Spacer(),
+                          IconWrapper(
+                            icon: Icons.close,
+                            iconColor: Colors.black,
+                            onTap: () => Navigator.of(context).pop(),
                           ),
                         ],
                       ),
-                    ),
-                    rSpacing.gapVerticalLg,
-
-                    // Account Selection
-                    if (selectedPaymentType != null) ...[
+                      rSpacing.gapVerticalMd,
+                
+                      // Payment Type Selection
                       Text(
-                        l10n.translate(LocaleKeys.selectAccount),
+                        l10n.translate(LocaleKeys.paymentType),
                         style: rTypography.bodyMedium.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       rSpacing.gapVerticalSm,
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          _buildAccountSelection(),
-                          if (selectedAccount != null &&
-                              selectedAccount?.cachedImagePath != null) ...[
-                            rSpacing.gapVerticalLg,
-                            Image.file(
-                              File(selectedAccount!.cachedImagePath!),
-                              width: rSizes.modalWidthSm,
-                              height: rSizes.modalWidthSm,
-                              errorBuilder: (context, error, stackTrace) =>
-                              const SizedBox.shrink(),
-                            )
-                          ]
-                        ],
+                
+                      RadioGroup<PaymentMethod>(
+                        onChanged: (method){
+                          setState(() {
+                            selectedPaymentType = method;
+                
+                            if(selectedPaymentType == PaymentMethod.eWallet && widget.eWalletAccounts.isNotEmpty){
+                              selectedAccount = widget.eWalletAccounts.first;
+                            }
+                            else if (widget.bankTransferAccounts.isNotEmpty) {
+                              selectedAccount = widget.bankTransferAccounts.first;
+                            }
+                          });
+                          // Broadcast payment selection immediately
+                          if (selectedAccount != null) {
+                            context.read<PosBloc>().add(
+                                  PosSelectPayment(
+                                    paymentMethod: selectedPaymentType!,
+                                    paymentAccount: selectedAccount,
+                                  ),
+                                );
+                          }
+                        },
+                        groupValue: selectedPaymentType,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Radio(
+                                    value: PaymentMethod.eWallet,
+                                  ),
+                                  Text(l10n.translate(LocaleKeys.eWallet)),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Radio(
+                                    value: PaymentMethod.bankTransfer,
+                                  ),
+                                  Text(l10n.translate(LocaleKeys.bankTransfer)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      rSpacing.gapVerticalLg,
+                
+                      // Account Selection
+                      if (selectedPaymentType != null) ...[
+                        Text(
+                          l10n.translate(LocaleKeys.selectAccount),
+                          style: rTypography.bodyMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        rSpacing.gapVerticalSm,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _buildAccountSelection(),
+                            if (selectedAccount != null &&
+                                selectedAccount?.cachedImagePath != null) ...[
+                              rSpacing.gapVerticalLg,
+                              Image.file(
+                                File(selectedAccount!.cachedImagePath!),
+                                width: rSizes.modalWidthSm,
+                                height: rSizes.modalWidthSm,
+                                errorBuilder: (context, error, stackTrace) =>
+                                const SizedBox.shrink(),
+                              )
+                            ]
+                          ],
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),

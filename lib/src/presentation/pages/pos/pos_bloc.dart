@@ -819,9 +819,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       currentPage: 1,
     ));
 
-    // Sync products first
-    await _productRepository.syncProducts(state.selectedLocationId!);
-
     // Reload products from first page
     final result = await _productRepository.getProducts(
       locationId: state.selectedLocationId!,
