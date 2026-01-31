@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -55,17 +56,16 @@ class BarcodeScannerService {
 
   bool _handleKeyEvent(KeyEvent event) {
     if (!_enabled) return false;
-    // Check if focus is on a text input field
+    // Check if focus is inside a text input field - do NOT consume keys in that case.
+    // Previously used widget.debugLabel == 'EditableText' which is unreliable
+    // (e.g. on Windows/desktop the focused widget hierarchy can differ).
     final focusNode = FocusManager.instance.primaryFocus;
-    if (focusNode != null) {
-      final widget = focusNode.context?.widget;
-      // More robust check: if focus is on any text input, don't intercept
-      // Check for TextField, TextFormField, or any widget with EditableText
-      if (widget != null &&
-          widget is Focus &&
-          widget.debugLabel == 'EditableText') {
+    final context = focusNode?.context;
+    if (context != null) {
+      if (context.findAncestorWidgetOfExactType<TextField>() != null ||
+          context.findAncestorWidgetOfExactType<TextFormField>() != null) {
         _buffer = '';
-        return false;
+        return false; // Let the text field receive the key
       }
     }
 
