@@ -32,7 +32,7 @@ class PosOnlinePage extends StatefulWidget {
 }
 
 class _PosOnlinePageState extends State<PosOnlinePage>
-    implements NetworkStatusObserver {
+    with  WidgetsBindingObserver implements NetworkStatusObserver{
   WindowController? _customerWindowController;
 
   InAppWebViewController? webViewController;
@@ -228,21 +228,17 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                           url: WebUri(_appConfig.webUrl),
                           headers: _requiredHeaders,
                         ),
-                        gestureRecognizers:
-
-                        <Factory<OneSequenceGestureRecognizer>>{}.toSet(),
-                        // {}..addAll([
-                        //     // Factory<VerticalDragGestureRecognizer>(
-                        //     //   () => VerticalDragGestureRecognizer(),
-                        //     // ),
-                        //     // Factory<HorizontalDragGestureRecognizer>(
-                        //     //   () => HorizontalDragGestureRecognizer(),
-                        //     // ),
-                        //
-                        //     Factory<OneSequenceGestureRecognizer>(
-                        //       () => EagerGestureRecognizer(),
-                        //     ),
-                        //   ]),
+                        gestureRecognizers: {}..addAll([
+                            Factory<VerticalDragGestureRecognizer>(
+                              () => VerticalDragGestureRecognizer(),
+                            ),
+                            Factory<HorizontalDragGestureRecognizer>(
+                              () => HorizontalDragGestureRecognizer(),
+                            ),
+                            Factory<OneSequenceGestureRecognizer>(
+                              () => EagerGestureRecognizer(),
+                            ),
+                          ]),
                         onLoadStop: (controller, url) async {
                           // Listen to URL changes
                           final urlString = url.toString();
@@ -582,5 +578,12 @@ class _PosOnlinePageState extends State<PosOnlinePage>
         ),
       );
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    Logger.logI('didChangeAppLifecycleState, $state');
   }
 }
