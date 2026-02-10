@@ -223,7 +223,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                   child: Stack(
                     children: [
                       ExcludeFocus(
-                        excluding: false,
+                        excluding: true,
                         child: InAppWebView(
                           key: _webViewKey,
                           webViewEnvironment: _webViewEnvironment,
