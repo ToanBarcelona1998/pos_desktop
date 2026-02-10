@@ -43,8 +43,9 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     iframeAllow: "camera; microphone",
     iframeAllowFullscreen: true,
     supportMultipleWindows: true,
-    javaScriptCanOpenWindowsAutomatically: true,
+    javaScriptCanOpenWindowsAutomatically: false,
     useShouldOverrideUrlLoading: true,
+    disableContextMenu: false
   );
 
   late PosOnlineBloc _posOnlineBloc;
@@ -90,13 +91,8 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   final GlobalKey _webViewKey = GlobalKey();
 
-  void _test() {
-    print("Đối tượng đang giữ Focus hiện tại: ${FocusManager.instance.primaryFocus}");
-  }
-
   @override
   void initState() {
-    FocusManager.instance.addListener(_test);
     _posOnlineBloc = PosOnlineBloc(
       authCubit: context.read<AuthCubit>(),
       syncService: sl.get<SystemSyncService>(),
@@ -110,7 +106,6 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   void dispose() {
-    FocusManager.instance.removeListener(_test);
     try {
       _customerWindowController?.close();
     } catch (_) {}
@@ -227,262 +222,262 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                 body: SafeArea(
                   child: Stack(
                     children: [
-                      InAppWebView(
-                        key: _webViewKey,
-                        webViewEnvironment: _webViewEnvironment,
-                        initialUrlRequest: URLRequest(
-                          url: WebUri(_appConfig.webUrl),
-                          headers: _requiredHeaders,
-                        ),
-                        gestureRecognizers: {}..addAll([
-                            Factory<VerticalDragGestureRecognizer>(
-                              () => VerticalDragGestureRecognizer(),
-                            ),
-                            Factory<HorizontalDragGestureRecognizer>(
-                              () => HorizontalDragGestureRecognizer(),
-                            ),
-                            Factory<OneSequenceGestureRecognizer>(
-                              () => EagerGestureRecognizer(),
-                            ),
-                          ]),
-                        onLoadStop: (controller, url) async {
-                          // Listen to URL changes
-                          final urlString = url.toString();
+                      ExcludeFocus(
+                        excluding: false,
+                        child: InAppWebView(
+                          key: _webViewKey,
+                          webViewEnvironment: _webViewEnvironment,
+                          initialUrlRequest: URLRequest(
+                            url: WebUri(_appConfig.webUrl),
+                            headers: _requiredHeaders,
+                          ),
+                          gestureRecognizers: {}..addAll([
+                              Factory<VerticalDragGestureRecognizer>(
+                                () => VerticalDragGestureRecognizer(),
+                              ),
+                              Factory<HorizontalDragGestureRecognizer>(
+                                () => HorizontalDragGestureRecognizer(),
+                              ),
+                            ]),
+                          onLoadStop: (controller, url) async {
+                            // Listen to URL changes
+                            final urlString = url.toString();
 
-                          // Check authentication on first load only
-                          if (_isFirstLoad) {
-                            _isFirstLoad = false;
-                            _posOnlineBloc
-                                .add(const PosOnlineCheckAuthentication());
-                          }
-
-                          // Only logout if URL is login page AND user is authenticated
-                          // Don't logout during login process (when authCompleted is being called)
-                          if (urlString.contains('/login')) {
-                            final authCubit = context.read<AuthCubit>();
-                            final authState = authCubit.state;
-
-                            // ROOT CAUSE FIX: Don't logout if:
-                            // 1. AuthCubit is in AuthLoading state (login in progress)
-                            // 2. Flag _isLoggingIn is true (authCompleted handler was called)
-                            // 3. User is not authenticated (no need to logout)
-                            final isLoginInProgress =
-                                authState is AuthLoading || _isLoggingIn;
-                            final isAuthenticated = authCubit.isAuthenticated;
-
-                            // Only logout if user is authenticated AND login is NOT in progress
-                            if (isAuthenticated && !isLoginInProgress) {
-                              Logger.logI(
-                                  '🔄 [PosOnlinePage] URL changed to /login and user is authenticated - triggering logout');
-                              // URL changed to login page - logout
+                            // Check authentication on first load only
+                            if (_isFirstLoad) {
+                              _isFirstLoad = false;
                               _posOnlineBloc
-                                  .add(const PosOnlineUrlChangedToLogin());
-                            } else {
-                              Logger.logI(
-                                  'ℹ️ [PosOnlinePage] URL changed to /login but skipping logout - isLoginInProgress: $isLoginInProgress, isAuthenticated: $isAuthenticated');
+                                  .add(const PosOnlineCheckAuthentication());
                             }
-                          }
 
-                          await controller.evaluateJavascript(
-                              source: _postAppReadySource);
-                        },
-                        onWebViewCreated: (controller) async {
-                          webViewController = controller;
+                            // Only logout if URL is login page AND user is authenticated
+                            // Don't logout during login process (when authCompleted is being called)
+                            if (urlString.contains('/login')) {
+                              final authCubit = context.read<AuthCubit>();
+                              final authState = authCubit.state;
 
-                          controller.addJavaScriptHandler(
-                              handlerName: 'getCashierLogin',
+                              // ROOT CAUSE FIX: Don't logout if:
+                              // 1. AuthCubit is in AuthLoading state (login in progress)
+                              // 2. Flag _isLoggingIn is true (authCompleted handler was called)
+                              // 3. User is not authenticated (no need to logout)
+                              final isLoginInProgress =
+                                  authState is AuthLoading || _isLoggingIn;
+                              final isAuthenticated = authCubit.isAuthenticated;
+
+                              // Only logout if user is authenticated AND login is NOT in progress
+                              if (isAuthenticated && !isLoginInProgress) {
+                                Logger.logI(
+                                    '🔄 [PosOnlinePage] URL changed to /login and user is authenticated - triggering logout');
+                                // URL changed to login page - logout
+                                _posOnlineBloc
+                                    .add(const PosOnlineUrlChangedToLogin());
+                              } else {
+                                Logger.logI(
+                                    'ℹ️ [PosOnlinePage] URL changed to /login but skipping logout - isLoginInProgress: $isLoginInProgress, isAuthenticated: $isAuthenticated');
+                              }
+                            }
+
+                            await controller.evaluateJavascript(
+                                source: _postAppReadySource);
+                          },
+                          onWebViewCreated: (controller) async {
+                            webViewController = controller;
+
+                            controller.addJavaScriptHandler(
+                                handlerName: 'getCashierLogin',
+                                callback: (args) async {
+                                  try {
+                                    // Parse data from webview
+                                    // Format: {userId: number, amount: number, startTime: string, locationId?: number}
+                                    final data = args[0] as Map<String, dynamic>;
+
+                                    final userId =
+                                        (data['userId'] as num?)?.toInt();
+                                    final amount = double.tryParse(data['amount']
+                                        .toString()
+                                        .replaceAll(',', ''));
+                                    final startTimeStr =
+                                        data['startTime'] as String?;
+                                    final locationId =
+                                        (data['locationId'] as num?)?.toInt();
+
+                                    if (userId == null ||
+                                        amount == null ||
+                                        startTimeStr == null) {
+                                      if (mounted) {
+                                        debugPrint(
+                                            'Invalid cashier login data: $data');
+                                      }
+                                      return 'error: invalid_data';
+                                    }
+
+                                    // Parse startTime (format: "YYYY-MM-DD HH:mm:ss")
+                                    final startTime =
+                                        DateTime.tryParse(startTimeStr);
+                                    if (startTime == null) {
+                                      if (mounted) {
+                                        debugPrint(
+                                            'Invalid startTime format: $startTimeStr');
+                                      }
+                                      return 'error: invalid_time';
+                                    }
+
+                                    // LocationId should be provided from webview
+                                    // If not provided, we cannot proceed
+                                    if (locationId == null) {
+                                      if (mounted) {
+                                        debugPrint(
+                                            'LocationId is required for cashier login');
+                                      }
+                                      return 'error: location_required';
+                                    }
+
+                                    // Save session locally (marked as synced since it's from online mode)
+                                    final cashierSessionRepository =
+                                        sl.get<CashierSessionRepository>();
+                                    final result = await cashierSessionRepository
+                                        .saveSessionLocally(
+                                      userId: userId,
+                                      locationId: locationId,
+                                      openingAmount: amount,
+                                      startTime: startTime,
+                                      isSynced:
+                                          true, // Already synced from webview
+                                    );
+
+                                    result.fold(
+                                      onSuccess: (_) {
+                                        if (mounted) {
+                                          Logger.logI(
+                                              'Cashier session cached successfully: userId=$userId, locationId=$locationId, amount=$amount');
+                                        }
+                                      },
+                                      onError: (failure) {
+                                        if (mounted) {
+                                          Logger.logE(
+                                              'Failed to cache cashier session: ${failure.message}');
+                                        }
+                                      },
+                                    );
+
+                                    return 'success';
+                                  } catch (e) {
+                                    if (mounted) {
+                                      Logger.logE(
+                                          'Error handling getCashierLogin: $e');
+                                    }
+                                    return 'error: ${e.toString()}';
+                                  }
+                                });
+
+                            // Handle authentication completed
+                            controller.addJavaScriptHandler(
+                              handlerName: 'authCompleted',
                               callback: (args) async {
                                 try {
-                                  // Parse data from webview
-                                  // Format: {userId: number, amount: number, startTime: string, locationId?: number}
-                                  final data = args[0] as Map<String, dynamic>;
+                                  // Set flag to prevent logout during login
+                                  _isLoggingIn = true;
 
-                                  final userId =
-                                      (data['userId'] as num?)?.toInt();
-                                  final amount = double.tryParse(data['amount']
-                                      .toString()
-                                      .replaceAll(',', ''));
-                                  final startTimeStr =
-                                      data['startTime'] as String?;
-                                  final locationId =
-                                      (data['locationId'] as num?)?.toInt();
-
-                                  if (userId == null ||
-                                      amount == null ||
-                                      startTimeStr == null) {
-                                    if (mounted) {
-                                      debugPrint(
-                                          'Invalid cashier login data: $data');
-                                    }
-                                    return 'error: invalid_data';
+                                  if (_windowsDeviceInfo != null) {
+                                    final String deviceId = _windowsDeviceInfo!
+                                        .deviceId
+                                        .replaceAll('{', '')
+                                        .replaceAll('}', '');
+                                    controller.evaluateJavascript(
+                                      source: _postHardWareId(deviceId),
+                                    );
                                   }
+                                  String accessToken = args[0][0];
+                                  String userInfoJson = args[0][1];
 
-                                  // Parse startTime (format: "YYYY-MM-DD HH:mm:ss")
-                                  final startTime =
-                                      DateTime.tryParse(startTimeStr);
-                                  if (startTime == null) {
-                                    if (mounted) {
-                                      debugPrint(
-                                          'Invalid startTime format: $startTimeStr');
-                                    }
-                                    return 'error: invalid_time';
+                                  Map<String, dynamic> userMap =
+                                      jsonDecode(userInfoJson);
+
+                                  // Dispatch event to bloc
+                                  context.read<PosOnlineBloc>().add(
+                                        PosOnlineAuthCompleted(
+                                          accessToken: accessToken,
+                                          userInfo: userMap,
+                                        ),
+                                      );
+
+                                  // Reset flag after a delay to allow login to complete
+                                  Future.delayed(const Duration(seconds: 2), () {
+                                    _isLoggingIn = false;
+                                  });
+                                } catch (e) {
+                                  _isLoggingIn = false; // Reset flag on error
+                                  if (mounted) {
+                                    final l10n = AppLocalizations.of(context);
+                                    ToastManager.showError(
+                                      context,
+                                      '${l10n.translate(LocaleKeys.error)}: $e',
+                                    );
                                   }
+                                }
+                                return 'Receive';
+                              },
+                            );
 
-                                  // LocationId should be provided from webview
-                                  // If not provided, we cannot proceed
-                                  if (locationId == null) {
-                                    if (mounted) {
-                                      debugPrint(
-                                          'LocationId is required for cashier login');
-                                    }
-                                    return 'error: location_required';
-                                  }
-
-                                  // Save session locally (marked as synced since it's from online mode)
-                                  final cashierSessionRepository =
-                                      sl.get<CashierSessionRepository>();
-                                  final result = await cashierSessionRepository
-                                      .saveSessionLocally(
-                                    userId: userId,
-                                    locationId: locationId,
-                                    openingAmount: amount,
-                                    startTime: startTime,
-                                    isSynced:
-                                        true, // Already synced from webview
-                                  );
-
-                                  result.fold(
-                                    onSuccess: (_) {
-                                      if (mounted) {
-                                        Logger.logI(
-                                            'Cashier session cached successfully: userId=$userId, locationId=$locationId, amount=$amount');
-                                      }
-                                    },
-                                    onError: (failure) {
-                                      if (mounted) {
-                                        Logger.logE(
-                                            'Failed to cache cashier session: ${failure.message}');
-                                      }
-                                    },
-                                  );
-
-                                  return 'success';
+                            // Handle logout from webview
+                            controller.addJavaScriptHandler(
+                              handlerName: 'logout',
+                              callback: (args) async {
+                                try {
+                                  // Dispatch event to bloc
+                                  context.read<PosOnlineBloc>().add(
+                                        const PosOnlineLogoutFromWebview(),
+                                      );
                                 } catch (e) {
                                   if (mounted) {
-                                    Logger.logE(
-                                        'Error handling getCashierLogin: $e');
+                                    final l10n = AppLocalizations.of(context);
+                                    ToastManager.showError(
+                                      context,
+                                      '${l10n.translate(LocaleKeys.error)}: $e',
+                                    );
                                   }
-                                  return 'error: ${e.toString()}';
                                 }
-                              });
-
-                          // Handle authentication completed
-                          controller.addJavaScriptHandler(
-                            handlerName: 'authCompleted',
-                            callback: (args) async {
-                              try {
-                                // Set flag to prevent logout during login
-                                _isLoggingIn = true;
-
-                                if (_windowsDeviceInfo != null) {
-                                  final String deviceId = _windowsDeviceInfo!
-                                      .deviceId
-                                      .replaceAll('{', '')
-                                      .replaceAll('}', '');
-                                  controller.evaluateJavascript(
-                                    source: _postHardWareId(deviceId),
-                                  );
-                                }
-                                String accessToken = args[0][0];
-                                String userInfoJson = args[0][1];
-
-                                Map<String, dynamic> userMap =
-                                    jsonDecode(userInfoJson);
-
-                                // Dispatch event to bloc
-                                context.read<PosOnlineBloc>().add(
-                                      PosOnlineAuthCompleted(
-                                        accessToken: accessToken,
-                                        userInfo: userMap,
-                                      ),
-                                    );
-
-                                // Reset flag after a delay to allow login to complete
-                                Future.delayed(const Duration(seconds: 2), () {
-                                  _isLoggingIn = false;
-                                });
-                              } catch (e) {
-                                _isLoggingIn = false; // Reset flag on error
-                                if (mounted) {
-                                  final l10n = AppLocalizations.of(context);
-                                  ToastManager.showError(
-                                    context,
-                                    '${l10n.translate(LocaleKeys.error)}: $e',
-                                  );
-                                }
-                              }
-                              return 'Receive';
-                            },
-                          );
-
-                          // Handle logout from webview
-                          controller.addJavaScriptHandler(
-                            handlerName: 'logout',
-                            callback: (args) async {
-                              try {
-                                // Dispatch event to bloc
-                                context.read<PosOnlineBloc>().add(
-                                      const PosOnlineLogoutFromWebview(),
-                                    );
-                              } catch (e) {
-                                if (mounted) {
-                                  final l10n = AppLocalizations.of(context);
-                                  ToastManager.showError(
-                                    context,
-                                    '${l10n.translate(LocaleKeys.error)}: $e',
-                                  );
-                                }
-                              }
-                              return 'Receive';
-                            },
-                          );
-
-                          controller.addJavaScriptHandler(
-                            handlerName: 'customerDisplayOpened',
-                            callback: (arguments) async {
-                              try {
-                                if (_customerWindowController == null) {
-                                  String href = arguments[0][0];
-                                  _customerWindowController =
-                                      await WindowManagerUtils.createNewWindow(
-                                          WindowArguments(
-                                    type: WindowType.onlineCustomer,
-                                    params: {'href': href},
-                                  ));
-                                } else {
-                                  _customerWindowController!.show();
-                                  _customerWindowController!.focus();
-                                }
-                              } catch (e) {
-                                Logger.logE('customerDisplayOpened error', e);
-                              }
-                              return 'success';
-                            },
-                          );
-                        },
-                        onReceivedError: (controller, request, error) {
-                          if (_offlineWebviewShown) return;
-                          final code = error.type.toNativeValue();
-                          if (code == 11) {
-                            _offlineWebviewShown = true;
-                            controller.loadData(
-                              data: offlineHtml,
-                              mimeType: 'text/html',
-                              encoding: 'utf-8',
-                              baseUrl: WebUri('about:blank'),
+                                return 'Receive';
+                              },
                             );
-                          }
-                        },
+
+                            controller.addJavaScriptHandler(
+                              handlerName: 'customerDisplayOpened',
+                              callback: (arguments) async {
+                                try {
+                                  if (_customerWindowController == null) {
+                                    String href = arguments[0][0];
+                                    _customerWindowController =
+                                        await WindowManagerUtils.createNewWindow(
+                                            WindowArguments(
+                                      type: WindowType.onlineCustomer,
+                                      params: {'href': href},
+                                    ));
+                                  } else {
+                                    _customerWindowController!.show();
+                                    _customerWindowController!.focus();
+                                  }
+                                } catch (e) {
+                                  Logger.logE('customerDisplayOpened error', e);
+                                }
+                                return 'success';
+                              },
+                            );
+                          },
+                          onReceivedError: (controller, request, error) {
+                            if (_offlineWebviewShown) return;
+                            final code = error.type.toNativeValue();
+                            if (code == 11) {
+                              _offlineWebviewShown = true;
+                              controller.loadData(
+                                data: offlineHtml,
+                                mimeType: 'text/html',
+                                encoding: 'utf-8',
+                                baseUrl: WebUri('about:blank'),
+                              );
+                            }
+                          },
+                        ),
                       ),
                       // POS Offline Screen (stacked on top when network disconnects)
                       if (state.showOfflinePos)
