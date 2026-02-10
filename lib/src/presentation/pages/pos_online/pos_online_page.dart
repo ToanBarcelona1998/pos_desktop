@@ -90,8 +90,13 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   final GlobalKey _webViewKey = GlobalKey();
 
+  void _test() {
+    print("Đối tượng đang giữ Focus hiện tại: ${FocusManager.instance.primaryFocus}");
+  }
+
   @override
   void initState() {
+    FocusManager.instance.addListener(_test);
     _posOnlineBloc = PosOnlineBloc(
       authCubit: context.read<AuthCubit>(),
       syncService: sl.get<SystemSyncService>(),
@@ -105,6 +110,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   void dispose() {
+    FocusManager.instance.removeListener(_test);
     try {
       _customerWindowController?.close();
     } catch (_) {}
