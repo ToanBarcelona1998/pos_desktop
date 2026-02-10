@@ -281,17 +281,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                             await controller.evaluateJavascript(
                                 source: _postAppReadySource);
 
-                            await controller.evaluateJavascript(source: """
-                              Object.defineProperty(document, 'hidden', { value: false, writable: false });
-                              Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: false });
-                          
-                              window.addEventListener('blur', function(e) {
-                                  e.stopImmediatePropagation();
-                              }, true);
-                            """);
-
-                            await controller.evaluateJavascript(
-                                source: _postAppReadySource);
+                            _applyToastrPatch(controller);
                           },
                           onWebViewCreated: (controller) async {
                             webViewController = controller;
@@ -603,5 +593,25 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     super.didChangeAppLifecycleState(state);
 
     Logger.logI('didChangeAppLifecycleState, $state');
+  }
+
+
+  void _applyToastrPatch(InAppWebViewController controller) async {
+    await controller.evaluateJavascript(source: """
+    (function() {
+      if (typeof toastr !== 'undefined') {
+        toastr.options.timeOut = 3000;
+        toastr.options.extendedTimeOut = 1000;
+        toastr.options.closeOnHover = false;
+        
+        window.hasFocus = function() { return true; };
+        Object.defineProperty(document, 'hasFocus', { value: () => true, writable: false });
+        
+        console.log("POS: Toastr patch applied successfully");
+      } else {
+        console.log("POS: Toastr not found yet, retrying...");
+      }
+    })();
+  """);
   }
 }
