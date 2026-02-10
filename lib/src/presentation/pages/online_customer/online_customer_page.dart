@@ -53,11 +53,14 @@ class _OnlineCustomerPageState extends State<OnlineCustomerPage> with WindowList
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: InAppWebView(
-          webViewEnvironment: _webViewEnvironment,
-          initialUrlRequest: URLRequest(
-            url: WebUri(widget.href),
-            headers: _requiredHeaders,
+        child: ExcludeFocus(
+          excluding: true,
+          child: InAppWebView(
+            webViewEnvironment: _webViewEnvironment,
+            initialUrlRequest: URLRequest(
+              url: WebUri(widget.href),
+              headers: _requiredHeaders,
+            ),
           ),
         ),
       ),
