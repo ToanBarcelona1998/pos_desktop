@@ -222,9 +222,8 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                 body: SafeArea(
                   child: Stack(
                     children: [
-                      FocusScope(
-                        debugLabel: "WebViewScope",
-                        canRequestFocus: true,
+                      ExcludeFocus(
+                        excluding: true,
                         child: InAppWebView(
                           key: _webViewKey,
                           webViewEnvironment: _webViewEnvironment,
