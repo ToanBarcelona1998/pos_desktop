@@ -102,6 +102,8 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     _networkStatusSubject = NetworkStatusSubject();
     _networkStatusSubject.attach(this);
     _networkStatusSubject.listenNetworkChanged();
+
+    WidgetsBinding.instance.addObserver(this);
     super.initState();
   }
 
@@ -115,6 +117,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     _networkStatusSubject.close();
     webViewController?.dispose();
     _posOnlineBloc.close();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -593,9 +596,9 @@ class _PosOnlinePageState extends State<PosOnlinePage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-
-    Logger.logI('didChangeAppLifecycleState, $state');
+    if (state == AppLifecycleState.inactive) {
+      forceActivateAppWindow();
+    }
   }
 
 
