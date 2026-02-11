@@ -230,7 +230,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                     children: [
                       Listener(
                         onPointerDown: (event) {
-                          forceActivateIfNeeded();
+                          // forceActivateIfNeeded();
                         },
                         behavior: HitTestBehavior.translucent,
                         child: InAppWebView(
@@ -596,13 +596,6 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     }
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive) {
-      forceActivateIfNeeded();
-    }
-  }
-
 
   void _applyToastrPatch(InAppWebViewController controller) async {
     await controller.evaluateJavascript(source: """
@@ -648,5 +641,33 @@ class _PosOnlinePageState extends State<PosOnlinePage>
         SetFocus(hwnd);
       }
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) {
+      _fixFocusIfInternal();
+    }
+  }
+
+  void _fixFocusIfInternal() {
+    final foreground = GetForegroundWindow();
+    if (foreground == 0) return;
+
+    final pidPtr = calloc<Uint32>();
+    GetWindowThreadProcessId(foreground, pidPtr);
+
+    final currentPid = GetCurrentProcessId();
+
+    if (pidPtr.value == currentPid) {
+      final hwnd = GetActiveWindow();
+      if (hwnd != 0) {
+        SetForegroundWindow(hwnd);
+        SetActiveWindow(hwnd);
+        SetFocus(hwnd);
+      }
+    }
+
+    calloc.free(pidPtr);
   }
 }
