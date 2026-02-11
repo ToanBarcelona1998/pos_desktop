@@ -21,6 +21,7 @@ import 'package:pos_final/src/presentation/widgets/dialog/dialog_provider.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/base_dialog_widget.dart';
 import 'package:data/data.dart';
 import 'package:pos_final/src/presentation/pages/pos/cashier_session/cashier_session_cubit.dart';
+import 'package:win32/win32.dart';
 
 import '../../presentation.dart';
 
@@ -43,7 +44,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
       allowsInlineMediaPlayback: true,
       iframeAllow: "camera; microphone",
       iframeAllowFullscreen: true,
-      supportMultipleWindows: true,
+      supportMultipleWindows: false,
       javaScriptCanOpenWindowsAutomatically: true,
       useShouldOverrideUrlLoading: true,
       disableContextMenu: false);
@@ -222,8 +223,11 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                 body: SafeArea(
                   child: Stack(
                     children: [
-                      ExcludeFocus(
-                        excluding: true,
+                      Listener(
+                        onPointerDown: (event) {
+                          forceActivateAppWindow();
+                        },
+                        behavior: HitTestBehavior.translucent,
                         child: InAppWebView(
                           key: _webViewKey,
                           webViewEnvironment: _webViewEnvironment,
@@ -612,5 +616,14 @@ class _PosOnlinePageState extends State<PosOnlinePage>
       }
     })();
   """);
+  }
+
+  void forceActivateAppWindow() {
+    final hwnd = GetActiveWindow();
+    if (hwnd != 0) {
+      ShowWindow(hwnd, SW_RESTORE);
+      SetForegroundWindow(hwnd);
+      SetFocus(hwnd);
+    }
   }
 }

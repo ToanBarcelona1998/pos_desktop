@@ -79,6 +79,7 @@ dependencies:
   desktop_multi_window: ^0.3.0
   device_info_plus: ^12.3.0
   flutter_presentation_display: any
+  win32: ^5.15.0
 
 
 dev_dependencies:
