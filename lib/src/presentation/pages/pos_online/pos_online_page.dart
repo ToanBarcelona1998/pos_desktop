@@ -646,28 +646,14 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive) {
-      _fixFocusIfInternal();
+      forceActivateWindowLight();
     }
   }
 
-  void _fixFocusIfInternal() {
-    final foreground = GetForegroundWindow();
-    if (foreground == 0) return;
-
-    final pidPtr = calloc<Uint32>();
-    GetWindowThreadProcessId(foreground, pidPtr);
-
-    final currentPid = GetCurrentProcessId();
-
-    if (pidPtr.value == currentPid) {
-      final hwnd = GetActiveWindow();
-      if (hwnd != 0) {
-        SetForegroundWindow(hwnd);
-        SetActiveWindow(hwnd);
-        SetFocus(hwnd);
-      }
+  void forceActivateWindowLight() {
+    final hwnd = GetActiveWindow();
+    if (hwnd != 0) {
+      SetForegroundWindow(hwnd);
     }
-
-    calloc.free(pidPtr);
   }
 }
