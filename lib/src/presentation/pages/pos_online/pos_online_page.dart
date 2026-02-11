@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:domain/domain.dart';
+import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -228,7 +230,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                     children: [
                       Listener(
                         onPointerDown: (event) {
-                          forceActivateAppWindow();
+                          forceActivateIfNeeded();
                         },
                         behavior: HitTestBehavior.translucent,
                         child: InAppWebView(
@@ -597,7 +599,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive) {
-      forceActivateAppWindow();
+      forceActivateIfNeeded();
     }
   }
 
@@ -621,12 +623,30 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   """);
   }
 
-  void forceActivateAppWindow() {
-    final hwnd = GetActiveWindow();
-    if (hwnd != 0) {
-      ShowWindow(hwnd, SW_RESTORE);
-      SetForegroundWindow(hwnd);
-      SetFocus(hwnd);
+  bool isForegroundFromSameProcess() {
+    final foregroundHwnd = GetForegroundWindow();
+    if (foregroundHwnd == 0) return false;
+
+    final foregroundPid = calloc<Uint32>();
+    GetWindowThreadProcessId(foregroundHwnd, foregroundPid);
+
+    final currentPid = GetCurrentProcessId();
+
+    final result = foregroundPid.value == currentPid;
+
+    calloc.free(foregroundPid);
+
+    return result;
+  }
+
+  void forceActivateIfNeeded() {
+    if (isForegroundFromSameProcess()) {
+      final hwnd = GetActiveWindow();
+      if (hwnd != 0) {
+        SetForegroundWindow(hwnd);
+        SetActiveWindow(hwnd);
+        SetFocus(hwnd);
+      }
     }
   }
 }

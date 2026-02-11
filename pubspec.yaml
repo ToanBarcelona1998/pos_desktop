@@ -80,6 +80,7 @@ dependencies:
   device_info_plus: ^12.3.0
   flutter_presentation_display: any
   win32: ^5.15.0
+  ffi: ^2.1.5
 
 
 dev_dependencies:
