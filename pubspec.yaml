@@ -75,7 +75,12 @@ dependencies:
   audioplayers: ^6.4.0
   fl_chart: ^1.0.0
 
-  flutter_inappwebview: ^6.1.5
+  flutter_inappwebview:
+#    path: packages/flutter_inappwebview/flutter_inappwebview
+     git:
+       url: https://github.com/ToanBarcelona1998/flutter_inappwebview.git
+       ref: composition_controller
+       path: flutter_inappwebview
   desktop_multi_window: ^0.3.0
   device_info_plus: ^12.3.0
   flutter_presentation_display: any
