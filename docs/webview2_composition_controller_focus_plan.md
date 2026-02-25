@@ -93,13 +93,13 @@ Tài liệu: [ICoreWebView2CompositionController](https://learn.microsoft.com/en
 
 #### Cách debug: xem WebView đang dùng Composition hay fallback
 
-- **Build Debug:** Chạy app Windows ở **Debug** (không build Release). Trong package đã thêm log trong `in_app_webview.cpp` → `createInAppWebViewEnv()`:
-  - Khi vào nhánh Composition: in ra **`[WebView2] Using Composition Controller (ICoreWebView2CompositionController) - no child HWND`**.
-  - Khi fallback: in ra **`[WebView2] Fallback to Controller (CreateCoreWebView2Controller) - WebView2 will create child HWND`**.
-  - Trước đó có dòng **`[WebView2] willBeSurface=... hasEnv3=... hasEnv10=...`** (cho biết có lấy được Environment3/10 hay không).
-- **Xem log:** Chạy app từ **terminal** (VD: `flutter run -d windows`) hoặc từ **Visual Studio** (Run/Debug) và xem **console** (stdout). Hoặc dùng **DebugView** (Sysinternals) / **Output** tab trong Visual Studio (OutputDebugString) để bắt message.
-- **Breakpoint:** Đặt breakpoint trong `in_app_webview.cpp` tại dòng `if (willBeSurface && (webViewEnv10 || webViewEnv3))` và xem `webViewEnv3` / `webViewEnv10` có khác null không; bước tiếp theo sẽ biết đang vào Composition hay `else` (fallback).
-- **Lưu ý:** Log chỉ xuất khi build **Debug** (macro `debugLog` chỉ hoạt động khi không define `NDEBUG`). Build Release sẽ không in các dòng trên.
+- **Xem log qua file (nên dùng khi chạy `flutter run`):**  
+  Plugin ghi log ra file **`webview2_controller_path.txt`** trong thư mục tạm Windows (**%TEMP%**). Mỗi lần tạo WebView sẽ ghi lại:
+  - Dòng 1: **`[WebView2] willBeSurface=... hasEnv3=... hasEnv10=...`** (có lấy được Environment3/10 hay không).
+  - Dòng 2: **`[WebView2] Using Composition Controller ...`** (đang dùng Composition) **hoặc** **`[WebView2] Fallback to Controller ...`** (đang fallback, WebView2 tạo child HWND).  
+  Mở file: **File Explorer** → thanh địa chỉ gõ `%TEMP%` → Enter → mở `webview2_controller_path.txt` (sau khi đã mở màn có WebView trong app).
+- **Xem log trên console / OutputDebugString:** Chạy app từ **Visual Studio** (F5 Debug) → **View** → **Output**, chọn **Debug**; hoặc dùng **DebugView** (Sysinternals, chạy với quyền Admin) để bắt OutputDebugString. Khi chạy bằng **`flutter run -d windows`**, stdout của app thường **không** hiện trên terminal Flutter, nên ưu tiên xem file **%TEMP%\webview2_controller_path.txt**.
+- **Breakpoint:** Trong `in_app_webview.cpp` tại `if (willBeSurface && (webViewEnv10 || webViewEnv3))` xem `webViewEnv3` / `webViewEnv10` có khác null không.
 
 ### Phase 2: Quản lý focus (host window)
 
