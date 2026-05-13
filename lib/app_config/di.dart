@@ -73,8 +73,9 @@ class _LazyService<T> {
 final sl = ServiceLocator();
 
 /// Initialize all dependencies
-Future<void> initDependencies(
-    {Environment env = Environment.development}) async {
+Future<void> initDependencies({
+  Environment env = Environment.development,
+}) async {
   final config = await EnvConfig.load(env);
 
   String? userData;

@@ -7,6 +7,7 @@ import 'package:pos_final/app_config/env_config.dart';
 import 'package:pos_final/src/application.dart';
 import 'package:pos_final/src/core/services/print_service.dart';
 import 'package:pos_final/src/core/utils/platform_helper.dart';
+import 'package:pos_final/src/core/utils/window_manager_abstract.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
 import 'package:pos_final/src/offline_customer_application.dart';
 import 'package:pos_final/src/online_customer_application.dart';
@@ -16,7 +17,8 @@ import 'bloc_observer.dart';
 
 import 'package:pos_final/src/core/app_version_manager.dart';
 
-Future<void> main() async {
+@pragma('vm:entry-point')
+void main() async {
   Bloc.observer = Observer();
 
   WidgetsFlutterBinding.ensureInitialized();
@@ -98,3 +100,21 @@ Future<void> main() async {
     runApp(const Application());
   }
 }
+
+/// Entry point for online customer display on Android
+@pragma('vm:entry-point')
+void secondaryDisplayMain() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await PrintService.init();
+
+  await initDependencies(env: EnvConfig.environment);
+  runApp(const OnlineCustomerApplication(href: ''));
+}
+
+/// Entry point for offline customer display on Android
+// @pragma('vm:entry-point')
+// void offlineCustomerMain() {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   runApp(const OfflineCustomerApplication());
+// }

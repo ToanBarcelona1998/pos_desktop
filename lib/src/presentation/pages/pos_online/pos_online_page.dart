@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 
@@ -17,6 +18,8 @@ import 'package:pos_final/src/core/core.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_observer.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_subject.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
+import 'package:pos_final/src/core/utils/window_manager_abstract.dart' as wm_abstract;
+import 'package:pos_final/src/core/utils/platform_helper.dart';
 import 'package:pos_final/src/presentation/pages/pos/cashier_session/cashier_session_state.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/dialog_provider.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/base_dialog_widget.dart';
@@ -35,7 +38,8 @@ class PosOnlinePage extends StatefulWidget {
 
 class _PosOnlinePageState extends State<PosOnlinePage>
     implements NetworkStatusObserver {
-  WindowController? _customerWindowController;
+  wm_abstract.WindowManagerAbstract? _windowManager;
+  StreamSubscription? _windowStatusSubscription;
 
 
   InAppWebViewController? webViewController;
@@ -104,15 +108,30 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     _networkStatusSubject.attach(this);
     _networkStatusSubject.listenNetworkChanged();
 
+    // Initialize window manager (only on supported platforms)
+    try {
+      if (PlatformHelper.isDesktop || PlatformHelper.isAndroid) {
+        _windowManager = WindowManagerUtils.getWindowManager();
+      }
+    } catch (e) {
+      Logger.logI('Window manager not available on this platform');
+    }
+
     super.initState();
   }
 
   @override
   void dispose() {
+    _windowStatusSubscription?.cancel();
+    _windowStatusSubscription = null;
+
     try {
-      _customerWindowController?.close();
+      _windowManager?.closeCustomerWindow();
     } catch (_) {}
-    _customerWindowController = null;
+    
+    _windowManager?.dispose();
+    _windowManager = null;
+
     _networkStatusSubject.detach(this);
     _networkStatusSubject.close();
     webViewController?.dispose();
@@ -451,21 +470,26 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                           controller.addJavaScriptHandler(
                             handlerName: 'customerDisplayOpened',
                             callback: (arguments) async {
+                              Logger.logI('customerDisplayOpened nhận data: $arguments');
                               try {
-                                if (_customerWindowController == null) {
-                                  String href = arguments[0][0];
-                                  _customerWindowController =
-                                      await WindowManagerUtils
-                                          .createNewWindow(WindowArguments(
-                                    type: WindowType.onlineCustomer,
-                                    params: {'href': href},
-                                  ));
+                                if (_windowManager == null) {
+                                  Logger.logE('Window manager not initialized');
+                                  return 'error: not_initialized';
+                                }
+
+                                final isOpen = await _windowManager!.isCustomerWindowOpen();
+                                String href = arguments[0][0];
+
+                                if (!isOpen) {
+                                  await _windowManager!.openCustomerWindow(
+                                    type: wm_abstract.WindowType.onlineCustomer,
+                                    params: {'href': href, 'type' : wm_abstract.WindowType.onlineCustomer.type},
+                                  );
                                 } else {
-                                  _customerWindowController!.show();
-                                  _customerWindowController!.focus();
+                                  await _windowManager!.showCustomerWindow();
                                 }
                               } catch (e) {
-                                Logger.logE('customerDisplayOpened error', e);
+                                Logger.logE('customerDisplayOpened error ${e.toString()}', e);
                               }
                               return 'success';
                             },

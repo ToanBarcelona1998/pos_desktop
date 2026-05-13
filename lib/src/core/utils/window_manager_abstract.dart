@@ -1,7 +1,19 @@
 /// Window type enum
 enum WindowType {
-  offlineCustomer,
-  onlineCustomer,
+  none('none'),
+  onlineCustomer('onlineCustomer'),
+  offlineCustomer('offlineCustomer');
+
+  final String type;
+
+  const WindowType(this.type);
+
+  static WindowType fromName(String type) {
+    return WindowType.values.firstWhere(
+      (e) => type.toLowerCase() == e.type.toLowerCase(),
+      orElse: () => WindowType.none,
+    );
+  }
 }
 
 /// Window status

@@ -39,9 +39,7 @@ class WindowManagerDesktop implements WindowManagerAbstract {
 
       // Create window arguments
       final windowArgs = utils.WindowArguments(
-        type: type == WindowType.offlineCustomer
-            ? utils.WindowType.offlineCustomer
-            : utils.WindowType.onlineCustomer,
+        type: type,
         params: params ?? {},
       );
 

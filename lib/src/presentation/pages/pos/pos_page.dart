@@ -163,7 +163,9 @@ class _PosPageState extends State<PosPage> {
       // Open customer window
       await _windowManager!.openCustomerWindow(
         type: wm_abstract.WindowType.offlineCustomer,
-        params: {},
+        params: {
+          'type': wm_abstract.WindowType.offlineCustomer.type,
+        },
       );
 
       if (context.mounted) {

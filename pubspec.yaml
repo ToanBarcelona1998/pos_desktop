@@ -3,7 +3,7 @@ description: A Flutter POS application supporting mobile and desktop platforms.
 
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.1.0 <4.0.0'
@@ -83,7 +83,8 @@ dependencies:
     #    path: flutter_inappwebview
   desktop_multi_window: ^0.3.0
   device_info_plus: ^12.3.0
-  flutter_presentation_display: any
+  flutter_presentation_display:
+    path: packages/flutter_presentation_display
 
 
 dev_dependencies:

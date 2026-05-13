@@ -58,22 +58,32 @@ class WindowManagerAndroid implements WindowManagerAbstract {
         throw Exception('No displays available');
       }
 
-      // Use first secondary display (index 1) if available, otherwise use primary (index 0)
+      // Use first secondary display (index 1) if available, otherwise look for non-zero displayId
       // For POS devices like SUNMI T2s, secondary display is usually at index 1
-      final displayId = displays.length > 1 
-          ? (displays[1].displayId ?? displays[0].displayId ?? 1)
-          : (displays[0].displayId ?? 1);
+      int? displayId;
+      if (displays.length > 1) {
+        displayId = displays[1].displayId;
+      }
 
-      // Determine router name based on type
-      // These router names must match routes defined in app navigation
+      // Fallback: search for any display that is not ID 0
+      displayId ??= displays.firstWhere(
+        (d) => d.displayId != 0,
+        orElse: () => displays[0],
+      ).displayId;
+
+      // Ensure we have a valid displayId (default to 1 if null or 0 as last resort, but 0 often fails)
+      displayId ??= 1;
+
+      // Determine entry point name based on type
+      // On Android, routerName must match a top-level function marked with @pragma('vm:entry-point')
       final routerName = type == WindowType.offlineCustomer
-          ? '/offline_customer'
-          : '/online_customer';
+          ? 'offlineCustomerMain'
+          : 'onlineCustomerMain';
 
       // Show secondary display
       final result = await _display.showSecondaryDisplay(
         displayId: displayId,
-        routerName: routerName,
+        routerName: 'secondaryDisplayMain',
       );
 
       if (result == true) {
@@ -86,6 +96,8 @@ class WindowManagerAndroid implements WindowManagerAbstract {
 
         // Send initial data to presentation display if params provided
         if (params != null && params.isNotEmpty) {
+          // Wait a bit for the secondary engine to start and listen
+          await Future.delayed(const Duration(milliseconds: 1000));
           await _display.transferDataToPresentation(params);
         }
       } else {

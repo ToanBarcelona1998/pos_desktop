@@ -471,11 +471,9 @@ packages:
   flutter_inappwebview:
     dependency: "direct main"
     description:
-      path: flutter_inappwebview
-      ref: composition_controller
-      resolved-ref: e7f62db36288a3347bee8b64c8c9edeb9326f352
-      url: "https://github.com/ToanBarcelona1998/flutter_inappwebview.git"
-    source: git
+      path: "packages/flutter_inappwebview/flutter_inappwebview"
+      relative: true
+    source: path
     version: "6.2.0-beta.3"
   flutter_inappwebview_android:
     dependency: transitive
@@ -536,10 +534,9 @@ packages:
   flutter_inappwebview_windows:
     dependency: transitive
     description:
-      name: flutter_inappwebview_windows
-      sha256: "902edd6f6326952af822e21aa928f7426d723d45c94c15e6ce3c2d5640d28ad7"
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/flutter_inappwebview/flutter_inappwebview_windows"
+      relative: true
+    source: path
     version: "0.7.0-beta.3"
   flutter_launcher_icons:
     dependency: "direct dev"
@@ -573,11 +570,10 @@ packages:
   flutter_presentation_display:
     dependency: "direct main"
     description:
-      name: flutter_presentation_display
-      sha256: c8654ac00b719c59fb911d4494f22a0a067d14bb7587b8ae6e405ce16ca9cc9f
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.6"
+      path: "packages/flutter_presentation_display"
+      relative: true
+    source: path
+    version: "2.0.8"
   flutter_spinkit:
     dependency: "direct main"
     description:
