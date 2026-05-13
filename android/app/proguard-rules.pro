@@ -1,3 +1,5 @@
 -keep class io.flutter.embedding.engine.** { *; }
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugins.** { *; }
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }
