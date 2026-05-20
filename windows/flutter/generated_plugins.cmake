@@ -10,10 +10,13 @@ list(APPEND FLUTTER_PLUGIN_LIST
   file_saver
   file_selector_windows
   flutter_inappwebview_windows
+  flutter_pos_printer_platform_image_3_sdt
   geolocator_windows
+  pdfx
   permission_handler_windows
   printing
   screen_retriever_windows
+  universal_ble
   url_launcher_windows
   window_manager
 )

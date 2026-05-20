@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:domain/domain.dart';
@@ -18,7 +17,9 @@ import 'package:pos_final/src/core/core.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_observer.dart';
 import 'package:pos_final/src/core/observers/network_status/network_status_subject.dart';
 import 'package:pos_final/src/core/utils/window_manager_utils.dart';
-import 'package:pos_final/src/core/utils/window_manager_abstract.dart' as wm_abstract;
+import 'package:pos_final/src/core/utils/window_manager_abstract.dart'
+    as wm_abstract;
+import 'package:pos_final/src/core/services/thermal_print_service.dart';
 import 'package:pos_final/src/core/utils/platform_helper.dart';
 import 'package:pos_final/src/presentation/pages/pos/cashier_session/cashier_session_state.dart';
 import 'package:pos_final/src/presentation/widgets/dialog/dialog_provider.dart';
@@ -41,18 +42,15 @@ class _PosOnlinePageState extends State<PosOnlinePage>
   wm_abstract.WindowManagerAbstract? _windowManager;
   StreamSubscription? _windowStatusSubscription;
 
-
   InAppWebViewController? webViewController;
   InAppWebViewSettings settings = InAppWebViewSettings(
-      isInspectable: false,
-      mediaPlaybackRequiresUserGesture: false,
-      allowsInlineMediaPlayback: true,
-      iframeAllow: "camera; microphone",
-      iframeAllowFullscreen: true,
-      supportMultipleWindows: false,
-      javaScriptCanOpenWindowsAutomatically: true,
-      useShouldOverrideUrlLoading: true,
-      disableContextMenu: false);
+    isInspectable: false,
+    mediaPlaybackRequiresUserGesture: false,
+    // allowsInlineMediaPlayback: true,
+    // iframeAllow: "camera; microphone",
+    // iframeAllowFullscreen: true,
+    useHybridComposition: true,
+  );
 
   late PosOnlineBloc _posOnlineBloc;
 
@@ -128,7 +126,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     try {
       _windowManager?.closeCustomerWindow();
     } catch (_) {}
-    
+
     _windowManager?.dispose();
     _windowManager = null;
 
@@ -246,6 +244,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                     children: [
                       InAppWebView(
                         key: _webViewKey,
+                        initialSettings: settings,
                         webViewEnvironment: _webViewEnvironment,
                         initialUrlRequest: URLRequest(
                           url: WebUri(_appConfig.webUrl),
@@ -311,15 +310,13 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                                 try {
                                   // Parse data from webview
                                   // Format: {userId: number, amount: number, startTime: string, locationId?: number}
-                                  final data =
-                                      args[0] as Map<String, dynamic>;
+                                  final data = args[0] as Map<String, dynamic>;
 
                                   final userId =
                                       (data['userId'] as num?)?.toInt();
-                                  final amount = double.tryParse(
-                                      data['amount']
-                                          .toString()
-                                          .replaceAll(',', ''));
+                                  final amount = double.tryParse(data['amount']
+                                      .toString()
+                                      .replaceAll(',', ''));
                                   final startTimeStr =
                                       data['startTime'] as String?;
                                   final locationId =
@@ -359,9 +356,8 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                                   // Save session locally (marked as synced since it's from online mode)
                                   final cashierSessionRepository =
                                       sl.get<CashierSessionRepository>();
-                                  final result =
-                                      await cashierSessionRepository
-                                          .saveSessionLocally(
+                                  final result = await cashierSessionRepository
+                                      .saveSessionLocally(
                                     userId: userId,
                                     locationId: locationId,
                                     openingAmount: amount,
@@ -427,8 +423,7 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                                     );
 
                                 // Reset flag after a delay to allow login to complete
-                                Future.delayed(const Duration(seconds: 2),
-                                    () {
+                                Future.delayed(const Duration(seconds: 2), () {
                                   _isLoggingIn = false;
                                 });
                               } catch (e) {
@@ -470,28 +465,70 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                           controller.addJavaScriptHandler(
                             handlerName: 'customerDisplayOpened',
                             callback: (arguments) async {
-                              Logger.logI('customerDisplayOpened nhận data: $arguments');
+                              Logger.logI(
+                                  'customerDisplayOpened nhận data: $arguments');
                               try {
                                 if (_windowManager == null) {
                                   Logger.logE('Window manager not initialized');
                                   return 'error: not_initialized';
                                 }
 
-                                final isOpen = await _windowManager!.isCustomerWindowOpen();
+                                final isOpen = await _windowManager!
+                                    .isCustomerWindowOpen();
                                 String href = arguments[0][0];
 
                                 if (!isOpen) {
                                   await _windowManager!.openCustomerWindow(
                                     type: wm_abstract.WindowType.onlineCustomer,
-                                    params: {'href': href, 'type' : wm_abstract.WindowType.onlineCustomer.type},
+                                    params: {
+                                      'href': href,
+                                      'type': wm_abstract
+                                          .WindowType.onlineCustomer.type
+                                    },
                                   );
                                 } else {
                                   await _windowManager!.showCustomerWindow();
                                 }
                               } catch (e) {
-                                Logger.logE('customerDisplayOpened error ${e.toString()}', e);
+                                Logger.logE(
+                                    'customerDisplayOpened error ${e.toString()}',
+                                    e);
                               }
                               return 'success';
+                            },
+                          );
+
+                          controller.addJavaScriptHandler(
+                            handlerName: 'execute_print',
+                            callback: (arguments) async {
+                              Logger.logI(
+                                  'execute_print nhận data length=${arguments.length}');
+                              try {
+                                final raw = _extractBase64Arg(arguments);
+                                if (raw == null || raw.isEmpty) {
+                                  Logger.logE(
+                                      'execute_print: payload base64 rỗng');
+                                  return 'error: empty_payload';
+                                }
+
+                                final pdfBytes =
+                                    ThermalPrintService.decodePdfBase64(raw);
+
+                                // Debug-only: show compare dialog. `kDebugMode`
+                                // là `const false` ở release → toàn bộ block
+                                // bị tree-shake, không tốn binary size.
+                                if (kDebugMode) {
+                                  await _maybeShowPdfDebugDialog(pdfBytes);
+                                }
+
+                                await ThermalPrintService.printPdfBytes(
+                                    pdfBytes);
+                                return 'success';
+                              } catch (e) {
+                                Logger.logE(
+                                    'execute_print error: ${e.toString()}', e);
+                                return 'error: ${e.toString()}';
+                              }
                             },
                           );
                         },
@@ -507,6 +544,15 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                               baseUrl: WebUri('about:blank'),
                             );
                           }
+                        },
+                        onDownloadStarting: (controller, downloadRequest) async {
+                          // Khi Webview thấy dữ liệu PDF, nó sẽ nhảy vào đây thay vì hiển thị
+                          print("Đang tải hóa đơn: ${downloadRequest.url}");
+
+                          // Cách 1: Mở bằng trình duyệt ngoài (Chrome trên Android sẽ đọc được PDF)
+                          // if (await canLaunchUrl(downloadRequest.url)) {
+                          //   await launchUrl(downloadRequest.url, mode: LaunchMode.externalApplication);
+                          // }
                         },
                       ),
                       // POS Offline Screen (stacked on top when network disconnects)
@@ -611,6 +657,114 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     }
   }
 
+  /// DEBUG-only entry. Tất cả call site phải bọc trong `if (kDebugMode)`
+  /// để Dart AOT tree-shake khi build release. Render 2 lượt (preview-quality
+  /// 1080dot + thermal-quality 576dot) rồi show side-by-side dialog.
+  ///
+  /// Không dùng `PdfPreview` / `printing.raster` vì rasterize ở
+  /// `deviceDpr × 72` DPI → OOM 174MB trên Android với PDF page lớn.
+  Future<void> _maybeShowPdfDebugDialog(Uint8List pdfBytes) async {
+    final previewPages = await ThermalPrintService.renderPdfToPngPages(
+      pdfBytes,
+      targetWidth: ThermalPrintService.previewDotWidth,
+    );
+    final thermalPages = await ThermalPrintService.renderPdfToPngPages(
+      pdfBytes,
+      targetWidth: ThermalPrintService.thermalDotWidth,
+    );
+    if (!mounted) return;
+    if (previewPages.isEmpty || thermalPages.isEmpty) return;
+
+    final first = previewPages.first;
+    final dimsLabel =
+        'Page: ${first.widthMm.toStringAsFixed(1)} × ${first.heightMm.toStringAsFixed(1)} mm'
+        '  (${first.widthPt.toStringAsFixed(0)} × ${first.heightPt.toStringAsFixed(0)} pt)'
+        '  | pages=${previewPages.length}';
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final size = MediaQuery.of(ctx).size;
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: size.width * 0.95,
+            height: size.height * 0.9,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'PDF debug — preview (1080dot) vs thermal (576dot)',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(dimsLabel,
+                                style: const TextStyle(fontSize: 11)),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _DebugPdfColumn(
+                          title:
+                              'Preview (${ThermalPrintService.previewDotWidth}dot)',
+                          pages: previewPages,
+                        ),
+                      ),
+                      const VerticalDivider(width: 1),
+                      Expanded(
+                        child: _DebugPdfColumn(
+                          title:
+                              'Thermal (${ThermalPrintService.thermalDotWidth}dot — what printer sees)',
+                          pages: thermalPages,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// JS có thể call handler('base64...') (arg = String) hoặc
+  /// handler(['base64...']) (arg = `List<String>`) hoặc bọc trong object.
+  String? _extractBase64Arg(List<dynamic> arguments) {
+    if (arguments.isEmpty) return null;
+    final first = arguments.first;
+    if (first is String) return first;
+    if (first is List && first.isNotEmpty && first.first is String) {
+      return first.first as String;
+    }
+    if (first is Map) {
+      for (final key in const ['pdf', 'data', 'base64', 'content']) {
+        final value = first[key];
+        if (value is String && value.isNotEmpty) return value;
+      }
+    }
+    return null;
+  }
 
   void _applyToastrPatch(InAppWebViewController controller) async {
     await controller.evaluateJavascript(source: """
@@ -619,15 +773,63 @@ class _PosOnlinePageState extends State<PosOnlinePage>
         toastr.options.timeOut = 3000;
         toastr.options.extendedTimeOut = 1000;
         toastr.options.closeOnHover = false;
-        
+
         window.hasFocus = function() { return true; };
         Object.defineProperty(document, 'hasFocus', { value: () => true, writable: false });
-        
+
         console.log("POS: Toastr patch applied successfully");
       } else {
         console.log("POS: Toastr not found yet, retrying...");
       }
     })();
   """);
+  }
+}
+
+class _DebugPdfColumn extends StatelessWidget {
+  final String title;
+  final List<PdfPagePreview> pages;
+
+  const _DebugPdfColumn({required this.title, required this.pages});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(6),
+          child: Text(title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12)),
+        ),
+        Expanded(
+          child: Container(
+            color: Colors.grey.shade200,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 8),
+              itemCount: pages.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) {
+                final p = pages[i];
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: const [
+                      BoxShadow(blurRadius: 2, color: Colors.black26)
+                    ],
+                  ),
+                  child: Image.memory(
+                    p.png,
+                    fit: BoxFit.contain,
+                    gaplessPlayback: true,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

@@ -74,6 +74,10 @@ dependencies:
   async: ^2.12.0
   audioplayers: ^6.4.0
   fl_chart: ^1.0.0
+  flutter_pos_printer_platform_image_3_sdt: ^1.0.8
+  esc_pos_utils_plus: ^2.0.4
+  pdfx: ^2.9.2
+  image: ^4.5.4
 
   flutter_inappwebview:
     path: packages/flutter_inappwebview/flutter_inappwebview
