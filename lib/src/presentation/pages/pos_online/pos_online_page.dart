@@ -9,6 +9,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart' hide WindowType;
+import 'package:printing/printing.dart';
 import 'package:pos_final/app_config/app_config.dart';
 import 'package:pos_final/app_config/di.dart';
 import 'package:pos_final/src/application.dart';
@@ -675,11 +676,22 @@ class _PosOnlinePageState extends State<PosOnlinePage>
     if (!mounted) return;
     if (previewPages.isEmpty || thermalPages.isEmpty) return;
 
-    final first = previewPages.first;
-    final dimsLabel =
-        'Page: ${first.widthMm.toStringAsFixed(1)} × ${first.heightMm.toStringAsFixed(1)} mm'
-        '  (${first.widthPt.toStringAsFixed(0)} × ${first.heightPt.toStringAsFixed(0)} pt)'
-        '  | pages=${previewPages.length}';
+    final pageDims = previewPages
+        .asMap()
+        .entries
+        .map((e) =>
+            'p${e.key + 1}: ${e.value.widthMm.toStringAsFixed(1)}×${e.value.heightMm.toStringAsFixed(1)}mm '
+            '(${e.value.widthPt.toStringAsFixed(0)}×${e.value.heightPt.toStringAsFixed(0)}pt)')
+        .join('  |  ');
+
+    final headerBytes = pdfBytes.take(16).toList();
+    final headerHex = headerBytes
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join(' ');
+    final headerAscii = String.fromCharCodes(
+        headerBytes.map((b) => (b >= 32 && b < 127) ? b : 46));
+    final rawInfo =
+        'Raw: ${pdfBytes.lengthInBytes} bytes  |  header: $headerHex  ($headerAscii)';
 
     await showDialog<void>(
       context: context,
@@ -706,10 +718,27 @@ class _PosOnlinePageState extends State<PosOnlinePage>
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 2),
-                            Text(dimsLabel,
+                            Text('Pages (${previewPages.length}):  $pageDims',
+                                style: const TextStyle(fontSize: 11)),
+                            const SizedBox(height: 2),
+                            Text(rawInfo,
                                 style: const TextStyle(fontSize: 11)),
                           ],
                         ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () async {
+                          try {
+                            await Printing.sharePdf(
+                              bytes: pdfBytes,
+                              filename: 'debug_print.pdf',
+                            );
+                          } catch (e) {
+                            Logger.logE('sharePdf error: $e', e);
+                          }
+                        },
+                        icon: const Icon(Icons.share),
+                        label: const Text('Share raw PDF'),
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(ctx).pop(),
