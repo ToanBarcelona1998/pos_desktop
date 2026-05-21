@@ -9,6 +9,7 @@ import 'package:flutter_pos_printer_platform_image_3_sdt/flutter_pos_printer_pla
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:pos_final/src/core/utils/dart_core_extension.dart';
 
 /// Pipeline in hoá đơn qua máy in nhiệt USB (Android POS).
 ///
@@ -76,7 +77,8 @@ class ThermalPrintService {
       if (target == null) {
         final discovered =
             await discoverPrinters(timeout: const Duration(seconds: 5));
-        target = discovered.firstOrNull;
+        
+        target = discovered.firstWhereOrNull((e) => e.name.toLowerCase().contains('itp9'));
       }
       if (target == null) {
         throw Exception('Không tìm thấy máy in USB');
