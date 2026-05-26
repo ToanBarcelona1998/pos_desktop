@@ -34,6 +34,17 @@ class ThermalPrintService {
 
   static void clearCachedPrinter() => _cachedPrinter = null;
 
+  static const List<String> _printerKeyWords = [
+    'itp9',
+    'gprinter',
+    'itp86',
+    'itp76',
+    'itp3300',
+    'itp85',
+    'itp80',
+    'printer',
+  ];
+
   /// Discovery USB. Trả về list dedup theo `vid:pid` (xem PRINTING_FLOW.md).
   static Future<List<UsbPrinter>> discoverPrinters({
     Duration timeout = const Duration(seconds: 5),
@@ -77,8 +88,11 @@ class ThermalPrintService {
       if (target == null) {
         final discovered =
             await discoverPrinters(timeout: const Duration(seconds: 5));
-        
-        target = discovered.firstWhereOrNull((e) => e.name.toLowerCase().contains('itp9'));
+
+        target = discovered.firstWhereOrNull((e) {
+          final nameNormalize = e.name.toLowerCase();
+          return _printerKeyWords.any((k) => nameNormalize.contains(k));
+        });
       }
       if (target == null) {
         throw Exception('Không tìm thấy máy in USB');
@@ -119,8 +133,7 @@ class ThermalPrintService {
       try {
         if (!await dir.exists()) return;
         await for (final entry in dir.list(followLinks: false)) {
-          if (entry is File &&
-              entry.path.toLowerCase().endsWith('.pdf')) {
+          if (entry is File && entry.path.toLowerCase().endsWith('.pdf')) {
             try {
               await entry.delete();
             } catch (_) {}
@@ -222,6 +235,7 @@ class PdfPagePreview {
 
   /// 1 pt = 1/72 inch; 1 inch = 25.4 mm → mm = pt / 2.83465.
   double get widthMm => widthPt / 2.83465;
+
   double get heightMm => heightPt / 2.83465;
 }
 
